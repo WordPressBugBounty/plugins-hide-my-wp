@@ -130,7 +130,7 @@
                                         <div class="font-weight-bold"><?php echo esc_html__('reCaptcha Theme', 'hide-my-wp'); ?>:</div>
                                     </div>
                                     <div class="col-sm-8 p-0 input-group">
-                                        <select name="brute_captcha_theme" class="form-control mb-1">
+                                        <select name="brute_captcha_theme" class="form-control mb-1 selectpicker">
                                             <?php
                                             $themes = array(esc_html__('light', 'hide-my-wp'), esc_html__('dark', 'hide-my-wp'));
                                             foreach ($themes as $theme) {
@@ -144,7 +144,7 @@
                                         <div class="font-weight-bold"><?php echo esc_html__('reCaptcha Language', 'hide-my-wp'); ?>:</div>
                                     </div>
                                     <div class="col-sm-8 p-0 input-group">
-                                        <select name="brute_captcha_language" class="form-control mb-1">
+                                        <select name="brute_captcha_language" class="form-control mb-1 selectpicker">
                                             <?php
                                             $languages = array(
                                                 esc_html__('Auto Detect', 'hide-my-wp') => '',

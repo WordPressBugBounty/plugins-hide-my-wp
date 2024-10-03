@@ -56,7 +56,7 @@
                                     <div class="font-weight-bold"><?php echo esc_html__('Server Type', 'hide-my-wp'); ?>:</div>
                                 </div>
                                 <div class="col-sm-9 p-0 input-group mb-1">
-                                    <select name="hmwp_server_type" class="form-control">
+                                    <select name="hmwp_server_type" class="form-control selectpicker">
                                         <option value="auto" <?php selected('auto', HMWP_Classes_Tools::getOption('hmwp_server_type')) ?>><?php echo esc_html__("Autodetect", 'hide-my-wp') ?></option>
                                         <option value="apache" <?php selected('apache', HMWP_Classes_Tools::getOption('hmwp_server_type')) ?>><?php echo esc_html__("Apache", 'hide-my-wp') ?></option>
                                         <option value="iis" <?php selected('iis', HMWP_Classes_Tools::getOption('hmwp_server_type')) ?>><?php echo esc_html__("IIS Windows", 'hide-my-wp') ?></option>
@@ -72,7 +72,7 @@
                                         <option value="godaddy" <?php selected('godaddy', HMWP_Classes_Tools::getOption('hmwp_server_type')) ?> ><?php echo esc_html__("Godaddy", 'hide-my-wp') ?></option>
                                     </select>
 
-                                    <div class="p-1 text-left">
+                                    <div class="col-sm-12 p-1 text-left">
                                         <div class="text-black-50"><?php echo esc_html__('Choose the type of server you are using to get the most suitable configuration for your server.', 'hide-my-wp'); ?></div>
                                         <div class="text-danger"><?php echo esc_html__('Only change this option if the plugin fails to identify the server type correctly.', 'hide-my-wp'); ?></div>
                                     </div>

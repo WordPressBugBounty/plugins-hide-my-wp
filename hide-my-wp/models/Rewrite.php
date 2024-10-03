@@ -2585,7 +2585,10 @@ class HMWP_Models_Rewrite {
 					case 'drupal10':
 						$generator = 'Drupal 10 (https://www.drupal.org)';
 						break;
-					default:
+                    case 'drupal11':
+                        $generator = 'Drupal 11 (https://www.drupal.org)';
+                        break;
+                    default:
 						$generator = 'Drupal (https://www.drupal.org)';
 						break;
 				}

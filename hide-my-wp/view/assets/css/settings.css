@@ -53,7 +53,7 @@
 
 .hmwp-settings a,
 .hmwp-settings .btn-link{
-    color: #006ba1;
+    color: #3f72af;
 }
 
 .hmwp-settings.uipc-body .modal-backdrop{
@@ -61,12 +61,12 @@
 }
 
 .dropdown-item.active, .dropdown-item:active{
-    background-color: #0e6dd4;
+    background-color: #3f72af;
 }
 
 .hmwp-settings #hmwp_wrap .wp_loading {
     border: 16px solid #f3f3f3;
-    border-top: 16px solid #5f82a9;
+    border-top: 16px solid #3f72af;
     border-radius: 50%;
     width: 80px;
     height: 80px;
@@ -76,7 +76,7 @@
 
 .hmwp-settings #hmwp_wrap .wp_loading_min{
     border: 16px solid #f3f3f3;
-    border-top: 16px solid #5f82a9;
+    border-top: 16px solid #3f72af;
     border-radius: 50%;
     animation: spin 2s linear infinite;
     width: 30px;
@@ -88,8 +88,8 @@
     vertical-align: text-bottom;
 }
 
-.hmwp-settings .card-title .dashicons-editor-help {
-    color: #006ba1;
+.hmwp-settings .dashicons-editor-help {
+    color: rgba(0,0,0,.5)!important;
 }
 
 .hmwp-settings .flex-row{
@@ -121,7 +121,7 @@
 #hmwp_wrap .hmwp_nav .hmwp_nav_item:hover, #hmwp_wrap .hmwp_nav .hmwp_nav_item.active {
     color: #121116;
     font-weight: 600;
-    border-left: 2px solid #2e4a61;
+    border-left: 2px solid #3f72af;
 }
 
 #hmwp_wrap .hmwp_nav .hmwp_nav_item_description {
@@ -193,7 +193,7 @@
 }
 
 #hmwp_wrap .fa-question-circle{
-    color: #006ba1;
+    color: #3f72af;
 }
 
 #hmwp_wrap .bg-brown {
@@ -209,17 +209,17 @@
 }
 
 #hmwp_wrap .text-logo {
-    color: #466892;
+    color: #3f72af;
 }
 
 .hmwp-settings .text-info {
-    color: #3478a0 !important;
+    color: #3f72af !important;
 }
 
 .hmwp-settings .btn-warning {
     color: #ffffff;
-    background-color: #ddaa00;
-    border-color: #ddaa00;
+    background-color: #ffa500;
+    border-color: #ffa500;
 }
 
 .hmwp-settings .btn-secondary {
@@ -232,10 +232,10 @@
 
 .hmwp-settings .btn-sidebar{
     background: #f3f5f6;
-    border-color: #007cba;
-    -webkit-box-shadow: 0 0 0 1px #007cba;
-    box-shadow: 0 0 0 1px #007cba;
-    color: #016087 !important;
+    border-color: #3f72af;
+    -webkit-box-shadow: 0 0 0 1px #3f72af;
+    box-shadow: 0 0 0 1px #112d4e;
+    color: #112d4e !important;
     outline: 2px solid transparent;
     outline-offset: 0;
     border-radius:0;
@@ -245,13 +245,13 @@
 .hmwp-settings .btn-sidebar:focus,
 .hmwp-settings .btn-sidebar:active{
     color: #ffffff !important;
-    background-color: #0073b0 !important;
-    border-color: #405c7b !important;
+    background-color: #3f72af !important;
+    border-color: #112d4e !important;
 }
 
 .hmwp-settings .btn-default {
     background: #f3f5f6;
-    border-color: #007cba;
+    border-color: #112d4e;
     -webkit-box-shadow: 0 0 0 1px #007cba;
     box-shadow: 0 0 0 1px #007cba;
     color: #016087 !important;
@@ -264,22 +264,23 @@
 .hmwp-settings .btn-default:focus,
 .hmwp-settings .btn-default:active{
     color: #ffffff !important;
-    background-color: #0073b0 !important;
-    border-color: #405c7b !important;
+    background-color: #3f72af !important;
+    border-color: #112d4e !important;
 }
 
 .hmwp-settings .btn-success {
     color: #ffffff;
-    background-color: #007cba;
-    border-color: #405c7b;
+    background-color: #3f72af;
+    border-color: #112d4e;
     border-radius:0;
 }
 
 .hmwp-settings .btn-success:hover,
 .hmwp-settings .btn-success:focus,
 .hmwp-settings .btn-success:active{
-    background-color: #0073b0 !important;
-    border-color: #405c7b !important;
+    color: #fff;
+    background-color: #3f72af !important;
+    border-color: #112d4e !important;
 }
 
 .hmwp-settings .bootstrap-select {
@@ -287,15 +288,15 @@
 }
 
 #hmwp_wrap .btn-outline-info {
-    border-color: #5f82a9;
+    border-color: #3f72af;
 }
 
 #hmwp_wrap .btn-outline-info:hover,
 #hmwp_wrap .btn-outline-info:focus,
 #hmwp_wrap .btn-outline-info:active{
     color: #fff;
-    background-color: #5f82a9;
-    border-color: #5f82a9;
+    background-color: #3f72af;
+    border-color: #112d4e;
 }
 
 #hmwp_wrap .table_securitycheck tr:hover button.close {
@@ -311,8 +312,8 @@
 }
 
 #hmwp_wrap .btn-outline-info:not(:disabled):not(.disabled).active, #hmwp_wrap .btn-outline-info:not(:disabled):not(.disabled):active, #hmwp_wrap .show > .btn-outline-info.dropdown-toggle {
-    background-color: #5f82a9;
-    border-color: #5f82a9;
+    background-color: #3f72af;
+    border-color: #3f72af;
 }
 
 #hmwp_wrap .hmwp_url_mapping_remove,
@@ -391,8 +392,8 @@
     -webkit-transform: rotate(45deg);
     width: 100px;
     display: block;
-    background: #4f6f97;
-    background: linear-gradient(#4f6f97 0%, #507098 100%);
+    background: #3f72af;
+    background: linear-gradient(#112d4e 0%, #3f72af 100%);
     box-shadow: 0 3px 10px -5px rgba(0, 0, 0, 1);
     position: absolute;
     top: 19px;
@@ -405,10 +406,10 @@
     left: 0;
     top: 100%;
     z-index: -1;
-    border-left: 3px solid #4f6f97;
+    border-left: 3px solid #3f72af;
     border-right: 3px solid transparent;
     border-bottom: 3px solid transparent;
-    border-top: 3px solid #4f6f97;
+    border-top: 3px solid #3f72af;
 }
 
 #hmwp_wrap .ribbon span::after {
@@ -418,9 +419,9 @@
     top: 100%;
     z-index: -1;
     border-left: 3px solid transparent;
-    border-right: 3px solid #4f6f97;
+    border-right: 3px solid #3f72af;
     border-bottom: 3px solid transparent;
-    border-top: 3px solid #4f6f97;
+    border-top: 3px solid #3f72af;
 }
 
 @media (max-width: 1500px) and (min-resolution: 120dpi) {
@@ -437,8 +438,7 @@
     }
 
     #hmwp_wrap .hmwp_nav .hmwp_nav_item span,
-    #hmwp_wrap .hmwp_nav .hmwp_nav_button,
-    #hmwp_wrap .hmwp_nav .text-logo {
+    #hmwp_wrap .hmwp_nav .hmwp_nav_button {
         display: none;
     }
 

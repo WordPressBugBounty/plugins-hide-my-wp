@@ -21,16 +21,16 @@
 
 .hmwp_notice.danger {
     font-size: 1rem;
-    background-color: #dc3545!important;
+    background-color: #e5765c!important;
     color: white;
 }
 
 .hmwp_notice.notice {
     font-size: 1rem;
-    background: #ffffe2 !important;
+    background: #fff !important;
     color: #444;
-    border-left: 2px solid #ffffe2;
-    border-bottom: 2px solid #e5765c;
+    border: none;
+    border-left: 4px solid #e5765c;
 }
 
 .hmwp_notice.notice  pre{

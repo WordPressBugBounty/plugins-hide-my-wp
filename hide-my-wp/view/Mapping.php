@@ -44,7 +44,7 @@
                                             </label>
                                             <div class="text-black-50 ml-5"><?php echo esc_html__("Change the text only in classes, styles & scrips. (Recommended ON)", 'hide-my-wp'); ?></div>
                                             <div class="text-black-50 ml-5"><?php echo esc_html__("If this option is switched off, the text is changed brutally in source-code.", 'hide-my-wp'); ?></div>
-                                            <div class="text-danger my-2 ml-5"><?php echo esc_html__("Avoid using text mapping for commonly used paths such as wp-content, wp-admin, wp-includes because it can cause errors. Instead, use the 'Change Paths' feature in the Hide My Wp plugin to safely hide these paths.", 'hide-my-wp'); ?></div>
+                                            <div class="text-danger my-2 ml-5"><?php echo esc_html__("Avoid using text mapping for commonly used paths such as wp-content, wp-admin, wp-includes because it can cause errors. Instead, use the 'Change Paths' feature to safely hide these paths.", 'hide-my-wp'); ?></div>
                                         </div>
                                     </div>
                                 </div>

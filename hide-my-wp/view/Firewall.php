@@ -39,7 +39,7 @@ defined('ABSPATH') || die('Cheatin\' uh?'); ?>
                                 <div class="text-black-50 small"><?php echo sprintf(esc_html__('Learn more about %s 8G firewall %s.', 'hide-my-wp'), '<a href="https://perishablepress.com/8g-firewall/" target="_blank">', '</a>'); ?></div>
                             </div>
                             <div class="col-sm-8 p-0 input-group mb-1">
-                                <select name="hmwp_sqlinjection_level" class="form-control">
+                                <select name="hmwp_sqlinjection_level" class="form-control selectpicker">
                                     <option value="1" <?php echo selected(1, HMWP_Classes_Tools::getOption('hmwp_sqlinjection_level')) ?>><?php echo esc_html__('Minimal', 'hide-my-wp'); ?></option>
                                     <option value="2" <?php echo selected(2, HMWP_Classes_Tools::getOption('hmwp_sqlinjection_level')) ?>><?php echo esc_html__('Medium', 'hide-my-wp'); ?></option>
                                     <option value="3" <?php echo selected(3, HMWP_Classes_Tools::getOption('hmwp_sqlinjection_level')) ?>><?php echo esc_html__('7G Firewall', 'hide-my-wp'); ?></option>
@@ -57,7 +57,7 @@ defined('ABSPATH') || die('Cheatin\' uh?'); ?>
                                     <div class="text-black-50 small"><?php echo esc_html__('Where to add the firewall rules.', 'hide-my-wp'); ?></div>
                                 </div>
                                 <div class="col-sm-8 p-0 input-group mb-1">
-                                    <select name="hmwp_sqlinjection_location" class="form-control">
+                                    <select name="hmwp_sqlinjection_location" class="form-control selectpicker">
                                         <option value="onload" <?php echo selected('onload', HMWP_Classes_Tools::getOption('hmwp_sqlinjection_location')) ?>><?php echo esc_html__('On website initialization', 'hide-my-wp'); ?> (<?php echo esc_html__('recommended', 'hide-my-wp'); ?>)</option>
                                         <option value="file" <?php echo selected('file', HMWP_Classes_Tools::getOption('hmwp_sqlinjection_location')) ?>><?php echo esc_html__('In .htaccess file', 'hide-my-wp'); ?></option>
                                     </select>
@@ -215,7 +215,7 @@ defined('ABSPATH') || die('Cheatin\' uh?'); ?>
                                                         <?php }?>
                                                     </div>
                                                     <div class="col-sm-8 p-0 input-group">
-                                                        <input type="text" class="form-control" />
+                                                        <input type="text" class="form-control w-100" />
                                                         <?php if(isset($value['link'])) { ?>
                                                             <a href="<?php echo esc_url($value['link'])?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 10px;"><i class="dashicons dashicons-editor-help"></i></a>
                                                         <?php }?>
@@ -328,7 +328,7 @@ defined('ABSPATH') || die('Cheatin\' uh?'); ?>
                                 <div class="text-black-50 small"><?php echo esc_html__('Chose what to do when accessing from whitelist IP addresses and whitelisted paths.', 'hide-my-wp'); ?></div>
                             </div>
                             <div class="col-sm-8 p-0 input-group mb-1 pl-2">
-                                <select name="whitelist_level" class="form-control">
+                                <select name="whitelist_level" class="form-control selectpicker">
                                     <option value="0" <?php echo selected(0, HMWP_Classes_Tools::getOption('whitelist_level')) ?> ><?php echo esc_html__('Allow Hidden Paths', 'hide-my-wp'); ?></option>
                                     <option value="1" <?php echo selected(1, HMWP_Classes_Tools::getOption('whitelist_level')) ?> ><?php echo esc_html__('Show Default Paths & Allow Hidden Paths', 'hide-my-wp'); ?></option>
                                     <option value="2" <?php echo selected(2, HMWP_Classes_Tools::getOption('whitelist_level')) ?> ><?php echo esc_html__('Show Defaults Paths & Allow Everything', 'hide-my-wp'); ?></option>

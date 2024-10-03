@@ -31,7 +31,7 @@ if (function_exists('wp_roles') ) {
                                 <div class="font-weight-bold"><?php echo esc_html__('Redirect Hidden Paths', 'hide-my-wp'); ?>:</div>
                             </div>
                             <div class="col-sm-8 p-0 input-group mb-1">
-                                <select name="hmwp_url_redirect" class="form-control">
+                                <select name="hmwp_url_redirect" class="form-control selectpicker">
                                     <option value="." <?php selected('.', HMWP_Classes_Tools::getOption('hmwp_url_redirect'), true) ?>><?php echo esc_html__("Front page", 'hide-my-wp') ?></option>
                                     <option value="404" <?php selected('404', HMWP_Classes_Tools::getOption('hmwp_url_redirect'), true) ?> ><?php echo esc_html__("404 page", 'hide-my-wp') ?></option>
                                     <option value="NFError" <?php selected('NFError', HMWP_Classes_Tools::getOption('hmwp_url_redirect'), true) ?> ><?php echo esc_html__("404 HTML Error", 'hide-my-wp') ?></option>
@@ -44,7 +44,7 @@ if (function_exists('wp_roles') ) {
                                         }
                                     } ?>
                                 </select>
-                                <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_paths" target="_blank" class="position-absolute float-right" style="right: 27px;top: 25%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_paths" target="_blank" class="position-absolute float-right" style="right: 40px;top: 25%;"><i class="dashicons dashicons-editor-help"></i></a>
                             </div>
                             <div class="p-1">
                                 <div class="text-black-50"><?php echo esc_html__('Redirect the protected paths /wp-admin, /wp-login to a Page or trigger an HTML Error.', 'hide-my-wp'); ?></div>
@@ -90,7 +90,7 @@ if (function_exists('wp_roles') ) {
                                         </div>
                                         <div class="col-sm-8 p-0 input-group ">
                                             <input type="text" class="form-control mt-2" name="hmwp_url_redirects[default][login]" value="<?php echo(isset($urlRedirects['default']['login']) ? esc_url($urlRedirects['default']['login']) : '') ?>" />
-                                            <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_on_login" target="_blank" class="position-absolute float-right" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                            <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_on_login" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
                                         </div>
                                     </div>
 
@@ -101,7 +101,7 @@ if (function_exists('wp_roles') ) {
                                         </div>
                                         <div class="col-sm-8 p-0 input-group">
                                             <input type="text" class="form-control mt-2" name="hmwp_url_redirects[default][logout]" value="<?php echo(isset($urlRedirects['default']['logout']) ? esc_url($urlRedirects['default']['logout']) : '') ?>" />
-                                            <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_on_login" target="_blank" class="position-absolute float-right" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                            <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_on_login" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
                                         </div>
                                     </div>
 
@@ -121,7 +121,7 @@ if (function_exists('wp_roles') ) {
                                                 </div>
                                                 <div class="col-sm-8 p-0 input-group">
                                                     <input type="text" class="form-control mt-2" name="hmwp_url_redirects[<?php echo esc_attr($role) ?>][login]" value="<?php echo(isset($urlRedirects[$role]['login']) ? esc_url($urlRedirects[$role]['login']) : '') ?>"/>
-                                                    <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_on_login" target="_blank" class="position-absolute float-right" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                                    <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_on_login" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
                                                 </div>
                                             </div>
 
@@ -132,7 +132,7 @@ if (function_exists('wp_roles') ) {
                                                 </div>
                                                 <div class="col-sm-8 p-0 input-group">
                                                     <input type="text" class="form-control mt-2" name="hmwp_url_redirects[<?php echo esc_attr($role) ?>][logout]" value="<?php echo(isset($urlRedirects[$role]['logout']) ? esc_url($urlRedirects[$role]['logout']) : '') ?>"/>
-                                                    <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_on_login" target="_blank" class="position-absolute float-right" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                                    <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#redirect_on_login" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
                                                 </div>
                                             </div>
 

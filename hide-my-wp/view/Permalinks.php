@@ -142,11 +142,12 @@
                                 <div class="font-weight-bold"><?php echo esc_html__('Simulate CMS', 'hide-my-wp'); ?>:</div>
                             </div>
                             <div class="col-sm-4 px-2 input-group">
-                                <select name="hmwp_emulate_cms" class="form-control mb-1">
+                                <select name="hmwp_emulate_cms" class="form-control mb-1 selectpicker">
                                     <option value="" <?php selected('', HMWP_Classes_Tools::getOption('hmwp_emulate_cms')) ?>><?php echo esc_html__("No CMS Simulation", 'hide-my-wp') ?></option>
                                     <option value="drupal" <?php selected('drupal', HMWP_Classes_Tools::getOption('hmwp_emulate_cms')) ?> ><?php echo esc_html__("Drupal 8", 'hide-my-wp') ?></option>
                                     <option value="drupal9" <?php selected('drupal9', HMWP_Classes_Tools::getOption('hmwp_emulate_cms')) ?> ><?php echo esc_html__("Drupal 9", 'hide-my-wp') ?></option>
                                     <option value="drupal10" <?php selected('drupal10', HMWP_Classes_Tools::getOption('hmwp_emulate_cms')) ?> ><?php echo esc_html__("Drupal 10", 'hide-my-wp') ?></option>
+                                    <option value="drupal11" <?php selected('drupal11', HMWP_Classes_Tools::getOption('hmwp_emulate_cms')) ?> ><?php echo esc_html__("Drupal 11", 'hide-my-wp') ?></option>
                                     <option value="joomla3" <?php selected('joomla3', HMWP_Classes_Tools::getOption('hmwp_emulate_cms')) ?> ><?php echo esc_html__("Joomla 3", 'hide-my-wp') ?></option>
                                     <option value="joomla4" <?php selected('joomla4', HMWP_Classes_Tools::getOption('hmwp_emulate_cms')) ?> ><?php echo esc_html__("Joomla 4", 'hide-my-wp') ?></option>
                                     <option value="joomla5" <?php selected('joomla5', HMWP_Classes_Tools::getOption('hmwp_emulate_cms')) ?> ><?php echo esc_html__("Joomla 5", 'hide-my-wp') ?></option>
@@ -202,7 +203,7 @@
                                     <div class="text-black-50 small"><?php echo esc_html__('Chose what to do when accessing from whitelist IP addresses and whitelisted paths.', 'hide-my-wp'); ?></div>
                                 </div>
                                 <div class="col-sm-8 p-0 input-group mb-1">
-                                    <select name="whitelist_level" class="form-control">
+                                    <select name="whitelist_level" class="form-control selectpicker">
                                         <option value="0" <?php echo selected(0, HMWP_Classes_Tools::getOption('whitelist_level')) ?> ><?php echo esc_html__('Allow Hidden Paths', 'hide-my-wp'); ?></option>
                                         <option value="1" <?php echo selected(1, HMWP_Classes_Tools::getOption('whitelist_level')) ?> ><?php echo esc_html__('Show Default Paths & Allow Hidden Paths', 'hide-my-wp'); ?></option>
                                         <option value="2" <?php echo selected(2, HMWP_Classes_Tools::getOption('whitelist_level')) ?> ><?php echo esc_html__('Show Defaults Paths & Allow Everything', 'hide-my-wp'); ?></option>
