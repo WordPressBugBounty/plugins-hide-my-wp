@@ -558,20 +558,15 @@
                             <?php } else { ?>
                                 <input type="hidden" name="hmwp_author_url" value="<?php echo HMWP_Classes_Tools::$default['hmwp_author_url'] ?>"/>
                             <?php } ?>
-                            <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_pro">
-                                <div class="box" >
-                                    <div class="ribbon"><span><?php echo esc_html__( 'PRO', 'hide-my-wp' ) ?></span></div>
-                                </div>
-                                <div class="checker col-sm-12 row my-2 py-1" style="opacity: 0.3" onclick="jQuery('#hmwp_ghost_mode_modal').modal('show')">
-                                    <div class="checker col-sm-12 row my-2 py-1">
-                                        <div class="col-sm-12 p-0 switch switch-sm">
-                                            <input type="hidden" name="hmwp_hide_authors" value="0"/>
-                                            <input type="checkbox" id="hmwp_hide_authors" name="hmwp_hide_authors" class="switch" <?php echo(HMWP_Classes_Tools::getOption('hmwp_hide_authors') ? 'checked="checked"' : '') ?> value="1"/>
-                                            <label for="hmwp_hide_authors"><?php echo esc_html__('Hide Author ID URL', 'hide-my-wp'); ?>
-                                                <a href="<?php echo esc_url(HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/customize-paths-in-hide-my-wp-ghost/#customize_author') ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                            </label>
-                                            <div class="text-black-50 ml-5"><?php echo esc_html__("Don't let URLs like domain.com?author=1 show the user login name", 'hide-my-wp'); ?></div>
-                                        </div>
+                            <div class="col-sm-12 row mb-1 ml-1 p-2">
+                                <div class="checker col-sm-12 row my-2 py-0">
+                                    <div class="col-sm-12 p-0 switch switch-sm">
+                                        <input type="hidden" name="hmwp_hide_authors" value="0"/>
+                                        <input type="checkbox" id="hmwp_hide_authors" name="hmwp_hide_authors" class="switch" <?php echo(HMWP_Classes_Tools::getOption('hmwp_hide_authors') ? 'checked="checked"' : '') ?> value="1"/>
+                                        <label for="hmwp_hide_authors"><?php echo esc_html__('Hide Author ID URL', 'hide-my-wp'); ?>
+                                            <a href="<?php echo esc_url(HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/customize-paths-in-hide-my-wp-ghost/#customize_author') ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        </label>
+                                        <div class="text-black-50 ml-5"><?php echo esc_html__("Don't let URLs like domain.com?author=1 show the user login name", 'hide-my-wp'); ?></div>
                                     </div>
                                 </div>
                             </div>
@@ -725,7 +720,6 @@
                                                 <a href="<?php echo esc_url(HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/customize-paths-in-hide-my-wp-ghost/#disable_browsing') ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                                             </label>
                                             <div class="text-black-50 ml-5"><?php echo sprintf(esc_html__("Don't let hackers see any directory content. See %sUploads Directory%s", 'hide-my-wp'), '<a href="' . $uploads['baseurl'] . '" target="_blank">', '</a>'); ?></div>
-                                            <div class="text-danger my-2 ml-5"><?php echo sprintf(esc_html__("Normally, the option to block visitors from browsing server directories is activated by the host through server configuration, and activating it twice in the config file may cause errors, so it's best to first check if the %sUploads Directory%s is visible.", 'hide-my-wp'), '<a href="' . $uploads['baseurl'] . '" target="_blank">', '</a>'); ?></div>
                                        </div>
                                     </div>
                                 </div>

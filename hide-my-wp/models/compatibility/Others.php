@@ -70,7 +70,7 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 		        HMWP_Classes_Tools::getValue('action') == 'breakdance_load_document' ||
 		        HMWP_Classes_Tools::getValue('action') == 'breakdance_image_metadata' ||
 		        HMWP_Classes_Tools::getValue('action') == 'breakdance_image_sizes') {
-			    //Stop Hide My WP Ghost from loading while on editor
+			    //Stop  WP Ghost from loading while on editor
 			    add_filter('hmwp_process_buffer', '__return_false');
 		    }
 	    }

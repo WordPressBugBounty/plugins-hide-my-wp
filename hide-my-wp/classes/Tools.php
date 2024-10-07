@@ -271,7 +271,7 @@ class HMWP_Classes_Tools
             //--
 
             //redirects
-            'hmwp_url_redirect' => '.',
+            'hmwp_url_redirect' => 'NFError',
             'hmwp_do_redirects' => 0,
             'hmwp_logged_users_redirect' => 0,
             'hmwp_url_redirects' => array('default' => array('login' => '', 'logout' => '')),
@@ -373,6 +373,7 @@ class HMWP_Classes_Tools
             'hmwp_wp-content_url' => 'core',
             'hmwp_wp-includes_url' => 'lib',
             'hmwp_author_url' => 'writer',
+            'hmwp_hide_authors' => 1,
             'hmwp_wp-comments-post' => 'comments',
             'hmwp_themes_style' => 'design.css',
             'hmwp_wp-json' => 'wp-json',
@@ -386,7 +387,7 @@ class HMWP_Classes_Tools
             'hmwp_hide_plugins' => 1,
             'hmwp_hide_all_plugins' => 0,
             'hmwp_hide_themes' => 1,
-            'hmwp_emulate_cms' => 'drupal',
+            'hmwp_emulate_cms' => 'drupal11',
             //
             'hmwp_hide_img_classes' => 1,
             'hmwp_hide_rest_api' => 1,
@@ -403,7 +404,6 @@ class HMWP_Classes_Tools
 
             //PRO
             'hmwp_hide_styleids' => 0,
-            'hmwp_hide_authors' => 0,
             'hmwp_disable_browsing' => 0,
             'hmwp_hide_commonfiles' => 0,
             'hmwp_hide_oldpaths' => 0,

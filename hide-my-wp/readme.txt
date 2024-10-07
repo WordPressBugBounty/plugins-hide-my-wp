@@ -4,7 +4,7 @@ Tags: hide,security,firewall,login,wp admin
 Requires at least: 4.6
 Tested up to: 6.6
 Requires PHP: 7.0
-Stable tag: 5.3.00
+Stable tag: 5.3.01
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -320,11 +320,19 @@ Enjoy!
 17. New custom core paths changed with Hide My WP Ghost
 
 == Changelog ==
+= 5.3.01 (07 Oct 2024) =
+Update - Added Hide My WP Advanced Pack in Plugins suggestion
+Update - Added Drupal 11 in CMS simulation
+Update - Set 404 Not Found error as default option for hidden paths
+Update - the files CSS and JS files from WP 6.6 when Clean Login is selected in Advanced > Compatibility
+Update - Added the option to pause the plugin for 5 minutes for testing purposes
+Fixed - Redirect to homepage the newadmin when user is not logged in
+
 = 5.3.00 (20 Sept 2024) =
-Update - Added New Feature Magic Link Login Without Password
-Update - Added New Feature Two-factor Authentication By Code (2FA)
-Update - Added New Feature Two-factor Authentication By Email (2FA)
-Update - Added New Feature Temporary Logins Without Password
+Update - Added New Feature Magic Link Login Without Password in Hide My WP > Overview
+Update - Added New Feature Two-factor Authentication By Code (2FA) in Hide My WP > Overview
+Update - Added New Feature Two-factor Authentication By Email (2FA) in Hide My WP > Overview
+Update - Added New Feature Temporary Logins Without Password in Hide My WP > Overview
 Update - Compatibility with WP 6.6.2 & 8.3.11
 Update - Brute Force compatibility with UsersWP plugin
 Update - Cookie set on WP Multisite with subdomains

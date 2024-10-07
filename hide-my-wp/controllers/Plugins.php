@@ -47,9 +47,9 @@ class HMWP_Controllers_Plugins extends HMWP_Classes_FrontController
     {
         return array(
 	        'advanced-pack' => array(
-		        'title' => "Hide My WP - Advanced Pack",
+		        'title' => "WP Ghost - Advanced Pack",
 		        'banner' => '//ps.w.org/hide-my-wp/assets/banner-1544x500.png',
-		        'description' => "The advanced security features for Hide My WP Ghost plugin with Two-Factor Authentication (2FA), Temporary Login and more." . '<div class="text-success my-2">' . 'Security Plugin' . '</div>',
+		        'description' => "The advanced security features for WP Ghost plugin with Two-Factor Authentication (2FA), Temporary Login and more." . '<div class="text-success my-2">' . 'Security Plugin' . '</div>',
 		        'path' => 'hide-my-wp-pack/index.php',
 		        'url' => 'https://hidemywpghost.com/plugin/hide-my-wp-pack'
 	        ),

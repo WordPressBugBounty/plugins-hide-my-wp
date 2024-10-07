@@ -437,6 +437,12 @@ class HMWP_Models_Rules
 
         if (HMWP_Classes_Tools::isNginx() ) {
 
+            if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
+                $rules .= 'if ($http_cookie !~* "wordpress_logged_in_|' . HMWP_LOGGED_IN_COOKIE . '" ) {  set $cond cookie; }' . PHP_EOL;
+                $rules .= 'if ($request_uri ~* author=\d+$) { set $cond "${cond}+author_uri"; }' . PHP_EOL;
+                $rules .= 'if ($cond = "cookie+author_uri") {  return 404; } ' . PHP_EOL;
+            }
+
             if (HMWP_Classes_Tools::getOption('hmwp_security_header') ) {
 
                 $headers = (array)HMWP_Classes_Tools::getOption('hmwp_security_headers');
@@ -741,6 +747,15 @@ class HMWP_Models_Rules
                 }
 
                 $rules .= "RewriteRule ^(.*)$ - [F]" . PHP_EOL;
+                $rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
+            }
+
+            if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
+                $rules .= "<IfModule mod_rewrite.c>" . PHP_EOL;
+                $rules .= "RewriteEngine On" . PHP_EOL;
+                $rules .= "RewriteCond %{REQUEST_URI} !/wp-admin [NC]" . PHP_EOL;
+                $rules .= "RewriteCond %{QUERY_STRING} ^author=\d+ [NC]" . PHP_EOL;
+                $rules .= "RewriteRule ^(.*)$ - [L,R=404]" . PHP_EOL;
                 $rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
             }
 

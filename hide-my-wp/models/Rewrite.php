@@ -2018,15 +2018,13 @@ class HMWP_Models_Rewrite {
 						if ( ! HMWP_Classes_Tools::isMultisites() && HMWP_Classes_Tools::getOption( 'hmwp_hide_newadmin' ) ) {
 							if ( strpos( $url . '/', '/' . HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ) . '/' ) !== false && HMWP_Classes_Tools::getOption( 'hmwp_hide_admin' ) ) {
 								if ( strpos( $url . '/', '/' . HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) . '/' ) === false ) {
-									$this->getNotFound( $url );
+									$this->getNotFound( $url, '.' );
 								}
 							}
-						} else {
-							if ( $_SERVER['REQUEST_URI'] == site_url( HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ), 'relative' ) ) {
-								wp_safe_redirect( $url . '/' );
-								exit();
-							}
-						}
+						} elseif ( $_SERVER['REQUEST_URI'] == site_url( HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ), 'relative' ) ) {
+                            wp_safe_redirect( $url . '/' );
+                            exit();
+                        }
 
 						$paths = array(
 							home_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ), 'relative' ),
@@ -2043,11 +2041,9 @@ class HMWP_Models_Rewrite {
 								$this->getNotFound( $url );
 							}
 						}
-					} else {
-						if ( strpos( $url, '/' . HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) ) !== false && strpos( $url, admin_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin-ajax_url' ), 'relative' ) ) === false && HMWP_Classes_Tools::getOption( 'hmwp_hide_admin' ) ) {
-							$this->getNotFound( $url );
-						}
-					}
+					} elseif ( strpos( $url, '/' . HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) ) !== false && strpos( $url, admin_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin-ajax_url' ), 'relative' ) ) === false && HMWP_Classes_Tools::getOption( 'hmwp_hide_admin' ) ) {
+                        $this->getNotFound( $url, '.' );
+                    }
 
 					/////////////////////////////////////////////////////
 					//Protect lost password and register
@@ -2226,37 +2222,46 @@ class HMWP_Models_Rewrite {
 		}
 	}
 
-	/**
-	 * Return 404 page or redirect
-	 *
-	 * @param string $url
-	 *
-	 * @throws Exception
-	 */
-	public function getNotFound( $url ) {
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) == '404' ) {
-			if ( HMWP_Classes_Tools::isThemeActive( 'Pro' ) ) {
-				global $wp_query;
-				$wp_query->is_404 = true;
+    /**
+     * Return 404 page or redirect
+     *
+     * @param string $url Options: 404, NFError Not Found, NAError Not Available, or a specific page
+     * @param string $option
+     *
+     * @throws Exception
+     */
+    public function getNotFound( $url, $option = false ) {
 
-				wp_safe_redirect( home_url( '404' ) );
-			} else {
-				$this->get404Page();
-			}
-		} else if ( HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) == 'NFError' ) {
-			$this->get404Page();
-		} else if ( HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) == 'NAError' ) {
-			$this->get403Error();
-		} elseif ( HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) == '.' ) {
-			//redirect to front page
-			wp_safe_redirect( home_url() );
-		} else {
-			//redirect to custom page
-			wp_safe_redirect( home_url( HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) );
-		}
+        if(!$option){
+            $option = HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' );
+        }
 
-		die();
-	}
+        if ( $option == '404' ) {
+            if ( HMWP_Classes_Tools::isThemeActive( 'Pro' ) ) {
+                global $wp_query;
+                $wp_query->is_404 = true;
+
+                wp_safe_redirect( home_url( '404' ) );
+                exit();
+            } else {
+                $this->get404Page();
+            }
+        } else if ( $option == 'NFError' ) {
+            $this->get404Page();
+        } else if ( $option == 'NAError' ) {
+            $this->get403Error();
+        } elseif ( $option == '.' ) {
+            //redirect to front page
+            wp_safe_redirect( home_url() );
+            exit();
+        } else {
+            //redirect to custom page
+            wp_safe_redirect( home_url( $option ) );
+            exit();
+        }
+
+        die();
+    }
 
 	/**
 	 * Display 404 page to bump bots and bad guys

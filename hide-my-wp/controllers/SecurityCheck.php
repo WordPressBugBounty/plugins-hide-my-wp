@@ -1671,6 +1671,11 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController
             break;
         } // foreach
 
+        //If the option is on, the author is hidden
+        if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
+            $success = false;
+        }
+
         return array(
             'value' => ($success ? esc_html__('Yes') : esc_html__('No')),
             'valid' => (!$success),
