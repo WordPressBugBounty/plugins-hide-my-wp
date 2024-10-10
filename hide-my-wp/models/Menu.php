@@ -49,6 +49,9 @@ class HMWP_Models_Menu
                 'title' => esc_html__("Text & URL Mapping", 'hide-my-wp'),
                 'capability' => 'hmwp_manage_settings',
                 'parent' => 'hmwp_settings',
+                'show' => (HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) ||
+                           HMWP_Classes_Tools::getOption( 'hmwp_mapping_url_show' ) ||
+                           HMWP_Classes_Tools::getOption( 'hmwp_mapping_cdn_show' )),
                 'function' => array(HMWP_Classes_ObjController::getClass('HMWP_Controllers_Settings'), 'init'),
             ),
             'hmwp_firewall' => array(
@@ -63,6 +66,7 @@ class HMWP_Models_Menu
                 'title' => esc_html__("Brute Force", 'hide-my-wp'),
                 'capability' => 'hmwp_manage_settings',
                 'parent' => 'hmwp_settings',
+                'show' => HMWP_Classes_Tools::getOption('hmwp_bruteforce'),
                 'function' => array(HMWP_Classes_ObjController::getClass('HMWP_Controllers_Settings'), 'init'),
             ),
             'hmwp_templogin' => array(
@@ -86,6 +90,7 @@ class HMWP_Models_Menu
                 'title' => esc_html__("Events Log", 'hide-my-wp'),
                 'capability' => 'hmwp_manage_settings',
                 'parent' => 'hmwp_settings',
+                'show' => HMWP_Classes_Tools::getOption('hmwp_activity_log'),
                 'function' => array(HMWP_Classes_ObjController::getClass('HMWP_Controllers_Settings'), 'init'),
             ),
             'hmwp_securitycheck' => array(
@@ -211,10 +216,6 @@ class HMWP_Models_Menu
                 array(
                     'title' => esc_html__("CDN", 'hide-my-wp'),
                     'tab' =>'cdn',
-                ),
-                array(
-                    'title' => esc_html__("Experimental", 'hide-my-wp'),
-                    'tab' =>'experimental',
                 ),
             ),
             'hmwp_tweaks' => array(

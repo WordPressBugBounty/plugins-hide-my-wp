@@ -138,18 +138,19 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController
                 $tabs = $this->model->getMenu();
                 foreach ($tabs as $slug => $tab) {
                     if ( isset( $tab['parent'] ) && isset( $tab['name'] ) && isset( $tab['title'] ) && isset( $tab['capability'] ) ) {
-                        if ( ! isset( $tab['show'] ) || $tab['show'] ) {
-                            $this->model->addSubmenu(
-                                array(
-                                    $tab['parent'],
-                                    $tab['title'],
-                                    $tab['name'],
-                                    $tab['capability'],
-                                    $slug,
-                                    $tab['function'],
-                                )
-                            );
-					    }
+
+                        if ( isset( $tab['show'] ) && !$tab['show'] ) {
+                            $tab['parent'] = 'hmwp_none';
+                        }
+
+                        $this->model->addSubmenu( array(
+                            $tab['parent'],
+                            $tab['title'],
+                            $tab['name'],
+                            $tab['capability'],
+                            $slug,
+                            $tab['function'],
+                        ) );
                     }
                 }
 

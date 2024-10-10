@@ -162,45 +162,47 @@ class HMWP_Models_Compatibility
 
 
 	    //Change the paths in the elementor cached css
-	    if (HMWP_Classes_Tools::isPluginActive('elementor/elementor.php') ) {
-		    if (HMWP_Classes_Tools::isMultisites() ) {
+        if (!HMW_DYNAMIC_FILES && !HMWP_Classes_Tools::getOption('hmwp_mapping_file') ) {
+            if (HMWP_Classes_Tools::isPluginActive('elementor/elementor.php') ) {
+                if (HMWP_Classes_Tools::isMultisites() ) {
 
-			    global $wpdb;
-			    $this->paths = array();
+                    global $wpdb;
+                    $this->paths = array();
 
-			    if ($blogs = $wpdb->get_results("SELECT blog_id FROM " . $wpdb->blogs . " where blog_id > 1")) {
-				    foreach ($blogs as $blog) {
+                    if ($blogs = $wpdb->get_results("SELECT blog_id FROM " . $wpdb->blogs . " where blog_id > 1")) {
+                        foreach ($blogs as $blog) {
 
-					    //Set the cache directory for this plugin
-					    $path = $content_dir . HMWP_Classes_Tools::$default['hmwp_upload_url'] . '/sites/' . $blog->blog_id . '/elementor/css/';
+                            //Set the cache directory for this plugin
+                            $path = $content_dir . HMWP_Classes_Tools::$default['hmwp_upload_url'] . '/sites/' . $blog->blog_id . '/elementor/css/';
 
-					    if ($wp_filesystem->is_dir($path)) {
+                            if ($wp_filesystem->is_dir($path)) {
 
-						    //Set the cache directory for this plugin
-						    HMWP_Classes_ObjController::getClass('HMWP_Models_Cache')->setCachePath($path);
+                                //Set the cache directory for this plugin
+                                HMWP_Classes_ObjController::getClass('HMWP_Models_Cache')->setCachePath($path);
 
-						    //change the paths in css
-						    HMWP_Classes_ObjController::getClass('HMWP_Models_Cache')->changePathsInCss();
+                                //change the paths in css
+                                HMWP_Classes_ObjController::getClass('HMWP_Models_Cache')->changePathsInCss();
 
-						    //mark as cache changed
-						    $changed = true;
-					    }
-				    }
-			    }
-		    }else{
-			    //Set the cache directory for this plugin
-			    $path = $content_dir . HMWP_Classes_Tools::$default['hmwp_upload_url'] . '/elementor/css/';
-			    if($wp_filesystem->is_dir($path)) {
-				    HMWP_Classes_ObjController::getClass('HMWP_Models_Cache')->setCachePath($path);
+                                //mark as cache changed
+                                $changed = true;
+                            }
+                        }
+                    }
+                }else{
+                    //Set the cache directory for this plugin
+                    $path = $content_dir . HMWP_Classes_Tools::$default['hmwp_upload_url'] . '/elementor/css/';
+                    if($wp_filesystem->is_dir($path)) {
+                        HMWP_Classes_ObjController::getClass('HMWP_Models_Cache')->setCachePath($path);
 
-				    //change the paths in css
-				    HMWP_Classes_ObjController::getClass('HMWP_Models_Cache')->changePathsInCss();
+                        //change the paths in css
+                        HMWP_Classes_ObjController::getClass('HMWP_Models_Cache')->changePathsInCss();
 
-				    //mark as cache changed
-				    $changed = true;
-			    }
-		    }
+                        //mark as cache changed
+                        $changed = true;
+                    }
+                }
 
+            }
 	    }
 
         //Change the paths in the cached css

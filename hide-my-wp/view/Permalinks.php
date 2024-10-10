@@ -115,7 +115,7 @@
                                 })(jQuery);
                             </script>
 
-                            <div class="hmwp_disable_url col-sm-12 row border-bottom border-light py-2 m-0">
+                            <div class="hmwp_disable_url col-sm-12 row border-bottom border-light py-2 m-0" <?php echo((HMWP_Classes_Tools::getOption('hmwp_mode') == 'default') ? 'style="display:none"' : '') ?>>
                                 <?php if(!HMWP_Classes_Tools::getOption('logout')) { ?>
                                     <?php if (defined('HMWP_DEFAULT_LOGIN') && HMWP_DEFAULT_LOGIN ) {
                                         if(stripos(HMWP_DEFAULT_LOGIN,home_url()) !== false){

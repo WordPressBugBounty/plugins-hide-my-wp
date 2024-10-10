@@ -109,7 +109,8 @@ class HMWP_Models_Files
      */
     public function maybeShowFile()
     {
-
+        //If the file is handled by WordPress
+        //Show it if was changed by HMWP
         if ($this->isFile($this->getCurrentURL()) ) {
             $this->showFile($this->getCurrentURL());
         }
@@ -237,6 +238,7 @@ class HMWP_Models_Files
 			    $this->_rewrites['to'][] = '/' . $rewriteModel->_replace['from'][$index] . (substr($rewriteModel->_replace['to'][$index], -1) == '/' ? "$1" : "");
 		    }
 	    }
+
     }
 
     /**
@@ -650,12 +652,14 @@ class HMWP_Models_Files
     }
 
 
-	/**
-	 * Handle the Login if the rules were not added in the config file
-	 *
-	 * @param $url
-	 * @return void
-	 */
+    /**
+     * Handle the Login if the rules were not added in the config file
+     *
+     * @param $url
+     *
+     * @return void
+     * @throws Exception
+     */
 	public function handleLogin($url){
 		$url = rawurldecode( $url );
 

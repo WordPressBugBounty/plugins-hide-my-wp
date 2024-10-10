@@ -324,7 +324,7 @@ Enjoy!
 Update - Added Hide My WP Advanced Pack in Plugins suggestion
 Update - Added Drupal 11 in CMS simulation
 Update - Set 404 Not Found error as default option for hidden paths
-Update - the files CSS and JS files from WP 6.6 when Clean Login is selected in Advanced > Compatibility
+Update - The files CSS and JS files from WP 6.6 when Clean Login is selected in Advanced > Compatibility
 Update - Added the option to pause the plugin for 5 minutes for testing purposes
 Fixed - Redirect to homepage the newadmin when user is not logged in
 

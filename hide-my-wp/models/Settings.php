@@ -323,7 +323,9 @@ class HMWP_Models_Settings
 		});
 
 		foreach ( $hmwp_text_mapping_from as $index => $from ) {
+
 			if ($hmwp_text_mapping_from[$index] <> '' && $hmwp_text_mapping_to[$index] <> '' ) {
+
 				$hmwp_text_mapping_from[$index] = preg_replace('/[^A-Za-z0-9-_.{}\/]/', '', $hmwp_text_mapping_from[$index]);
 				$hmwp_text_mapping_to[$index] = preg_replace('/[^A-Za-z0-9-_.{}\/]/', '', $hmwp_text_mapping_to[$index]);
 
@@ -337,6 +339,12 @@ class HMWP_Models_Settings
 								continue;
 							}
 						}
+
+                        if (!HMW_DYNAMIC_FILES && !HMWP_Classes_Tools::getOption('hmwp_mapping_file') ) {
+                            if ( in_array($hmwp_text_mapping_from[ $index ] , array('elementor','wp-block','woocommerce','bricks')) ) {
+                                HMWP_Classes_Error::setNotification( sprintf( esc_html__( 'Global class name detected: %s. Read this article first: %s' ), '<strong>' . $hmwp_text_mapping_from[ $index ] . '</strong>' , '<a href="'.esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hiding-plugins-like-woocommerce-and-elementor/' ).'" target="_blank">Hiding plugins like WooCommerce and Elementor</a>' ) );
+                            }
+                        }
 
 						if ($hmwp_text_mapping_from[$index] <> $hmwp_text_mapping_to[$index]) {
 							$hmwp_text_mapping['from'][] = $hmwp_text_mapping_from[$index];
