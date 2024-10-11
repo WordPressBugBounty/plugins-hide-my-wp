@@ -1,4 +1,5 @@
-<?php if(!isset($view)) return; ?>
+<?php defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' ); ?>
+<?php if ( ! isset( $view ) ) { return; } ?>
 <?php if (HMWP_Classes_Tools::getOption('hmwp_mode') <> 'default' && HMWP_Classes_Tools::isCachePlugin() ) { ?>
 <div class="card col-sm-12 m-0 mb-2 p-0 rounded-0">
     <div class="card-body f-gray-dark text-center">

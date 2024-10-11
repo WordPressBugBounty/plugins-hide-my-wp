@@ -1,10 +1,6 @@
-<?php if(!isset($view)) return; ?>
+<?php defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' ); ?>
+<?php if ( ! isset( $view ) ) { return; } ?>
 <?php
-/**
- *
- *
- * @var $wp_roles WP_Roles
- */
 global $wp_roles;
 
 $allroles = array();
@@ -32,15 +28,15 @@ if (function_exists('wp_roles') ) {
                             </div>
                             <div class="col-sm-8 p-0 input-group mb-1">
                                 <select name="hmwp_url_redirect" class="form-control selectpicker">
-                                    <option value="." <?php selected('.', HMWP_Classes_Tools::getOption('hmwp_url_redirect'), true) ?>><?php echo esc_html__("Front page", 'hide-my-wp') ?></option>
-                                    <option value="404" <?php selected('404', HMWP_Classes_Tools::getOption('hmwp_url_redirect'), true) ?> ><?php echo esc_html__("404 page", 'hide-my-wp') ?></option>
-                                    <option value="NFError" <?php selected('NFError', HMWP_Classes_Tools::getOption('hmwp_url_redirect'), true) ?> ><?php echo esc_html__("404 HTML Error", 'hide-my-wp') ?></option>
-                                    <option value="NAError" <?php selected('NAError', HMWP_Classes_Tools::getOption('hmwp_url_redirect'), true) ?> ><?php echo esc_html__("403 HTML Error", 'hide-my-wp') ?></option>
+                                    <option value="." <?php selected('.', HMWP_Classes_Tools::getOption('hmwp_url_redirect')) ?>><?php echo esc_html__("Front page", 'hide-my-wp') ?></option>
+                                    <option value="404" <?php selected('404', HMWP_Classes_Tools::getOption('hmwp_url_redirect')) ?> ><?php echo esc_html__("404 page", 'hide-my-wp') ?></option>
+                                    <option value="NFError" <?php selected('NFError', HMWP_Classes_Tools::getOption('hmwp_url_redirect')) ?> ><?php echo esc_html__("404 HTML Error", 'hide-my-wp') ?></option>
+                                    <option value="NAError" <?php selected('NAError', HMWP_Classes_Tools::getOption('hmwp_url_redirect')) ?> ><?php echo esc_html__("403 HTML Error", 'hide-my-wp') ?></option>
                                     <?php
                                     $pages = get_pages(array('number' => 50));
                                     foreach ( $pages as $page ) {
                                         if ($page->post_title <> '' ) {
-                                            ?><option value="<?php echo esc_attr($page->post_name) ?>" <?php echo selected($page->post_name, HMWP_Classes_Tools::getOption('hmwp_url_redirect'), true) ?> ><?php echo esc_html($page->post_title) ?></option><?php
+                                            ?><option value="<?php echo esc_attr($page->post_name) ?>" <?php echo selected($page->post_name, HMWP_Classes_Tools::getOption('hmwp_url_redirect')) ?> ><?php echo esc_html($page->post_title) ?></option><?php
                                         }
                                     } ?>
                                 </select>
@@ -352,7 +348,7 @@ if (function_exists('wp_roles') ) {
                                         <input type="checkbox" id="hmwp_hide_styleids" name="hmwp_hide_styleids" class="switch" <?php echo(HMWP_Classes_Tools::getOption('hmwp_hide_styleids') ? 'checked="checked"' : '') ?> value="1"/>
                                         <label for="hmwp_hide_styleids"><?php echo esc_html__('Hide IDs from META Tags', 'hide-my-wp'); ?>
                                             <a href="<?php echo HMWP_Classes_Tools::getOption('hmwp_plugin_website') ?>/kb/activate-security-tweaks/#hide_ids_tags" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                            <span class="text-black-50 small">(<?php echo esc_html__("not recommended", 'hide-my-wp'); ?>)</span> </label>
+                                            <span class="text-black-50 small">(<?php echo esc_html__("not recommended", 'hide-my-wp'); ?>)</span>
                                         </label>
                                         <div class="text-black-50 ml-5"><?php echo esc_html__("Hide the IDs from all &lt;links&gt;, &lt;style&gt;, &lt;scripts&gt; META Tags", 'hide-my-wp'); ?></div>
                                         <div class="text-danger my-2 ml-5"><?php echo esc_html__("Hiding the ID from meta tags in WordPress can potentially impact the caching process of plugins that rely on identifying the meta tags.", 'hide-my-wp'); ?></div>
@@ -743,7 +739,7 @@ if (function_exists('wp_roles') ) {
                     <?php }?>
                 </div>
 
-                <div class="col-sm-12 m-0 p-2 bg-light text-center" style="position: fixed; bottom: 0; right: 0; z-index: 100; box-shadow: 0px 0px 8px -3px #444;">
+                <div class="col-sm-12 m-0 p-2 bg-light text-center" style="position: fixed; bottom: 0; right: 0; z-index: 100; box-shadow: 0 0 8px -3px #444;">
                     <button type="submit" class="btn rounded-0 btn-success px-5 mr-5 save"><?php echo esc_html__('Save', 'hide-my-wp'); ?></button>
                 </div>
             </form>

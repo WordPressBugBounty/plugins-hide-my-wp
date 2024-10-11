@@ -10,15 +10,27 @@ defined('ABSPATH') || die('Cheatin\' uh?');
 class HMWP_Models_Clicks
 {
 
-    public function __construct()
+	/**
+	 * Constructor method for initializing the class.
+	 *
+	 * Sets up the necessary action to disable keys and clicks in the WordPress footer by attaching the 'disableKeysAndClicks' method.
+	 *
+	 * @return void
+	 */
+	public function __construct()
     {
         add_action('wp_footer', array($this, 'disableKeysAndClicks'), PHP_INT_MAX);
     }
 
 
-    /**
-     * Disable website keys and clicks
-     */
+	/**
+	 * Disables various keyboard shortcuts and mouse actions typically used for inspecting
+	 * and copying web page content. This method prevents actions like right-clicking,
+	 * viewing the source code, keyboard shortcut for opening developer tools, cutting,
+	 * copying, pasting, and dragging.
+	 *
+	 * @return void
+	 */
     public function disableKeysAndClicks()
     {
         $hmwp_disable_inspect_message = ((HMWP_Classes_Tools::getOption('hmwp_disable_inspect_message') <> '') ? str_replace("'", "`", HMWP_Classes_Tools::getOption('hmwp_disable_inspect_message')) : '');

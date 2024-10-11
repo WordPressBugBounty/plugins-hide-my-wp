@@ -1,4 +1,5 @@
-<?php if(!isset($view)) return; ?>
+<?php defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' ); ?>
+<?php if ( ! isset( $view ) ) { return; } ?>
 <div id="hmwp_wrap" class="d-flex flex-row p-0 my-3">
     <div class="hmwp_row d-flex flex-row p-0 m-0">
         <div class="hmwp_col flex-grow-1 px-2 py-0 mr-2 mb-3">

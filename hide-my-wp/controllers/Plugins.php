@@ -15,11 +15,16 @@ class HMWP_Controllers_Plugins extends HMWP_Classes_FrontController
 
     public $plugins;
 
-    public function init()
+	/**
+	 * Initializes the plugin by setting up plugin paths, loading necessary CSS files, and displaying the plugins page.
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function init()
     {
         //Add the Plugin Paths in variable
         $this->plugins = $this->getPlugins();
-
 
         //Load the css for Settings
         HMWP_Classes_ObjController::getClass('HMWP_Classes_DisplayController')->loadMedia('popper');
@@ -38,11 +43,13 @@ class HMWP_Controllers_Plugins extends HMWP_Classes_FrontController
         $this->show('Plugins');
     }
 
-    /**
-     * Get the known plugins and themes
-     *
-     * @return array
-     */
+	/**
+	 * Retrieves an array of available plugins with their details.
+	 *
+	 * @return array An associative array where the keys are plugin identifiers and the values
+	 *               are arrays containing plugin details such as title, banner, description,
+	 *               path, and URL.
+	 */
     public function getPlugins()
     {
         return array(

@@ -1,3 +1,4 @@
+<?php defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' ); ?>
 <?php if(!isset($message) || !isset($type) || !isset($ignore)) return; ?>
 <div class="hmwp_notice <?php echo esc_attr($type) ?>">
     <?php echo wp_kses_post($message) ?>
