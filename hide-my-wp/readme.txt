@@ -140,8 +140,10 @@ Hide My WP Ghost is packed with over 45 security features:
 > *   Brute Force Protection with Math reCaptcha
 > *   Brute Force Protection with Google reCaptcha V2
 > *   Brute Force Protection with Google reCaptcha V3
+> *   Brute Force Protection on Login
 > *   Brute Force Protection on Password Lost
 > *   Brute Force Protection on Signup
+> *   Brute Force Protection on Comment
 > *   Brute Force Protection on Woocommerce Login
 > *   Brute Force Protection shortcode [hmwp_bruteforce]
 > *   Custom attempts, timeout, message

@@ -642,8 +642,18 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 		if ( HMWP_Classes_Tools::getValue( 'action' ) == 'hmwp_feature_save' ) {
 			if ( ! empty( $_POST ) ) {
 				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveValues( $_POST );
-				// Clear the cache and remove the redirects
-				HMWP_Classes_Tools::emptyCache();
+
+				if(HMWP_Classes_Tools::getIsset( 'hmwp_hide_oldpaths') ||
+				   HMWP_Classes_Tools::getIsset( 'hmwp_hide_commonfiles') ||
+				   HMWP_Classes_Tools::getIsset( 'hmwp_sqlinjection') ||
+				   HMWP_Classes_Tools::getIsset( 'hmwp_disable_xmlrpc') ||
+				   HMWP_Classes_Tools::getIsset( 'hmwp_mapping_text_show') ||
+				   HMWP_Classes_Tools::getIsset( 'hmwp_mapping_url_show')
+				){
+					HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveRules();
+					HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->applyPermalinksChanged( true );
+				}
+
 			}
 
 			wp_send_json_success( esc_html__( 'Saved' ) );
