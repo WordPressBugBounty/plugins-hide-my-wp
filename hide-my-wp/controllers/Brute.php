@@ -30,6 +30,12 @@ class HMWP_Controllers_Brute extends HMWP_Classes_FrontController {
 		// Listen BF shortcode on forms
 		add_shortcode( 'hmwp_bruteforce', array( $this, 'hmwp_bruteforce_shortcode' ) );
 
+		//Check BF on comments
+		if (HMWP_Classes_Tools::getOption('hmwp_bruteforce_comments')) {
+			add_filter( 'preprocess_comment', array($this, 'hmwp_comments_validation') );
+			add_filter( 'comment_form_default_fields', array($this, 'hmwp_comments_form_fields') );
+		}
+
 		// Check BF on register
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_register' ) ) {
 			add_filter( 'registration_errors', array( $this, 'hmwp_check_registration' ), 99, 3 );
@@ -162,7 +168,7 @@ class HMWP_Controllers_Brute extends HMWP_Classes_FrontController {
                         form.appendChild(input);
                     }
                     
-                    form.submit();
+                    HTMLFormElement.prototype.submit.call(form);
                 }
     
                 if(document.getElementsByTagName("form").length > 0) {
@@ -196,6 +202,7 @@ class HMWP_Controllers_Brute extends HMWP_Classes_FrontController {
 				HMWP_Classes_Tools::saveOptions( 'hmwp_bruteforce', HMWP_Classes_Tools::getValue( 'hmwp_bruteforce' ) );
 				HMWP_Classes_Tools::saveOptions( 'hmwp_bruteforce_register', HMWP_Classes_Tools::getValue( 'hmwp_bruteforce_register' ) );
 				HMWP_Classes_Tools::saveOptions( 'hmwp_bruteforce_lostpassword', HMWP_Classes_Tools::getValue( 'hmwp_bruteforce_lostpassword' ) );
+				HMWP_Classes_Tools::saveOptions('hmwp_bruteforce_comments', HMWP_Classes_Tools::getValue('hmwp_bruteforce_comments'));
 				HMWP_Classes_Tools::saveOptions( 'hmwp_bruteforce_username', HMWP_Classes_Tools::getValue( 'hmwp_bruteforce_username' ) );
 				HMWP_Classes_Tools::saveOptions( 'hmwp_bruteforce_woocommerce', HMWP_Classes_Tools::getValue( 'hmwp_bruteforce_woocommerce' ) );
 
@@ -566,5 +573,70 @@ class HMWP_Controllers_Brute extends HMWP_Classes_FrontController {
 		}
 	}
 
+	/**
+	 * Validate comments before being submitted in the frontend by not logged-in users
+	 *
+	 * @param  array  $commentdata  The data of the comment being submitted.
+	 *
+	 * @return array The validated/filtered comment data.
+	 */
+	public function hmwp_comments_validation( $commentdata ) {
+
+		//only in frontend for not logged users
+		$response = $this->model->brute_check_loginability();
+
+		$error = $errors = false;
+
+		if (HMWP_Classes_Tools::getOption('brute_use_math')) {
+
+			$error = $this->model->brute_math_authenticate($errors, $response);
+
+		} elseif (HMWP_Classes_Tools::getOption('brute_use_captcha') || HMWP_Classes_Tools::getOption('brute_use_captcha_v3')) {
+
+			$error = $this->model->brute_catpcha_authenticate($errors, $response);
+
+		}
+
+		if (is_wp_error($error)) {
+			$have_gettext = function_exists( '__' );
+			$back_text = $have_gettext ? __( '&laquo; Back' ) : '&laquo; Back';
+			wp_die( $error->get_error_message() .  "\n<p><a href='javascript:history.back()'>$back_text</a></p>" );
+		}
+
+		return $commentdata;
+	}
+
+
+	/**
+	 * Modify the comment form fields to include anti-spam mechanisms based on the plugin settings.
+	 *
+	 * @param  array  $fields  Existing comment form fields.
+	 *
+	 * @return array Modified comment form fields.
+	 */
+	public function hmwp_comments_form_fields( $fields ) {
+
+		$output = false;
+
+		if (HMWP_Classes_Tools::getOption('brute_use_math')) {
+			ob_start();
+			$this->model->brute_math_form() ;
+			$output = '<div class="comment-recaptcha" >'.ob_get_clean().'</p>';
+		}elseif (HMWP_Classes_Tools::getOption('brute_use_captcha')) {
+			ob_start();
+			$this->model->brute_recaptcha_head() . $this->model->brute_recaptcha_form();
+			$output = '<div class="comment-recaptcha" >'.ob_get_clean().'</p>';
+		}elseif (HMWP_Classes_Tools::getOption('brute_use_captcha_v3')) {
+			ob_start();
+			$this->model->brute_recaptcha_head_v3() . $this->model->brute_recaptcha_form_v3();
+			$output = ob_get_clean();
+		}
+
+		if($output){
+			$fields['hmwp_recapcha'] = $output;
+		}
+
+		return $fields;
+	}
 
 }

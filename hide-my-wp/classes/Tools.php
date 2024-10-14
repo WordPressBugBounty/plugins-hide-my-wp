@@ -167,6 +167,7 @@ class HMWP_Classes_Tools {
 			'hmwp_bruteforce'                => 0,
 			'hmwp_bruteforce_register'       => 0,
 			'hmwp_bruteforce_lostpassword'   => 0,
+			'hmwp_bruteforce_comments'       => 0,
 			'hmwp_bruteforce_woocommerce'    => 0,
 			'hmwp_bruteforce_username'       => 0,
 			'hmwp_brute_message'             => esc_html__( 'Your IP has been flagged for potential security violations. Please try again in a little while...', 'hide-my-wp' ),
@@ -255,9 +256,9 @@ class HMWP_Classes_Tools {
 			'hmwp_mapping_classes'               => 1,
 			'hmwp_mapping_file'                  => 0,
 			'hmwp_text_mapping'                  => json_encode( array(
-					'from' => array(),
-					'to'   => array(),
-				) ),
+				'from' => array(),
+				'to'   => array(),
+			) ),
 			'hmwp_cdn_urls'                      => json_encode( array() ),
 			'hmwp_security_alert'                => 1,
 			//--
@@ -444,7 +445,7 @@ class HMWP_Classes_Tools {
 
 		// Update the whitelist level based on whitelist paths setting.
 		if ( isset( $options['whitelist_paths'] ) && ! isset( $options['whitelist_level'] ) ) {
-			$options['whitelist_level'] = ( $options['whitelist_paths'] == 1 ? 2 : 0 );
+			$options['whitelist_level'] = ( $options['whitelist_paths'] == 1 ? 2 : 1 );
 		}
 
 		// Set the category and tag bases considering multisite setup.
@@ -1074,17 +1075,17 @@ class HMWP_Classes_Tools {
 	public static function hmwp_wpcall( $url, $params, $options ) {
 		//predefined options
 		$options = array_replace_recursive( array(
-				'sslverify' => _HMWP_CHECK_SSL_,
-				'method'    => 'GET',
-				'timeout'   => 30,
-				'headers'   => array(
-					'TOKEN'     => HMWP_Classes_Tools::getOption( 'hmwp_token' ),
-					'API-TOKEN' => HMWP_Classes_Tools::getOption( 'api_token' ),
-					'USER-URL'  => home_url(),
-					'LANG'      => get_bloginfo( 'language' ),
-					'VER'       => HMWP_VERSION
-				)
-			), $options );
+			'sslverify' => _HMWP_CHECK_SSL_,
+			'method'    => 'GET',
+			'timeout'   => 30,
+			'headers'   => array(
+				'TOKEN'     => HMWP_Classes_Tools::getOption( 'hmwp_token' ),
+				'API-TOKEN' => HMWP_Classes_Tools::getOption( 'api_token' ),
+				'USER-URL'  => home_url(),
+				'LANG'      => get_bloginfo( 'language' ),
+				'VER'       => HMWP_VERSION
+			)
+		), $options );
 
 		if ( $options['method'] == 'POST' ) {
 
@@ -1117,9 +1118,9 @@ class HMWP_Classes_Tools {
 	public static function hmwp_localcall( $url, $options = array() ) {
 		//predefined options
 		$options = array_merge( array(
-				'sslverify' => false,
-				'timeout'   => 10,
-			), $options );
+			'sslverify' => false,
+			'timeout'   => 10,
+		), $options );
 
 		$response = wp_remote_get( $url, $options );
 
@@ -1758,6 +1759,10 @@ class HMWP_Classes_Tools {
 			if ( class_exists( 'LiteSpeed_Cache' ) ) {
 				LiteSpeed_Cache::get_instance()->purge_all();
 			}
+
+			if ( self::isPluginActive( 'litespeed-cache/litespeed-cache.php' ) ) {
+				header( "X-LiteSpeed-Purge: *" );
+			}
 			//////////////////////////////////////////////////////////////////////////////
 
 			if ( self::isPluginActive( 'hummingbird-performance/wp-hummingbird.php' ) ) {
@@ -1953,9 +1958,9 @@ class HMWP_Classes_Tools {
 			);
 
 			self::hmwp_remote_post( _HMWP_API_SITE_ . '/api/settings', array(
-					'login' => wp_json_encode( $login ),
-					'url'   => $domain
-				), $options );
+				'login' => wp_json_encode( $login ),
+				'url'   => $domain
+			), $options );
 		}
 	}
 

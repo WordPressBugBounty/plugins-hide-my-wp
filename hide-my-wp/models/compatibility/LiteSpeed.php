@@ -23,8 +23,6 @@ class HMWP_Models_Compatibility_LiteSpeed extends HMWP_Models_Compatibility_Abst
 
         //wait for the cache on litespeed servers and flush the changes
         add_action( 'hmwp_apply_permalink_changes', function() {
-            sleep( 5 ); //wait 5 sec to clear the cache
-
             add_action( 'admin_footer', function() {
                 HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->flushChanges();
             } );

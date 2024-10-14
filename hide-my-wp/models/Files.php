@@ -451,7 +451,7 @@ class HMWP_Models_Files {
 					$content = preg_replace( '/\/\*.*?\*\//s', '', $content, 1 );
 
 					// Text Mapping for all css and js files
-					if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) && ! is_admin() && ( function_exists( 'is_user_logged_in' ) && ! is_user_logged_in() ) ) {
+					if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) && ! is_admin() && ( function_exists( 'is_user_logged_in' ) && ! is_user_logged_in() ) ) {
 
 						$hmwp_text_mapping = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ), true );
 						if ( isset( $hmwp_text_mapping['from'] ) && ! empty( $hmwp_text_mapping['from'] ) && isset( $hmwp_text_mapping['to'] ) && ! empty( $hmwp_text_mapping['to'] ) ) {

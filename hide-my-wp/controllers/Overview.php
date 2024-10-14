@@ -642,6 +642,8 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 		if ( HMWP_Classes_Tools::getValue( 'action' ) == 'hmwp_feature_save' ) {
 			if ( ! empty( $_POST ) ) {
 				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveValues( $_POST );
+				// Clear the cache and remove the redirects
+				HMWP_Classes_Tools::emptyCache();
 			}
 
 			wp_send_json_success( esc_html__( 'Saved' ) );

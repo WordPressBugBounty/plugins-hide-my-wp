@@ -768,7 +768,7 @@ class HMWP_Models_Rewrite {
 			//if there are no rewrites, return true
 			if ( ! empty( $this->_rewrites ) ) {
 
-				if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
+				if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 					$rewritecode .= "<IfModule mod_rewrite.c>" . PHP_EOL;
 					$rewritecode .= "RewriteEngine On" . PHP_EOL;
 					$rewritecode .= "RewriteCond %{HTTP:Cookie} !(wordpress_logged_in_|" . HMWP_LOGGED_IN_COOKIE . ") [NC]" . PHP_EOL;
@@ -883,7 +883,7 @@ class HMWP_Models_Rewrite {
 			//if there are no rewrites, return true
 			if ( ! empty( $this->_rewrites ) ) {
 
-				if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
+				if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 					$rewritecode .= "<IfModule mod_rewrite.c>" . PHP_EOL;
 					$rewritecode .= "RewriteEngine On" . PHP_EOL;
 					$rewritecode .= "RewriteCond %{HTTP:Cookie} !(wordpress_logged_in_|" . HMWP_LOGGED_IN_COOKIE . ") [NC]" . PHP_EOL;
@@ -960,7 +960,7 @@ class HMWP_Models_Rewrite {
 			//if there are no rewrites, return true
 			if ( ! empty( $this->_rewrites ) ) {
 
-				if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
+				if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 					$cachecode .= 'set $cond "";' . PHP_EOL;
 					$cachecode .= 'if ($http_cookie !~* "wordpress_logged_in_|' . HMWP_LOGGED_IN_COOKIE . '" ) {  set $cond cookie; }' . PHP_EOL;
 					$cachecode .= 'if ($request_uri ~* ^' . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_wp-content_url' ) . '/[^\.]+\.[^\.]+) { set $cond "${cond}+redirect_uri"; }' . PHP_EOL;
@@ -2887,12 +2887,12 @@ class HMWP_Models_Rewrite {
 		$findtextmapping = array();
 
 		// Change the text in css and js files only for visitors
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) && function_exists( 'is_user_logged_in' ) && is_user_logged_in() ) {
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) && function_exists( 'is_user_logged_in' ) && is_user_logged_in() ) {
 			return $content;
 		}
 
 		// If it's ajax call and is set to change the paths in CSS and JS, change also in ajax to prevent name errors
-		if ( HMWP_Classes_Tools::isAjax() && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' )) {
+		if ( HMWP_Classes_Tools::isAjax() && HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' )) {
 			add_filter( 'hmwp_option_hmwp_mapping_classes', '__return_false' );
 		}
 
@@ -2918,7 +2918,7 @@ class HMWP_Models_Rewrite {
 				if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_classes' ) ) {
 					foreach ( $this->_findtextmapping as $from ) {
 						$findtextmapping[] = '/\s(class|id|aria-labelledby|aria-controls|data-lp-type|data-elementor-type|data-widget_type)=[\'"][^\'"]*(' . addslashes( $from ) . ')[^\'"]*[\'"]/';
-						if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
+						if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 							$findtextmapping[] = "'<(style|script)((?!src|>).)*>.*?</(style|script)>'is";
 						}
 						$findtextmapping[] = "'<script((?!src|>).)*>'is";

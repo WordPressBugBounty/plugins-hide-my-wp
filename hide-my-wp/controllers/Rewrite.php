@@ -402,7 +402,7 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		if ( ! HMWP_Classes_Tools::getValue( 'hmwp_preview' ) ) {
 			// If not frontend preview/testing
 
-			if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) || count( (array) HMWP_Classes_Tools::getOption( 'file_mappings' ) ) > 0 ) {
+			if ( (HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' )) || count( (array) HMWP_Classes_Tools::getOption( 'file_mappings' ) ) > 0 ) {
 
 				// Load MappingFile Check the Mapping Files
 				// Check the mapping file in case of config issues or missing rewrites

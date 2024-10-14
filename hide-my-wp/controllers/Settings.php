@@ -476,7 +476,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				}
 
 				// Load the after saving settings process
-				if ( $this->model->applyPermalinksChanged() ) {
+				if ( $this->model->applyPermalinksChanged( true ) ) {
 					HMWP_Classes_Error::setNotification( esc_html__( 'Saved' ), 'success' );
 
 					// Add action for later use

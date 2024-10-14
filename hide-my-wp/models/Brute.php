@@ -736,6 +736,7 @@ class HMWP_Models_Brute {
             <script>
                 function reCaptchaSubmit(e) {
                     var form = this;
+
                     e.preventDefault();
                     grecaptcha.ready(function () {
                         grecaptcha.execute('<?php echo HMWP_Classes_Tools::getOption( 'brute_captcha_site_key_v3' ) ?>', {action: 'submit'}).then(function (token) {
@@ -744,7 +745,7 @@ class HMWP_Models_Brute {
                             input.name = "g-recaptcha-response";
                             input.value = token;
                             form.appendChild(input);
-                            form.submit();
+                            HTMLFormElement.prototype.submit.call(form);
                         });
                     });
                 }

@@ -289,7 +289,7 @@ class HMWP_Models_Cache {
 				}
 
 				// Text Mapping for all css files - Experimental
-				if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
+				if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 					$hmwp_text_mapping = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ), true );
 					if ( isset( $hmwp_text_mapping['from'] ) && ! empty( $hmwp_text_mapping['from'] ) && isset( $hmwp_text_mapping['to'] ) && ! empty( $hmwp_text_mapping['to'] ) ) {
 
