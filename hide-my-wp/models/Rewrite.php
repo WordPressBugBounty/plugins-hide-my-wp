@@ -72,6 +72,9 @@ class HMWP_Models_Rewrite {
 	 * @return string The host name + path (e.g. //domain.com/path)
 	 */
 	public function getSiteUrl() {
+		// Add double slash prefix
+		$this->_siteurl =  '//' . trim( $this->_siteurl, '/' );
+
 		return apply_filters( 'hmwp_root_site_url', $this->_siteurl );
 	}
 
@@ -2402,48 +2405,23 @@ class HMWP_Models_Rewrite {
 			}
 
 			//make sure the paths are without schema
-			$find    = array_map( array(
-				$this,
-				'addDomainUrl'
-			), (array) $this->_replace['from'] );
-			$replace = array_map( array(
-				$this,
-				'addDomainUrl'
-			), (array) $this->_replace['to'] );
+			$find    = array_map( array( $this, 'addDomainUrl' ), (array) $this->_replace['from'] );
+			$replace = array_map( array( $this, 'addDomainUrl' ), (array) $this->_replace['to'] );
 
 			//make sure the main domain is added on wp multisite with subdirectories
 			//used for custom wp-content, custom wp-includes, custom uploads
 			if ( HMWP_Classes_Tools::isMultisiteWithPath() || HMWP_Classes_Tools::isDifferentWPContentPath() ) {
-				$find    = array_merge( $find, array_map( array(
-					$this,
-					'addMainDomainUrl'
-				), (array) $this->_replace['from'] ) );
-				$replace = array_merge( $replace, array_map( array(
-					$this,
-					'addMainDomainUrl'
-				), (array) $this->_replace['to'] ) );
+				$find    = array_merge( $find, array_map( array( $this, 'addMainDomainUrl' ), (array) $this->_replace['from'] ) );
+				$replace = array_merge( $replace, array_map( array( $this, 'addMainDomainUrl' ), (array) $this->_replace['to'] ) );
 			}
 
 			//change the javascript urls
-			$findencoded    = array_map( array(
-				$this,
-				'changeEncodedURL'
-			), (array) $this->_replace['from'] );
-			$replaceencoded = array_map( array(
-				$this,
-				'changeEncodedURL'
-			), (array) $this->_replace['to'] );
+			$findencoded    = array_map( array( $this, 'changeEncodedURL' ), (array) $this->_replace['from'] );
+			$replaceencoded = array_map( array( $this, 'changeEncodedURL' ), (array) $this->_replace['to'] );
 
 			//change the javascript urls
-			$findencodedfinal = array_map( array(
-				$this,
-				'changeEncodedURLFinal'
-			), (array) $this->_replace['from'] );
-
-			$replaceencodedfinal = array_map( array(
-				$this,
-				'changeEncodedURLFinal'
-			), (array) $this->_replace['to'] );
+			$findencodedfinal = array_map( array( $this, 'changeEncodedURLFinal' ), (array) $this->_replace['from'] );
+			$replaceencodedfinal = array_map( array( $this, 'changeEncodedURLFinal' ), (array) $this->_replace['to'] );
 
 		}
 
@@ -2474,11 +2452,17 @@ class HMWP_Models_Rewrite {
 	 */
 	public function addMainDomainUrl( $url ) {
 
-		//Set the blog URL
-		$mainsiteurl = str_replace( 'www.', '', wp_parse_url( site_url(), PHP_URL_HOST ) );
+		// Set main domain
+		$mainDomain = $this->getSiteUrl();
 
-		if ( strpos( $url, $mainsiteurl ) === false ) {
-			return $mainsiteurl . '/' . $url;
+		// Remove any path if exists
+		if(parse_url( $mainDomain, PHP_URL_PATH )){
+			$mainDomain =  substr( $mainDomain, 0, strrpos( $mainDomain, '/' ) );
+		}
+
+		// If is missing from the path, add the main domain
+		if ( strpos( $url, $mainDomain ) === false ) {
+			return $mainDomain . '/' . $url;
 		}
 
 		return $url;
