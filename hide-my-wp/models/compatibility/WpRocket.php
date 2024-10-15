@@ -129,8 +129,10 @@ class HMWP_Models_Compatibility_WpRocket extends HMWP_Models_Compatibility_Abstr
 
 				$cache_url = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( WP_ROCKET_CACHE_ROOT_URL );
 				if ( $cache_url = HMWP_Classes_Tools::getRelativePath( $cache_url ) ) {
-					$hmwp_url_mapping['from'][] = '/' . trim( $cache_url, '/' ) . '/background-css/' . trim( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->getSiteUrl(), '/' ) . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' ) . '/';
-					$hmwp_url_mapping['to'][]   = '/' . trim( $cache_url, '/' ) . '/background-cache/';
+					if ( empty( $hmwp_url_mapping['from'] ) || ! in_array(  '/' . trim( $cache_url, '/' ) . '/background-css/' . trim( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->getSiteUrl(), '/' ) . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' ) . '/', $hmwp_url_mapping['from'] ) ) {
+						$hmwp_url_mapping['from'][] = '/' . trim( $cache_url, '/' ) . '/background-css/' . trim( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->getSiteUrl(), '/' ) . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' ) . '/';
+						$hmwp_url_mapping['to'][]   = '/' . trim( $cache_url, '/' ) . '/background-cache/';
+					}
 				}
 
 				HMWP_Classes_ObjController::getClass('HMWP_Models_Settings')->saveURLMapping($hmwp_url_mapping['from'], $hmwp_url_mapping['to']);

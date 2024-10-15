@@ -2455,9 +2455,14 @@ class HMWP_Models_Rewrite {
 		// Set main domain
 		$mainDomain = $this->getSiteUrl();
 
-		// Remove any path if exists
-		if(parse_url( $mainDomain, PHP_URL_PATH )){
-			$mainDomain =  substr( $mainDomain, 0, strrpos( $mainDomain, '/' ) );
+		// If multisite with path
+		if (HMWP_Classes_Tools::isMultisiteWithPath()) {
+			$path = wp_parse_url( $mainDomain, PHP_URL_PATH );
+
+			// Remove any path if exists
+			if($path){
+				$mainDomain =  str_replace( $path, '', $mainDomain );
+			}
 		}
 
 		// If is missing from the path, add the main domain
