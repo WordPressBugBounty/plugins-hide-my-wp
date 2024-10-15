@@ -83,6 +83,7 @@
 													echo '$("input[type=text][name=' . $name . ']").val("' . str_replace( '"', '\\"', $value ) . '");' . "\n";
 												} elseif ( $value == "0" || $value == "1" ) {
 													echo '$("input[name=' . $name . ']").prop("checked", ' . (int) $value . '); $("input[name=' . $name . ']").trigger("change");';
+													echo '$("input[type=hidden][name=' . esc_attr($name) . ']").val("' . esc_attr(str_replace('"', '\\"', $value)) . '");' . "\n";
 												}
 											}
 											?>
@@ -103,7 +104,7 @@
 													echo '$("input[type=text][name=' . $name . ']").val("' . str_replace( '"', '\\"', $value ) . '");' . "\n";
 												} elseif ( $value == "0" || $value == "1" ) {
 													echo '$("input[name=' . $name . ']").prop("checked", ' . (int) $value . '); $("input[name=' . $name . ']").trigger("change");';
-
+													echo '$("input[type=hidden][name=' . esc_attr($name) . ']").val("' . esc_attr(str_replace('"', '\\"', $value)) . '");' . "\n";
 												}
 											}
 											?>

@@ -1490,22 +1490,12 @@ class HMWP_Models_Rewrite {
 			wp_deregister_style( 'login' );
 
 			if ( is_rtl() ) {
-				wp_register_style( 'login', _HMWP_WPLOGIN_URL_ . 'css/login-rtl.min.css', array(
-					'dashicons',
-					'buttons',
-					'forms',
-					'l10n'
-				), HMWP_VERSION_ID, false );
+				wp_register_style('login', _HMWP_WPLOGIN_URL_.'css/login-rtl.min.css', array( 'dashicons', 'buttons', 'forms', 'l10n' ), HMWP_VERSION_ID, false);
 				wp_register_style( 'forms', _HMWP_WPLOGIN_URL_ . 'css/forms-rtl.min.css', null, HMWP_VERSION_ID, false );
 				wp_register_style( 'buttons', _HMWP_WPLOGIN_URL_ . 'css/buttons.min.css', null, HMWP_VERSION_ID, false );
 				wp_register_style( 'l10n', _HMWP_WPLOGIN_URL_ . 'css/l10n-rtl.min.css', null, HMWP_VERSION_ID, false );
 			} else {
-				wp_register_style( 'login', _HMWP_WPLOGIN_URL_ . 'css/login.min.css', array(
-					'dashicons',
-					'buttons',
-					'forms',
-					'l10n'
-				), HMWP_VERSION_ID, false );
+				wp_register_style('login', _HMWP_WPLOGIN_URL_.'css/login.min.css', array( 'dashicons', 'buttons', 'forms', 'l10n' ), HMWP_VERSION_ID, false);
 				wp_register_style( 'forms', _HMWP_WPLOGIN_URL_ . 'css/forms.min.css', null, HMWP_VERSION_ID, false );
 				wp_register_style( 'buttons', _HMWP_WPLOGIN_URL_ . 'css/buttons.min.css', null, HMWP_VERSION_ID, false );
 				wp_register_style( 'l10n', _HMWP_WPLOGIN_URL_ . 'css/l10n.min.css', null, HMWP_VERSION_ID, false );
@@ -1538,10 +1528,8 @@ class HMWP_Models_Rewrite {
 			/////////////////////////////////////////////////////////
 		}
 
-		add_filter( 'wp_redirect', array(
-			$this,
-			'loopCheck'
-		), 99, 1 );
+		// Prevent any infinite loop
+		add_filter( 'wp_redirect', array( $this, 'loopCheck' ), 99, 1 );
 
 		//remove clasiera theme loop
 		remove_action( "login_init", "classiera_cubiq_login_init" );
@@ -1561,26 +1549,14 @@ class HMWP_Models_Rewrite {
 				}
 			} );
 
-			add_filter( 'login_headerurl', array(
-				$this,
-				'login_url'
-			) );
-			add_filter( 'login_redirect', array(
-				$this,
-				'sanitize_login_redirect'
-			), 1, 3 );
+			add_filter( 'login_headerurl', array( $this, 'login_url' ) );
+			add_filter( 'login_redirect', array( $this, 'sanitize_login_redirect' ), 1, 3 );
 		}
 
 		//handle the lost password and registration redirects
 		if ( HMWP_Classes_Tools::$default['hmwp_login_url'] <> HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
-			add_filter( 'lostpassword_redirect', array(
-				$this,
-				'lostpassword_redirect'
-			), 1 );
-			add_filter( 'registration_redirect', array(
-				$this,
-				'registration_redirect'
-			), 1 );
+			add_filter( 'lostpassword_redirect', array( $this, 'lostpassword_redirect' ), 1 );
+			add_filter( 'registration_redirect', array( $this, 'registration_redirect' ), 1 );
 
 			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cookies' )->setTestCookie();
 		}

@@ -328,7 +328,11 @@ Update - Added Drupal 11 in CMS simulation
 Update - Set 404 Not Found error as default option for hidden paths
 Update - The files CSS and JS files from WP 6.6 when Clean Login is selected in Advanced > Compatibility
 Update - Added the option to pause the plugin for 5 minutes for testing purposes
+Update - Compatibility with WP Rocket Background CSS loader
+Update - Map Litespeed cache directory in URL Mapping
 Fixed - Redirect to homepage the newadmin when user is not logged in
+Fixed - Remove dynamic CSS and JS when Text Mapping is switched off
+Fixed - Prevent changing wp-content and wp-includes paths in deep URL location and avoid 404 errors
 
 = 5.3.00 (20 Sept 2024) =
 Update - Added New Feature Magic Link Login Without Password in Hide My WP > Overview

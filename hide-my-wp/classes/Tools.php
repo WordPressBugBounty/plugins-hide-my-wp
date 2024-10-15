@@ -201,7 +201,7 @@ class HMWP_Classes_Tools {
 			'hmwp_change_in_cache_directory' => '',
 			'hmwp_hide_loggedusers'          => 1,
 			'hmwp_hide_version'              => 1,
-			'hmwp_hide_version_random'       => 0,
+			'hmwp_hide_version_random'       => 1,
 			'hmwp_hide_generator'            => 1,
 			'hmwp_hide_prefetch'             => 1,
 			'hmwp_hide_comments'             => 1,
@@ -329,7 +329,7 @@ class HMWP_Classes_Tools {
 			//--secure headers
 			'hmwp_sqlinjection'              => 0,
 			'hmwp_sqlinjection_location'     => 'onload',
-			'hmwp_sqlinjection_level'        => 1,
+			'hmwp_sqlinjection_level'        => 2,
 			'hmwp_security_header'           => 0,
 			'hmwp_hide_unsafe_headers'       => 0,
 			'hmwp_security_headers'          => array(
@@ -403,7 +403,6 @@ class HMWP_Classes_Tools {
 			'hmwp_hide_rsd'                  => 1,
 			//
 			'hmwp_sqlinjection'              => 1,
-			'hmwp_sqlinjection_level'        => 1,
 			'hmwp_security_header'           => 1,
 			'hmwp_hide_unsafe_headers'       => 1,
 			'hmwp_detectors_block'           => 1,
@@ -1648,18 +1647,21 @@ class HMWP_Classes_Tools {
 	public static function getRelativePath( $url ) {
 
 		if ( $url <> '' ) {
-			//get the relative url path
+			// Get the relative url path
 			$url = wp_make_link_relative( $url );
 
-			//get the relative domain
+			// Get the relative domain
 			$domain = site_url();
+
+			// f WP Multisite, get the root domain
 			if ( self::isMultisiteWithPath() ) {
 				$domain = network_site_url();
 			}
-			$domain = wp_make_link_relative( $domain );
 
-			//exclude the root domain
-			$url = str_replace( $domain, '', $url );
+			// Get relative path and exclude any root domain from URL
+			if($domain = wp_make_link_relative( trim($domain , '/') )){
+				$url = str_replace( $domain, '', $url );
+			}
 
 			//remove the domain path if exists
 			if ( self::isMultisiteWithPath() && defined( 'PATH_CURRENT_SITE' ) && PATH_CURRENT_SITE <> '/' ) {

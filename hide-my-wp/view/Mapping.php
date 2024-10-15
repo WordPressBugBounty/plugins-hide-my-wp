@@ -93,7 +93,7 @@
                                 <div class="col-sm-12 row p-0 m-0">
 									<?php foreach ( $wpclasses as $from => $to ) { ?>
                                         <div class="col-4">
-                                            <button type="button" class="btn btn-link btn-block btn-sm" style="min-width: 200px" onclick="jQuery('div.hmwp_text_mapping:last').find('input:first').val('<?php echo esc_attr( $from ) ?>'); jQuery('div.hmwp_text_mapping:last').find('input:last').val('<?php echo esc_attr( $to ) ?>'); jQuery(this).parent('div').hide(); jQuery('.add_text_mapping').trigger('click'); window.scrollTo(0, window.scrollY + 48)"><?php echo esc_html__( 'Add', 'hide-my-wp' ) ?><?php echo esc_html( $from ) ?></button>
+                                            <button type="button" class="btn btn-link btn-block btn-sm" style="min-width: 200px" onclick="jQuery('div.hmwp_text_mapping:last').find('input:first').val('<?php echo esc_attr( $from ) ?>'); jQuery('div.hmwp_text_mapping:last').find('input:last').val('<?php echo esc_attr( $to ) ?>'); jQuery(this).parent('div').hide(); jQuery('.add_text_mapping').trigger('click'); window.scrollTo(0, window.scrollY + 48)"><?php echo esc_html__( 'Add', 'hide-my-wp' ) ?> <?php echo esc_html( $from ) ?></button>
                                         </div>
 									<?php } ?>
                                 </div>
