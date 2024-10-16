@@ -751,7 +751,7 @@ class HMWP_Models_Compatibility {
 	public function findCDNServers() {
 		$domains = array();
 
-		// If WP_CONTENT_URL is set as a different domain
+		//If WP_CONTENT_URL is set as a different domain
 		if ( defined( 'WP_CONTENT_URL' ) && WP_CONTENT_URL <> '' ) {
 			$cdn    = wp_parse_url( WP_CONTENT_URL, PHP_URL_HOST );
 			$domain = wp_parse_url( home_url(), PHP_URL_HOST );
@@ -761,7 +761,7 @@ class HMWP_Models_Compatibility {
 			}
 		}
 
-		// WP Rocket CDN Integration
+		//WP Rocket CDN Integration
 		if ( HMWP_Classes_Tools::isPluginActive( 'wp-rocket/wp-rocket.php' ) && function_exists( 'get_rocket_option' ) ) {
 			$cnames = get_rocket_option( 'cdn_cnames', array() );
 			foreach ( $cnames as $_urls ) {
@@ -775,25 +775,19 @@ class HMWP_Models_Compatibility {
 			}
 		}
 
-		// Ewww plugin CDN
-		if ( HMWP_Classes_Tools::isPluginActive( 'ewww-image-optimizer/ewww-image-optimizer.php' ) ) {
-			$domain = get_option( 'ewww_image_optimizer_exactdn_domain', false );
-			if ( $domain ) {
-				$domains[] = $domain;
-			}
-		}
-
-
-		// CDN Enabler Integration
+		//CDN Enabler Integration
 		if ( HMWP_Classes_Tools::isPluginActive( 'cdn-enabler/cdn-enabler.php' ) ) {
 			if ( $cdn_enabler = get_option( 'cdn_enabler' ) ) {
 				if ( isset( $cdn_enabler['url'] ) ) {
-					$domains[] = $cdn_enabler['url'];
+					$url = $cdn_enabler['url'];
+					if($url = parse_url( $url, PHP_URL_HOST )){
+						$domains[] = $url;
+					}
 				}
 			}
 		}
 
-		// Power Cache CDN integration
+		//Power Cache CDN integration
 		if ( HMWP_Classes_Tools::isPluginActive( 'powered-cache/powered-cache.php' ) ) {
 			global $powered_cache_options;
 			if ( isset( $powered_cache_options['cdn_hostname'] ) ) {
@@ -808,14 +802,25 @@ class HMWP_Models_Compatibility {
 			}
 		}
 
-		// Wp Cache CDN integration
+		//Wp Cache CDN integration
 		if ( HMWP_Classes_Tools::isPluginActive( 'wp-super-cache/wp-cache.php' ) ) {
 			if ( get_option( 'ossdl_off_cdn_url' ) <> '' && get_option( 'ossdl_off_cdn_url' ) <> home_url() ) {
-				$domains[] = get_option( 'ossdl_off_cdn_url' );
+				$url = get_option( 'ossdl_off_cdn_url' );
+				if($url = parse_url( $url, PHP_URL_HOST )){
+					$domains[] = $url;
+				}
 			}
 		}
 
-		// JCH Optimize CDN integration
+		//Ewww plugin CDN
+		if ( HMWP_Classes_Tools::isPluginActive( 'ewww-image-optimizer/ewww-image-optimizer.php' ) ) {
+			$domain = get_option( 'ewww_image_optimizer_exactdn_domain', false );
+			if ( $domain ) {
+				$domains[] = $domain;
+			}
+		}
+
+		//JCH Optimize CDN integration
 		if ( HMWP_Classes_Tools::isPluginActive( 'jch-optimize/jch-optimize.php' ) ) {
 			if ( $jch = get_option( 'jch_options' ) ) {
 				if ( is_array( $jch ) ) {
@@ -826,24 +831,47 @@ class HMWP_Models_Compatibility {
 			}
 		}
 
-		// Get plugin CDN list
-		$hmwp_cdn_urls = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_cdn_urls' ), true );
-		if ( ! empty( $hmwp_cdn_urls ) ) {
-			foreach ( $hmwp_cdn_urls as $url ) {
-				$domains[] = $url;
-			}
-		}
-
-		// Hyper Cache CDN integration
-		if ( HMWP_Classes_Tools::isPluginActive( 'hyper-cache/plugin.php' ) ) {
-			if ( $cdn = get_option( 'hyper-cache' ) ) {
-				if ( isset( $cdn['cdn_enabled'] ) && $cdn['cdn_enabled'] && isset( $cdn['cdn_url'] ) && $cdn['cdn_url'] ) {
-					$domains[] = $cdn['cdn_url'];
+		//LiteSpeed CDN integration
+		if ( HMWP_Classes_Tools::isPluginActive( 'litespeed-cache/litespeed-cache.php' ) ) {
+			if ( $cdns = get_option( 'litespeed.conf.cdn-mapping' ) ) {
+				if ( $cdns = json_decode( $cdns, true ) ) {
+					if ( !empty( $cdns ) ) {
+						foreach ( $cdns as $cdn ) {
+							if ( isset( $cdn['url'] ) && $cdn['url'] <> '' ) {
+								$url = $cdn['url'];
+								if($url = parse_url( $url, PHP_URL_HOST )){
+									$domains[] = $url;
+								}
+							}
+						}
+					}
 				}
 			}
 		}
 
-		// Bunny CDN integration
+		//get Hide My WP CDN list
+		$hmwp_cdn_urls = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_cdn_urls' ), true );
+		if ( ! empty( $hmwp_cdn_urls ) ) {
+			foreach ( $hmwp_cdn_urls as $url ) {
+				if($url = parse_url( $url, PHP_URL_HOST )){
+					$domains[] = $url;
+				}
+			}
+		}
+
+		//Hyper Cache CDN integration
+		if ( HMWP_Classes_Tools::isPluginActive( 'hyper-cache/plugin.php' ) ) {
+			if ( $cdn = get_option( 'hyper-cache' ) ) {
+				if ( isset( $cdn['cdn_enabled'] ) && $cdn['cdn_enabled'] && isset( $cdn['cdn_url'] ) && $cdn['cdn_url'] ) {
+					$url = $cdn['cdn_url'];
+					if($url = parse_url( $url, PHP_URL_HOST )){
+						$domains[] = $url;
+					}
+				}
+			}
+		}
+
+		//Bunny CDN integration
 		if ( HMWP_Classes_Tools::isPluginActive( 'bunnycdn/bunnycdn.php' ) ) {
 			if ( $bunnycdn = get_option( 'bunnycdn' ) ) {
 				if ( isset( $bunnycdn['cdn_domain_name'] ) && $bunnycdn['cdn_domain_name'] ) {
@@ -851,6 +879,7 @@ class HMWP_Models_Compatibility {
 				}
 			}
 		}
+
 
 		if ( ! empty( $domains ) ) {
 			return array_unique( $domains );
