@@ -59,9 +59,13 @@ class HMWP_Models_Rewrite {
 			$this->_siteurl = wp_parse_url( $siteurl, PHP_URL_HOST ) . ':' . wp_parse_url( $siteurl, PHP_URL_PORT ) . wp_parse_url( $siteurl, PHP_URL_PATH );
 		}
 
-		//add prefix // to make sure is not a path
-		if ( strpos( $this->_siteurl, 'www.' ) !== false ) {
+		//if multisite with subdomains, remove www. to change the paths in all dubdomains
+		if( strpos( $this->_siteurl, 'www.' ) !== false && HMWP_Classes_Tools::isMultisites() && defined( 'SUBDOMAIN_INSTALL' ) && SUBDOMAIN_INSTALL ){
 			$this->_siteurl = str_replace( 'www.', '', $this->_siteurl );
+		}elseif ( strpos( $this->_siteurl, '//' ) === false ) {
+			//if not www prefix, add // to the domain
+			//don't add // when the www. is removed because it may not change the paths
+			$this->_siteurl =  '//' . trim( $this->_siteurl, '/' );
 		}
 
 	}
@@ -72,9 +76,6 @@ class HMWP_Models_Rewrite {
 	 * @return string The host name + path (e.g. //domain.com/path)
 	 */
 	public function getSiteUrl() {
-		// Add double slash prefix
-		$this->_siteurl =  '//' . trim( $this->_siteurl, '/' );
-
 		return apply_filters( 'hmwp_root_site_url', $this->_siteurl );
 	}
 
@@ -2433,7 +2434,7 @@ class HMWP_Models_Rewrite {
 
 		// If multisite with path
 		if (HMWP_Classes_Tools::isMultisiteWithPath()) {
-			$path = wp_parse_url( $mainDomain, PHP_URL_PATH );
+			$path = wp_parse_url( site_url(), PHP_URL_PATH );
 
 			// Remove any path if exists
 			if($path){
@@ -2687,7 +2688,7 @@ class HMWP_Models_Rewrite {
 
 		return preg_replace_callback( array(
 			'~(\s(href|src)\s*[=|:]\s*[\"\'])([^\"\']+)([\"\'])~i',
-			'~(\W(url\s*)[\(\"\']+)([^\)\"\']+)([\)\"\']+)~i',
+			'~(\W(url\s*)[\(\"\']+)([^\]\)\"\']+)([\)\"\']+)~i',
 			'~(([\"\']url[\"\']\s*:)\s*[\"\'])([^\"\']+)([\"\'])~i',
 			'~((=|:)\s*[\"\'])(\\\/[^\"\']+)([\"\'])~i'
 		), array(

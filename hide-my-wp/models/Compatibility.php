@@ -780,7 +780,7 @@ class HMWP_Models_Compatibility {
 			if ( $cdn_enabler = get_option( 'cdn_enabler' ) ) {
 				if ( isset( $cdn_enabler['url'] ) ) {
 					$url = $cdn_enabler['url'];
-					if($url = parse_url( $url, PHP_URL_HOST )){
+					if($url = wp_parse_url( $url, PHP_URL_HOST )){
 						$domains[] = $url;
 					}
 				}
@@ -806,7 +806,7 @@ class HMWP_Models_Compatibility {
 		if ( HMWP_Classes_Tools::isPluginActive( 'wp-super-cache/wp-cache.php' ) ) {
 			if ( get_option( 'ossdl_off_cdn_url' ) <> '' && get_option( 'ossdl_off_cdn_url' ) <> home_url() ) {
 				$url = get_option( 'ossdl_off_cdn_url' );
-				if($url = parse_url( $url, PHP_URL_HOST )){
+				if($url = wp_parse_url( $url, PHP_URL_HOST )){
 					$domains[] = $url;
 				}
 			}
@@ -831,29 +831,12 @@ class HMWP_Models_Compatibility {
 			}
 		}
 
-		//LiteSpeed CDN integration
-		if ( HMWP_Classes_Tools::isPluginActive( 'litespeed-cache/litespeed-cache.php' ) ) {
-			if ( $cdns = get_option( 'litespeed.conf.cdn-mapping' ) ) {
-				if ( $cdns = json_decode( $cdns, true ) ) {
-					if ( !empty( $cdns ) ) {
-						foreach ( $cdns as $cdn ) {
-							if ( isset( $cdn['url'] ) && $cdn['url'] <> '' ) {
-								$url = $cdn['url'];
-								if($url = parse_url( $url, PHP_URL_HOST )){
-									$domains[] = $url;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
 
 		//get Hide My WP CDN list
 		$hmwp_cdn_urls = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_cdn_urls' ), true );
 		if ( ! empty( $hmwp_cdn_urls ) ) {
 			foreach ( $hmwp_cdn_urls as $url ) {
-				if($url = parse_url( $url, PHP_URL_HOST )){
+				if($url = wp_parse_url( $url, PHP_URL_HOST )){
 					$domains[] = $url;
 				}
 			}
@@ -864,7 +847,7 @@ class HMWP_Models_Compatibility {
 			if ( $cdn = get_option( 'hyper-cache' ) ) {
 				if ( isset( $cdn['cdn_enabled'] ) && $cdn['cdn_enabled'] && isset( $cdn['cdn_url'] ) && $cdn['cdn_url'] ) {
 					$url = $cdn['cdn_url'];
-					if($url = parse_url( $url, PHP_URL_HOST )){
+					if($url = wp_parse_url( $url, PHP_URL_HOST )){
 						$domains[] = $url;
 					}
 				}

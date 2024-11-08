@@ -488,7 +488,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 			case 'hmwp_firewall':
 				// Save the settings
 				if ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST' ) {
-					/**  @var $this ->model HMWP_Models_Settings */
+
 					$this->model->saveValues( $_POST );
 
 					// Save the whitelist IPs
@@ -528,8 +528,14 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 					// Save the rules and add the rewrites
 					$this->model->saveRules();
 
-					// Add action for later use
-					do_action( 'hmwp_firewall_saved' );
+					// Load the after saving settings process
+					if ( $this->model->applyPermalinksChanged() ) {
+						HMWP_Classes_Error::setNotification( esc_html__( 'Saved' ), 'success' );
+
+						//add action for later use
+						do_action( 'hmwp_firewall_saved' );
+
+					}
 				}
 
 				break;
