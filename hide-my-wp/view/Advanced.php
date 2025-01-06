@@ -13,9 +13,11 @@
 				<?php wp_nonce_field( 'hmwp_advsettings', 'hmwp_nonce' ) ?>
                 <input type="hidden" name="action" value="hmwp_advsettings"/>
 
+	            <?php do_action('hmwp_advanced_form_beginning') ?>
+
                 <div id="rollback" class="card col-sm-12 p-0 m-0 tab-panel tab-panel-first">
                     <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Rollback Settings', 'hide-my-wp' ); ?>
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/advanced-wp-security/#rollback' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
+                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/rollback-settings/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                     </h3>
                     <div class="card-body">
 
@@ -26,7 +28,7 @@
                             </div>
                             <div class="col-sm-8 p-0 input-group">
                                 <input type="text" class="form-control" name="hmwp_disable_name" value="<?php echo HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ?>" placeholder="<?php echo HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ?>"/>
-                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/advanced-wp-security/#custom_safe_url' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/rollback-settings/#ghost-how-to-customize-the-safe-url-in-wp-ghost' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help"></i></a>
                             </div>
                             <div class="col-sm-12 py-3">
                                 <div class="small text-black-50 text-center my-2"><?php echo esc_html__( "The Safe URL will deactivate all the custom paths. Use it only if you can't login.", 'hide-my-wp' ); ?></div>
@@ -40,7 +42,7 @@
                                     <input type="hidden" name="prevent_slow_loading" value="0"/>
                                     <input type="checkbox" id="prevent_slow_loading" name="prevent_slow_loading" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'prevent_slow_loading' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="prevent_slow_loading"><?php echo esc_html__( 'Prevent Broken Website Layout', 'hide-my-wp' ); ?>
-                                        <a href="https://hidemywpghost.com/kb/advanced-wp-security/#prevent_slow_loading" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/rollback-settings/#ghost-prevent-broken-website-layout' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                                         <span class="text-black-50 small">(<?php echo esc_html__( "recommended", 'hide-my-wp' ); ?>)</span>
                                     </label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( "If the rewrite rules are not loading correctly in the config file, do not load the plugin and do not change the paths.", 'hide-my-wp' ); ?></div>
@@ -50,9 +52,10 @@
 
                     </div>
                 </div>
+
                 <div id="compatibility" class="card col-sm-12 p-0 m-0 tab-panel">
-                    <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Compatibility Settings', 'hide-my-wp' ); ?>
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/advanced-wp-security/#compatibility' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
+                    <h3 class="card-title hmwp_header p-2 m-0">
+                        <?php echo esc_html__( 'Compatibility Settings', 'hide-my-wp' ); ?>
                     </h3>
                     <div class="card-body">
 
@@ -76,6 +79,7 @@
                                     <option value="bitnami" <?php selected( 'bitnami', HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) ) ?> ><?php echo esc_html__( "AWS Bitnami", 'hide-my-wp' ) ?></option>
                                     <option value="godaddy" <?php selected( 'godaddy', HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) ) ?> ><?php echo esc_html__( "Godaddy", 'hide-my-wp' ) ?></option>
                                 </select>
+                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/hosting-and-server-types/' ) ?>" target="_blank" class="d-inline-block m-2" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help d-inline"></i></a>
 
                                 <div class="col-sm-12 p-1 text-left">
                                     <div class="text-black-50"><?php echo esc_html__( 'Choose the type of server you are using to get the most suitable configuration for your server.', 'hide-my-wp' ); ?></div>
@@ -96,7 +100,7 @@
                                     <option value="normal" <?php echo( ( in_array( 'normal', HMWP_Classes_Tools::getOption( 'hmwp_loading_hook' ) ) || ( ! HMWP_Classes_Tools::getOption( 'hmwp_laterload' ) && ! HMWP_Classes_Tools::getOption( 'hmwp_priorityload' ) ) ) ? 'selected="select"' : '' ) ?>><?php echo esc_html__( "Normal Loading", 'hide-my-wp' ) ?> (<?php echo esc_html__( "recommended", 'hide-my-wp' ); ?>)</option>
                                     <option value="late" <?php echo( ( in_array( 'late', HMWP_Classes_Tools::getOption( 'hmwp_loading_hook' ) ) || HMWP_Classes_Tools::getOption( 'hmwp_laterload' ) ) ? 'selected="select"' : '' ) ?>><?php echo esc_html__( "Late Loading", 'hide-my-wp' ) ?></option>
                                 </select>
-                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/advanced-wp-security/#hook_loading' ) ?>" target="_blank" class="d-inline-block m-2" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/plugin-loading-hook/' ) ?>" target="_blank" class="d-inline-block m-2" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help d-inline"></i></a>
 
                                 <div class="col-sm-12 p-0 m-0 ">
                                     <div class="text-black-50 small mt-2">
@@ -123,8 +127,9 @@
                                 <div class="col-sm-12 p-0 switch switch-sm">
                                     <input type="hidden" name="hmwp_remove_third_hooks" value="0"/>
                                     <input type="checkbox" id="hmwp_remove_third_hooks" name="hmwp_remove_third_hooks" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_remove_third_hooks' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                    <label for="hmwp_remove_third_hooks"><?php echo esc_html__( 'Clean Login Page', 'hide-my-wp' ); ?></label>
-                                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/advanced-wp-security/#clean_login_page' ) ?>" target="_blank" class="d-inline-block ml-2"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                    <label for="hmwp_remove_third_hooks"><?php echo esc_html__( 'Clean Login Page', 'hide-my-wp' ); ?>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/clean-login/' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                    </label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Cancel the login hooks from other plugins and themes to prevent unwanted login redirects.', 'hide-my-wp' ); ?></div>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( '(useful when the theme is adding wrong admin redirects or infinite redirects)', 'hide-my-wp' ); ?></div>
                                 </div>
@@ -138,6 +143,7 @@
                                         <input type="hidden" name="hmwp_rewrites_in_wp_rules" value="0"/>
                                         <input type="checkbox" id="hmwp_rewrites_in_wp_rules" name="hmwp_rewrites_in_wp_rules" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_rewrites_in_wp_rules' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                         <label for="hmwp_rewrites_in_wp_rules"><?php echo esc_html__( 'Add Rewrites in WordPress Rules Section', 'hide-my-wp' ); ?>
+                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/rewrites-rules-location/' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                                             <span class="text-black-50 small">(<?php echo esc_html__( "recommended", 'hide-my-wp' ); ?>)</span>
                                         </label>
                                         <div class="text-black-50 ml-5"><?php echo esc_html__( "This option will add rewrite rules to the .htaccess file in the WordPress rewrite rules area between the comments # BEGIN WordPress and # END WordPress.", 'hide-my-wp' ); ?></div>
@@ -153,7 +159,7 @@
 
                 <div id="notification" class="card col-sm-12 p-0 m-0 tab-panel">
                     <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Notification Settings', 'hide-my-wp' ); ?>
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/advanced-wp-security/#email_notification' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
+                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/email-notification/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                     </h3>
                     <div class="card-body">
 
@@ -162,8 +168,9 @@
                                 <div class="col-sm-12 p-0 switch switch-sm">
                                     <input type="hidden" name="hmwp_send_email" value="0"/>
                                     <input type="checkbox" id="hmwp_send_email" name="hmwp_send_email" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_send_email' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                    <label for="hmwp_send_email"><?php echo esc_html__( 'Email Notification', 'hide-my-wp' ); ?></label>
-                                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/advanced-wp-security/#email_notification' ) ?>" target="_blank" class="d-inline-block ml-2"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                    <label for="hmwp_send_email"><?php echo esc_html__( 'Email Notification', 'hide-my-wp' ); ?>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/email-notification/' ) ?>" target="_blank" class="d-inline-block ml-2"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                    </label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Send me an email with the changed admin and login URLs', 'hide-my-wp' ); ?></div>
                                 </div>
                             </div>
@@ -186,6 +193,8 @@
                         </div>
                     </div>
                 </div>
+
+	            <?php do_action('hmwp_advanced_form_end') ?>
 
                 <div class="col-sm-12 m-0 p-2 bg-light text-center" style="position: fixed; bottom: 0; right: 0; z-index: 100; box-shadow: 0 0 8px -3px #444;">
                     <button type="submit" class="btn rounded-0 btn-success px-5 mr-5 save"><?php echo esc_html__( 'Save', 'hide-my-wp' ); ?></button>

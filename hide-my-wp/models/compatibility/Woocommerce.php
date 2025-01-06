@@ -1,9 +1,9 @@
 <?php
 /**
- * Woocommerce Class
+ * WooCommerce Class
  *
- * @file The Woocommerce Model file
- * @package HMWP/Compatibility/Woocommerce
+ * @file The WooCommerce Model file
+ * @package HMWP/Compatibility/WooCommerce
  */
 
 defined('ABSPATH') || die('Cheatin\' uh?');
@@ -29,7 +29,7 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
 
 	    }else{
 
-		    //Check if Woocommerce login support is loaded
+		    //Check if WooCommerce login support is loaded
 		    if(HMWP_Classes_Tools::getValue('woocommerce-login-nonce')) {
 			    add_filter('hmwp_preauth_check', '__return_false');
 		    }
@@ -150,7 +150,7 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
 	}
 
 	/**
-	 * reCaptcha V3 support for Woocommerce
+	 * reCaptcha V3 support for WooCommerce
 	 * @return void
 	 */
 	public function woocommerce_brute_recaptcha_form_v3()

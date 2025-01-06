@@ -14,40 +14,60 @@ class HMWP_Models_RoleManager {
 
 	public function __construct() {
 		add_action( 'admin_init', array( $this, 'addHMWPCaps' ), PHP_INT_MAX );
+		add_filter( 'user_has_cap', array( $this, 'setUserHasCap' ), PHP_INT_MAX, 4);
 	}
 
 	/**
-	 * Retrieve the HMWP capabilities for a specified role.
+	 * Make sure the user has the capability if set in any role
+	 * @param $allcaps
+	 * @param $caps
+	 * @param $args
+	 * @param $user
 	 *
-	 * @param  string  $role  The role for which to retrieve capabilities.
-	 *
-	 * @return array The HMWP capabilities for the specified role, or all capabilities if no role is specified.
+	 * @return mixed
 	 */
-	public function getHMWPCaps( $role = '' ) {
-		$caps = array();
+	public function setUserHasCap( $allcaps, $caps, $args, $user ) {
 
-		$caps['hmwp_admin'] = array(
-			'hmwp_manage_settings' => true,
-		);
-
-		$caps = array_filter( $caps );
-
-		if ( isset( $caps[ $role ] ) ) {
-			return $caps[ $role ];
+		if ( ! in_array( HMWP_CAPABILITY, $caps ) ) {
+			return $allcaps;
 		}
 
-		return $caps;
+		if( isset($allcaps[HMWP_CAPABILITY]) && $allcaps[HMWP_CAPABILITY] ) {
+			return $allcaps;
+		}elseif( ! isset($allcaps[HMWP_CAPABILITY]) && user_can( $user->ID, 'manage_options' ) ){
+			$allcaps[HMWP_CAPABILITY] = 1;
+		}
+
+		//If the user has multiple roles
+		if ( !empty( $user->roles ) && is_array( $user->roles ) ) {
+			foreach ( $user->roles as $role ) {
+
+				/** @var WP_Role $allroles */
+				$role_object = get_role( $role );
+
+				foreach ( (array) $caps as $cap ) {
+					if ( $role_object->has_cap( $cap ) ) {
+						$allcaps[$cap] = 1;
+					}
+				}
+
+			}
+		}
+
+		return $allcaps;
 	}
 
 	/**
-	 * Add HMWP capabilities to the administrator role
-	 *
-	 * @return void
+	 * Register HMWP Caps
+	 * in case they don't exist
 	 */
 	public function addHMWPCaps() {
 
 		if ( function_exists( 'wp_roles' ) ) {
+
+			/** @var WP_Role[] $allroles */
 			$allroles = wp_roles()->get_names();
+
 			if ( ! empty( $allroles ) ) {
 				$allroles = array_keys( $allroles );
 			}
@@ -55,30 +75,29 @@ class HMWP_Models_RoleManager {
 			if ( ! empty( $allroles ) ) {
 				foreach ( $allroles as $role ) {
 					if ( $role == 'administrator' ) {
-						$this->addHMWPCap( 'hmwp_admin', $role );
+						/** @var WP_Role $allroles */
+						$wp_role = get_role( $role );
+						$this->addCap( $wp_role, HMWP_CAPABILITY );
 					}
 				}
 			}
 		}
 	}
 
-	/**
-	 * Remove HMWP caps for all roles
-	 *
-	 * @return void
-	 */
 	public function removeHMWPCaps() {
 		if ( function_exists( 'wp_roles' ) ) {
+			/** @var WP_Role[] $allroles */
 			$allroles = wp_roles()->get_names();
-			$caps     = $this->getHMWPCaps( 'hmwp_admin' );
 
 			if ( ! empty( $allroles ) ) {
 				$allroles = array_keys( $allroles );
 			}
 
-			if ( ! empty( $allroles ) && ! empty( $caps ) ) {
+			if ( ! empty( $allroles ) ) {
 				foreach ( $allroles as $role ) {
-					$this->removeCap( $role, $caps );
+					/** @var WP_Role $allroles */
+					$wp_role = get_role( $role );
+					$this->removeCap( $wp_role, HMWP_CAPABILITY );
 				}
 			}
 		}
@@ -86,60 +105,36 @@ class HMWP_Models_RoleManager {
 	}
 
 	/**
-	 * Add the HMWP capabilities to a WordPress role
+	 * Add a cap into WP for a role
 	 *
-	 * @param string $hmwprole The HMWP role identifier
-	 * @param string $wprole The WordPress role object
-	 *
-	 * @return void
+	 * @param WP_Role $role
+	 * @param string $capability
 	 */
-	public function addHMWPCap( $hmwprole, $wprole ) {
-		$hmwpcaps = $this->getHMWPCaps( $hmwprole );
-
-		$this->addCap( $wprole, $hmwpcaps );
-	}
-
-	/**
-	 * Add capabilities to a role
-	 *
-	 * @param  string  $name  The name of the role.
-	 * @param  array  $capabilities  An associative array of capabilities to be added, where the key is the capability and the value is whether it is granted.
-	 *
-	 * @return void
-	 */
-	public function addCap( $name, $capabilities ) {
-		$role = get_role( $name );
+	public function addCap( $role, $capability ) {
 
 		if ( ! $role || ! method_exists( $role, 'add_cap' ) ) {
 			return;
 		}
 
-		foreach ( $capabilities as $capability => $grant ) {
-			if ( ! $role->has_cap( $capability ) ) {
-				$role->add_cap( $capability, $grant );
-			}
+		if ( ! isset( $role->capabilities[$capability] ) ) {
+			$role->add_cap( $capability );
 		}
 	}
 
 	/**
-	 * Removes specified capabilities from a role.
+	 * Remove the caps for a role
 	 *
-	 * @param  string  $name  The name of the role from which capabilities will be removed.
-	 * @param  array  $capabilities  An associative array of capabilities to remove.
-	 *
-	 * @return void
+	 * @param WP_Role $role
+	 * @param string $capability
 	 */
-	public function removeCap( $name, $capabilities ) {
-		$role = get_role( $name );
+	public function removeCap( $role, $capability ) {
 
 		if ( ! $role || ! method_exists( $role, 'remove_cap' ) ) {
 			return;
 		}
 
-		foreach ( $capabilities as $capability => $grant ) {
-			if ( $role->has_cap( $capability ) ) {
-				$role->remove_cap( $capability );
-			}
+		if ( isset( $role->capabilities[$capability] ) ) {
+			$role->remove_cap( $capability );
 		}
 	}
 

@@ -10,6 +10,14 @@
 
 defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' );
 
+/**
+ * Class HMWP_Models_Rewrite
+ *
+ * This class handles the URL rewriting functionality within the plugin.
+ * It is responsible for managing various rewrite rules, path replacements,
+ * and text mappings while helping maintain security and anonymization of
+ * sensitive paths in WordPress installations.
+ */
 class HMWP_Models_Rewrite {
 	/**
 	 * All the paths that need to be changed
@@ -609,7 +617,7 @@ class HMWP_Models_Rewrite {
 			foreach ( $rewrites as $rewrite ) {
 				if ( strpos( $rewrite['to'], 'index.php' ) === false ) {
 					$rules .= '
-                <rule name="HideMyWp: ' . md5( $rewrite['from'] ) . '" stopProcessing="false">
+                <rule name="WPGhost: ' . md5( $rewrite['from'] ) . '" stopProcessing="false">
                     <match url="^' . $rewrite['from'] . '" ignoreCase="false" />
                     <action type="Redirect" url="' . $rewrite['to'] . '" />
                 </rule>';
@@ -635,7 +643,7 @@ class HMWP_Models_Rewrite {
 			foreach ( $rewrites as $rewrite ) {
 				if ( strpos( $rewrite['to'], 'index.php' ) === false ) {
 					$rules .= '
-                <rule name="HideMyWp: ' . md5( $rewrite['from'] ) . '" stopProcessing="true">
+                <rule name="WPGhost: ' . md5( $rewrite['from'] ) . '" stopProcessing="true">
                     <match url="^' . $rewrite['from'] . '" ignoreCase="false" />
                     <action type="Rewrite" url="' . $rewrite['to'] . '" />
                 </rule>';
@@ -702,7 +710,7 @@ class HMWP_Models_Rewrite {
 		}
 
 		$xpath = new DOMXPath( $doc );
-		$rules = $xpath->query( '/configuration/system.webServer/rewrite/rules/rule[starts-with(@name,\'HideMyWp\')]' );
+		$rules = $xpath->query( '/configuration/system.webServer/rewrite/rules/rule[starts-with(@name,\'WPGhost\')]' );
 
 		if ( $rules->length > 0 ) {
 			foreach ( $rules as $item ) {
@@ -747,10 +755,7 @@ class HMWP_Models_Rewrite {
 
 		$config_file = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getConfFile();
 
-		$form = '<a href="' . add_query_arg( array(
-				'hmwp_nonce' => wp_create_nonce( 'hmwp_manualrewrite' ),
-				'action'     => 'hmwp_manualrewrite'
-			) ) . '" class="btn rounded-0 btn-success save" />' . esc_html__( "Okay, I set it up", 'hide-my-wp' ) . '</a>';
+		$form = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_manualrewrite' ), 'action' => 'hmwp_manualrewrite' ) ) ) . '" class="btn rounded-0 btn-success save" />' . esc_html__( "Okay, I set it up", 'hide-my-wp' ) . '</a>';
 
 		//If Windows Server
 		if ( HMWP_Classes_Tools::isIIS() ) {
@@ -2194,6 +2199,7 @@ class HMWP_Models_Rewrite {
 							home_url( 'wp-json', 'relative' ),
 							home_url( HMWP_Classes_Tools::getOption( 'hmwp_wp-json' ), 'relative' ),
 						);
+
 						if ( HMWP_Classes_Tools::searchInString( $url, $paths ) ) {
 							$this->getNotFound( $url );
 						}
@@ -3126,19 +3132,42 @@ class HMWP_Models_Rewrite {
 	}
 
 	/**
-	 * Hide the rest api from the source code
+	 * Hides the REST API links from the head and HTTP headers.
 	 *
 	 * @return void
-	 * @throws Exception
 	 */
 	public function hideRestApi() {
 		remove_action( 'wp_head', 'rest_output_link_wp_head' );
 		remove_action( 'template_redirect', 'rest_output_link_header', 11 );
-
 	}
 
 	/**
-	 * Disable the rest Route param access
+	 * Modify REST API endpoints to hide user listings for unauthorized users.
+	 *
+	 * @param  array  $endpoints  The array of registered REST API endpoints.
+	 *
+	 * @return array The modified array of REST API endpoints.
+	 */
+	public function hideRestUsers( $endpoints ) {
+
+		// Remove the users listing from Rest API
+		if (!current_user_can('list_users')) {
+
+			if ( isset( $endpoints['/wp/v2/users'] ) ) {
+				unset( $endpoints['/wp/v2/users'] );
+			}
+
+			if ( isset( $endpoints['/wp/v2/users/(?P<id>[\d]+)'] ) ) {
+				unset( $endpoints['/wp/v2/users/(?P<id>[\d]+)'] );
+			}
+
+		}
+
+		return $endpoints;
+	}
+
+	/**
+	 * Hide the 'rest_route' parameter when the REST API path is changed.
 	 *
 	 * @return void
 	 * @throws Exception

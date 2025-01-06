@@ -18,7 +18,7 @@
                             <input type="hidden" name="hmwp_change_in_cache" value="0"/>
                             <input type="checkbox" id="hmwp_change_in_cache" name="hmwp_change_in_cache" onchange="jQuery('form#hmwp_savecachepath').submit()" class="switch nopopup" <?php echo(HMWP_Classes_Tools::getOption('hmwp_change_in_cache') ? 'checked="checked"' : '') ?> value="1"/>
                             <label for="hmwp_change_in_cache">
-                                <a href="<?php echo esc_url(HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/activate-security-tweaks/#change_paths_cached_files') ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/change-paths-in-cached-files/' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                             </label>
                         </div>
                     </div>

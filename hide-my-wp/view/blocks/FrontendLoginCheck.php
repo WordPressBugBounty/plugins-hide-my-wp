@@ -8,7 +8,7 @@
 	?>
     <div class="col-sm-12 border-bottom border-light p-0 mx-0 mt-0 mb-3">
 
-        <div class="col-sm-12 border-danger bg-light border py-3 mx-0 my-0">
+        <div class="col-sm-12 border-danger bg-white border py-3 mx-0 my-0">
 
             <div class="text-center my-4">
                 <div class="hmwp_confirm" style="display: inline-block; margin-right: 5px;">
@@ -25,9 +25,14 @@
             <div id="hmwp_frontendcheck_content" class="my-3"></div>
             <div id="hmwp_solutions" style="display: none">
                 <div class="my-3 pt-3 border-top border-white text-center">
+	                <?php if ( HMWP_Classes_Tools::isLitespeed() ) { ?>
+                        <div class="mb-2">
+                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getSettingsUrl( 'litespeed-toolbox' ) ) ?>" target="_blank">Make sure you purge
+                                <strong>LiteSpeed cache</strong></a></div>
+	                <?php } ?>
 					<?php if ( HMWP_Classes_Tools::isApache() && ! HMWP_Classes_Tools::isWpengine() ) { ?>
                         <div class="mb-2">
-                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/how-to-set-allowoverride-all/' ) ?>" target="_blank">Make sure to activate
+                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/how-to-set-allowoverride-all/' ) ?>" target="_blank">Make sure to activate
                                 <strong>AllowOverride All</strong> for your website directory</a></div>
 					<?php } ?>
 					<?php if ( HMWP_Classes_Tools::isNginx() ) { ?>
@@ -35,30 +40,30 @@
                             <a href="<?php echo esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_advanced#tab=compatibility', true ) ) ?>" target="_blank">Select Server Type</a>
                         </div>
                         <div class="mb-2">
-                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/how-to-setup-hide-my-wp-on-nginx-server/' ) ?>" target="_blank">Setup The Plugin On Nginx Server</a>
+                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/how-to-setup-hide-my-wp-on-nginx-server/' ) ?>" target="_blank">Setup The Plugin On Nginx Server</a>
                         </div>
                         <div class="mb-2">
-                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/how-to-configure-hide-my-wp-on-nginx-web-server-with-virtual-private-server/' ) ?>" target="_blank">Setup The Plugin On Nginx Server with Virtual Private Server</a>
+                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/how-to-configure-hide-my-wp-on-nginx-web-server-with-virtual-private-server/' ) ?>" target="_blank">Setup The Plugin On Nginx Server with Virtual Private Server</a>
                         </div>
 					<?php } ?>
 					<?php if ( HMWP_Classes_Tools::isWpengine() ) { ?>
                         <div class="mb-2">
-                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-pro-compatible-with-wp-engine/' ) ?>" target="_blank">Setup The Plugin On WP Engine</a>
+                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/hide-my-wp-pro-compatible-with-wp-engine/' ) ?>" target="_blank">Setup The Plugin On WP Engine</a>
                         </div>
 					<?php } ?>
 					<?php if ( HMWP_Classes_Tools::isGodaddy() ) { ?>
                         <div class="mb-2">
-                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/how-to-use-hide-my-wp-with-godaddy/' ) ?>" target="_blank">Setup The Plugin On Godaddy</a>
+                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/how-to-use-hide-my-wp-with-godaddy/' ) ?>" target="_blank">Setup The Plugin On Godaddy</a>
                         </div>
 					<?php } ?>
 					<?php if ( HMWP_Classes_Tools::isIIS() ) { ?>
                         <div class="mb-2">
-                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/setup-hide-my-wp-on-windows-iis-server/' ) ?>" target="_blank">Setup The Plugin On Windows IIS Server</a>
+                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/setup-hide-my-wp-on-windows-iis-server/' ) ?>" target="_blank">Setup The Plugin On Windows IIS Server</a>
                         </div>
 					<?php } ?>
 					<?php if ( HMWP_Classes_Tools::isInmotion() ) { ?>
                         <div class="mb-2">
-                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-pro-compatible-with-inmotion-wordpress-hosting/' ) ?>" target="_blank">Setup The Plugin On Inmotion Server</a>
+                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/hide-my-wp-pro-compatible-with-inmotion-wordpress-hosting/' ) ?>" target="_blank">Setup The Plugin On Inmotion Server</a>
                         </div>
 					<?php } ?>
                 </div>
@@ -69,7 +74,7 @@
                 <li><?php echo sprintf( esc_html__( "Run %s Login Test %s and log in inside the popup.", 'hide-my-wp' ), '<strong>', '</strong>' ); ?></li>
                 <li><?php echo esc_html__( "If you're able to log in, you've set the new paths correctly.", 'hide-my-wp' ); ?></li>
                 <li><?php echo esc_html__( 'Do not log out from this browser until you are confident that the Log in Page is working and you will be able to login again.', 'hide-my-wp' ); ?></li>
-                <li><?php echo sprintf( esc_html__( "If you can't configure %s, switch to Deactivated Mode and %scontact us%s.", 'hide-my-wp' ), HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ), '<a href="' . HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/contact/" target="_blank" >', '</a>' ); ?></li>
+                <li><?php echo sprintf( esc_html__( "If you can't configure %s, switch to Deactivated Mode and %scontact us%s.", 'hide-my-wp' ), HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ), '<a href="' . esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/contact/' ) . '" target="_blank" >', '</a>' ); ?></li>
             </ol>
 
 			<?php if ( defined( 'HMWP_DEFAULT_LOGIN' ) && HMWP_DEFAULT_LOGIN ) {

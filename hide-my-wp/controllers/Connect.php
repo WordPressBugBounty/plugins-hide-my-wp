@@ -20,7 +20,7 @@ class HMWP_Controllers_Connect extends HMWP_Classes_FrontController {
 		parent::action();
 
 		// Check user permission.
-		if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+		if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 			return;
 		}
 

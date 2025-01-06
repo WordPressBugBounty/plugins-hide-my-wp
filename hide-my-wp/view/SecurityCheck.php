@@ -21,12 +21,15 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
         <div class="hmwp_col flex-grow-1 px-2 py-0 mr-2 mb-3">
             <div class="card col-sm-12 p-0 m-0" style="max-width: 100%">
                 <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'WordPress Security Check', 'hide-my-wp' ); ?>:
-                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/website-security-check/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help" style=" vertical-align: top; padding: 5px 0 !important;"></i></a>
+                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/website-security-check/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help" style=" vertical-align: top; padding: 5px 0 !important;"></i></a>
                 </h3>
                 <div class="card-body p-0 m-0">
 
-                    <div class="col-sm-12 border-bottom border-light pb-3 m-0">
-                        <div class="card col-sm-12 p-4 bg-light ">
+                    <div class="col-sm-12 border-0 shadow-0 pb-3 m-0">
+
+	                    <?php do_action( 'hmwp_security_check_beginning' ) ?>
+
+                        <div class="card col-sm-12 p-4 shadow-none border-0">
                             <div class="card-body text-center p-0">
                                 <div class="start_securitycheck">
 									<?php if ( ! $do_check ) { ?>
@@ -103,7 +106,7 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
                         </div>
                         <div class="col-sm-12 mt-3 p-0 input-group">
 							<?php if ( ! empty( $view->report ) ) { ?>
-                                <table class="table table_securitycheck" style="width: 100%">
+                                <table class="table table_securitycheck border" style="width: 100%">
                                     <thead>
                                     <tr>
                                         <th scope="col"><?php echo esc_html__( 'Name', 'hide-my-wp' ) ?></th>
@@ -182,6 +185,9 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
 								<?php } ?>
                             </form>
                         </div>
+
+	                    <?php do_action( 'hmwp_security_check_end' ) ?>
+
                     </div>
 
 					<?php if ( apply_filters( 'hmwp_showaccount', true ) ) { ?>

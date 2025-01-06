@@ -1,30 +1,30 @@
 <?php
 /*
-  Copyright (c) 2016 - 2024, WPPlugins.
+  Copyright (c) 2016 - 2025, WP Ghost
   The copyrights to the software code in this file are licensed under the (revised) BSD open source license.
 
-  Plugin Name: Hide My WP Ghost Lite
+  Plugin Name: WP Ghost Lite
   Plugin URI: https://wordpress.org/plugins/hide-my-wp/
   Description: #1 Hack Prevention Security Solution: Hide WP CMS, 7G/8G Firewall, Brute Force Protection, 2FA, GEO Security, Temporary Logins, Alerts & more.
-  Version: 5.3.02
-  Author: WPPlugins
+  Version: 5.4.01
+  Author: WP Ghost
   Author URI: https://hidemywp.com
   License: GPLv2 or later
   License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
   Text Domain: hide-my-wp
   Domain Path: /languages
   Network: true
-  Requires at least: 4.6
+  Requires at least: 5.3
   Requires PHP: 7.0
  */
 
 if ( defined( 'ABSPATH' ) && ! defined( 'HMW_VERSION' ) ) {
 
 	// Set current plugin version
-	define( 'HMWP_VERSION', '5.3.02' );
+	define( 'HMWP_VERSION', '5.4.01' );
 
 	// Set the last stable version of the plugin
-	define( 'HMWP_STABLE_VERSION', '5.3.01' );
+	define( 'HMWP_STABLE_VERSION', '5.3.02' );
 
 	// Set the plugin basename
 	define( 'HMWP_BASENAME', plugin_basename( __FILE__ ) );
@@ -62,7 +62,7 @@ if ( defined( 'ABSPATH' ) && ! defined( 'HMW_VERSION' ) ) {
 				return;
 			}
 
-			if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
+			if ( ! HMWP_Classes_Tools::isCron() ) {
 				// If Brute Force is activated
 				if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce' ) ) {
 					HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Brute' );

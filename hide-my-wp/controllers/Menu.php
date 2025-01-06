@@ -43,7 +43,7 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 				// Delete the redirect transient.
 				delete_transient( 'hmwp_activate' );
 
-				// Make sure HideMyWP in the loading first.
+				// Make sure this plugin in the loading first.
 				HMWP_Classes_Tools::movePluginFirst();
 			}
 
@@ -80,7 +80,12 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 				add_filter( 'plugin_row_meta', function ( $plugin_meta ) {
 					foreach ( $plugin_meta as $key => &$string ) {
 						//Change the author URL.
-						$string = str_replace( 'https://wpplugins.tips', HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ), $string );
+						$string = str_ireplace( array(
+							'https://wpplugins.tips',
+							'https://hidemywpghost.com',
+							'https://wpghost.com',
+							'https://hidemywp.com'
+						), HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ), $string );
 						//Change the plugin details.
 						if ( stripos( $string, 'plugin=' . dirname( HMWP_BASENAME ) ) !== false ) {
 							//Unset the plugin meta is plugin found
@@ -121,83 +126,44 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 		if ( ! HMWP_Classes_Tools::isMultisites() ) {
 
 			//If the capability hmwp_manage_settings exists.
-			if ( HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+			$this->model->addMenu( array(
+				HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
+				HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
+				HMWP_CAPABILITY,
+				'hmwp_settings',
+				array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Overview' ), 'init' ),
+				HMWP_Classes_Tools::getOption( 'hmwp_plugin_icon' )
+			) );
 
-				$this->model->addMenu( array(
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
-					'hmwp_manage_settings',
-					'hmwp_settings',
-					array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Overview' ), 'init' ),
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_icon' )
-				) );
+			// Add the admin menu
+			$tabs = $this->model->getMenu();
+			foreach ( $tabs as $slug => $tab ) {
+				if ( isset( $tab['parent'] ) && isset( $tab['name'] ) && isset( $tab['title'] ) && isset( $tab['capability'] ) ) {
 
-				// Add the admin menu
-				$tabs = $this->model->getMenu();
-				foreach ( $tabs as $slug => $tab ) {
-					if ( isset( $tab['parent'] ) && isset( $tab['name'] ) && isset( $tab['title'] ) && isset( $tab['capability'] ) ) {
-
-						if ( isset( $tab['show'] ) && ! $tab['show'] ) {
-							$tab['parent'] = 'hmwp_none';
-						}
-
-						$this->model->addSubmenu( array(
-							$tab['parent'],
-							$tab['title'],
-							$tab['name'],
-							$tab['capability'],
-							$slug,
-							$tab['function'],
-						) );
+					if ( isset( $tab['show'] ) && ! $tab['show'] ) {
+						$tab['parent'] = 'hmwp_none';
 					}
-				}
 
-				//Avoid blank page after upgrade
-				$this->model->addSubmenu( array(
-					'hmw_settings',
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
-					'hmwp_manage_settings',
-					'hmw_settings',
-					array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Overview' ), 'init' )
-				) );
-
-			} else {
-				//if the manage_options capability exists
-				$this->model->addMenu( array(
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
-					'manage_options',
-					'hmwp_settings',
-					array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Overview' ), 'init' ),
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_icon' )
-				) );
-
-				/* add the admin menu */
-				$tabs = $this->model->getMenu();
-				foreach ( $tabs as $slug => $tab ) {
 					$this->model->addSubmenu( array(
 						$tab['parent'],
 						$tab['title'],
 						$tab['name'],
-						'manage_options',
+						$tab['capability'],
 						$slug,
 						$tab['function'],
 					) );
 				}
-
-				//Avoid blank page after upgrade
-				$this->model->addSubmenu( array(
-					'hmw_settings',
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
-					HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
-					'manage_options',
-					'hmw_settings',
-					array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Overview' ), 'init' )
-				) );
-
 			}
 
+			//Avoid blank page after upgrade
+			$this->model->addSubmenu( array(
+				'hmw_settings',
+				HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
+				HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
+				HMWP_CAPABILITY,
+				'hmw_settings',
+				array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Overview' ), 'init' )
+			) );
 
 			//Update the external links in the menu
 			global $submenu;
@@ -252,73 +218,42 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 	public function hookMultisiteMenu() {
 
 		// If the capability hmwp_manage_settings exists
-		if ( HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
-			$this->model->addMenu( array(
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
-				'hmwp_manage_settings',
-				'hmwp_settings',
-				null,
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_icon' )
-			) );
+		$this->model->addMenu( array(
+			HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
+			HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
+			HMWP_CAPABILITY,
+			'hmwp_settings',
+			null,
+			HMWP_Classes_Tools::getOption( 'hmwp_plugin_icon' )
+		) );
 
-			// Add the admin menu
-			$tabs = $this->model->getMenu();
-			foreach ( $tabs as $slug => $tab ) {
-				$this->model->addSubmenu( array(
-					$tab['parent'],
-					$tab['title'],
-					$tab['name'],
-					$tab['capability'],
-					$slug,
-					$tab['function'],
-				) );
+		// Add the admin menu
+		$tabs = $this->model->getMenu();
+		foreach ( $tabs as $slug => $tab ) {
+
+			if ( isset( $tab['show'] ) && ! $tab['show'] ) {
+				$tab['parent'] = 'hmwp_none';
 			}
 
-			// Avoid blank page after upgrade
 			$this->model->addSubmenu( array(
-				'hmw_settings',
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
-				'hmwp_manage_settings',
-				'hmw_settings',
-				array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Overview' ), 'init' )
-			) );
-		} else {
-			// If the manage options capability exists
-			$this->model->addMenu( array(
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
-				'manage_options',
-				'hmwp_settings',
-				null,
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_icon' )
-			) );
-
-			// Add the admin menu
-			$tabs = $this->model->getMenu();
-			foreach ( $tabs as $slug => $tab ) {
-				$this->model->addSubmenu( array(
-					$tab['parent'],
-					$tab['title'],
-					$tab['name'],
-					'manage_options',
-					$slug,
-					$tab['function'],
-				) );
-
-			}
-
-			// Avoid blank page after upgrade
-			$this->model->addSubmenu( array(
-				'hmw_settings',
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
-				HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
-				'manage_options',
-				'hmw_settings',
-				array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Overview' ), 'init' )
+				$tab['parent'],
+				$tab['title'],
+				$tab['name'],
+				$tab['capability'],
+				$slug,
+				$tab['function'],
 			) );
 		}
+
+		// Avoid blank page after upgrade
+		$this->model->addSubmenu( array(
+			'hmw_settings',
+			HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ),
+			HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ),
+			HMWP_CAPABILITY,
+			'hmw_settings',
+			array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Overview' ), 'init' )
+		) );
 
 		// Update the external links in the menu
 		global $submenu;

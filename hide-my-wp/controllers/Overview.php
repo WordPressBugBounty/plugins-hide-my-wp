@@ -74,7 +74,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-shield-alt',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/hide-my-wp-ghost-tutorial/#safemode',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/set-up-wp-ghost-in-safe-mode-in-3-minutes/',
 				'show'        => true,
 			),
 			array(
@@ -87,7 +87,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-file-word-o',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks#tab=core', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/customize-paths-in-hide-my-wp-ghost/#hide_common_paths',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/hide-wordpress-common-paths-and-files/#ghost-hide-wordpress-common-paths',
 				'show'        => true,
 			),
 			array(
@@ -100,7 +100,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-file-word-o',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks#tab=core', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/customize-paths-in-hide-my-wp-ghost/#hide_common_files',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/hide-wordpress-common-paths-and-files/#ghost-hide-wordpress-common-files',
 				'show'        => true,
 			),
 			//--
@@ -114,7 +114,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-window-maximize',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_twofactor', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/two-factor/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/two-factor-authentication/',
 				'show'        => true,
 			),
 			array(
@@ -127,7 +127,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-ban',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_brute#tab=brute', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/brute-force-attack-protection/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/brute-force-attack-protection/',
 				'show'        => true,
 			),
 			array(
@@ -140,7 +140,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-ban',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_brute#tab=brute', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/brute-force-attack-protection/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/brute-force-attack-protection/#ghost-woocommerce-protection',
 				'show'        => false,
 			),
 			array(
@@ -153,7 +153,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-bug',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks#tab=firewall', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/customize-paths-in-hide-my-wp-ghost/#firewall_script_injection',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/firewall-security/',
 				'show'        => true,
 			),
 			array(
@@ -166,7 +166,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-clock-o',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_templogin#tab=logins', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/temporary-logins/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/temporary-logins/',
 				'show'        => true,
 			),
 			//--
@@ -180,11 +180,11 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-link',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/unique-logins/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/magic-link-login/',
 				'show'        => false,
 			),
 			array(
-				'title'       => esc_html__( "Woocommerce Magic Link", 'hide-my-wp' ),
+				'title'       => esc_html__( "WooCommerce Magic Link", 'hide-my-wp' ),
 				'description' => esc_html__( "Allow users to log in to WooCommerce account using their email address and a unique login URL delivered via email.", 'hide-my-wp' ),
 				'free'        => true,
 				'option'      => 'hmwp_uniquelogin_woocommerce',
@@ -193,7 +193,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-link',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/unique-logins/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/magic-link-login/#ghost-woocommerce-login',
 				'show'        => false,
 			),
 			//--
@@ -207,7 +207,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-lock',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks#tab=api', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/activate-security-tweaks/#disable_xml_rpc_access',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-xml-rpc-access-using-wp-ghost/',
 				'show'        => true,
 			),
 			array(
@@ -220,7 +220,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-eye-slash',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_mapping#tab=text', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/url-mapping-text-mapping/#text_mapping',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/text-mapping/',
 				'show'        => true,
 			),
 			array(
@@ -233,11 +233,11 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-refresh',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_mapping#tab=url', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/url-mapping-text-mapping/#url_mapping',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/url-mapping/',
 				'show'        => ( ! HMWP_Classes_Tools::isWpengine() ),
 			),
 			array(
-				'title'       => esc_html__( "CDN", 'hide-my-wp' ),
+				'title'       => esc_html__( "CDN Mapping", 'hide-my-wp' ),
 				'description' => esc_html__( "Integration with other CDN plugins and custom CDN URLs.", 'hide-my-wp' ),
 				'free'        => true,
 				'option'      => 'hmwp_mapping_cdn_show',
@@ -246,7 +246,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-link',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_mapping#tab=cdn', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/url-mapping-text-mapping/#cdn_urls',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/cdn-url-mapping/',
 				'show'        => true,
 			),
 			array(
@@ -259,7 +259,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => true,
 				'logo'        => 'fa fa-calendar',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_log#tab=log', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/users-activity-log/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/events-log-report/',
 				'show'        => true,
 			),
 
@@ -273,7 +273,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-code-fork',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_tweaks#tab=redirects', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/activate-security-tweaks/#redirect_on_login',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url',
 				'show'        => true,
 			),
 			array(
@@ -286,7 +286,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-code',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks#tab=firewall', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/customize-paths-in-hide-my-wp-ghost/#hide_security_headers',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/header-security/',
 				'show'        => true,
 			),
 			array(
@@ -299,7 +299,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-sitemap',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_tweaks#tab=sitemap', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/activate-security-tweaks/#fix_sitemap_xml',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/feed-sitemap-and-robots/#ghost-change-paths-in-rss-feed',
 				'show'        => true,
 			),
 			array(
@@ -312,7 +312,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-sitemap',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_tweaks#tab=sitemap', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/activate-security-tweaks/#fix_sitemap_xml',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/feed-sitemap-and-robots/#ghost-change-paths-in-sitemap-xml',
 				'show'        => true,
 			),
 			array(
@@ -325,7 +325,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-android',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_tweaks#tab=changes', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/activate-security-tweaks/#fix_robots_txt',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/feed-sitemap-and-robots/#ghost-change-paths-in-robots-txt',
 				'show'        => true,
 			),
 			array(
@@ -338,7 +338,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-window-maximize',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_tweaks#tab=hide', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/activate-security-tweaks/#admin_toolbar',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/hide-admin-toolbar/',
 				'show'        => true,
 			),
 			array(
@@ -351,7 +351,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-mouse-pointer',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_tweaks#tab=disable', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/knowledge-base/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-right-click',
 				'show'        => true,
 			),
 			array(
@@ -364,7 +364,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-keyboard-o',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_tweaks#tab=disable', true ),
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/knowledge-base/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-copy-and-paste',
 				'show'        => true,
 			),
 			//--
@@ -378,7 +378,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-shield-alt',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-and-wordfence-security/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'wordfence/wordfence.php' ),
 			),
 			array(
@@ -391,7 +391,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-shield-alt',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'all-in-one-wp-security-and-firewall/wp-security.php' ),
 			),
 			array(
@@ -404,7 +404,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-shield-alt',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-and-sucuri-security/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'sucuri-scanner/sucuri.php' ),
 			),
 			array(
@@ -417,7 +417,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-shield-alt',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-and-solid-security/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'better-wp-security/better-wp-security.php' ),
 			),
 			//--
@@ -431,7 +431,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/how-to-use-autoptimize-with-hide-my-wp-ghost/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-and-autoptimize-cache/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'autoptimize/autoptimize.php' ),
 			),
 			array(
@@ -444,7 +444,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-and-hummingbird-cache-plugin/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'hummingbird-performance/wp-hummingbird.php' ),
 			),
 			array(
@@ -457,7 +457,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'wp-super-cache/wp-cache.php' ),
 			),
 			array(
@@ -470,7 +470,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'cache-enabler/cache-enabler.php' ),
 			),
 			array(
@@ -482,8 +482,8 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'optional'    => false,
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
-				'link'        => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/how-to-use-wp-rocket-with-hide-my-wp-ghost/',
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/how-to-use-wp-rocket-with-hide-my-wp-ghost/',
+				'link'        => false,
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-and-wp-rocket-cache/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'wp-rocket/wp-rocket.php' ),
 			),
 			array(
@@ -496,7 +496,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'wp-fastest-cache/wpFastestCache.php' ),
 			),
 			array(
@@ -509,7 +509,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'w3-total-cache/w3-total-cache.php' ),
 			),
 			array(
@@ -522,7 +522,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/use-hide-my-wp-ghost-with-litespeed/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-and-litespeed-cache/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'litespeed-cache/litespeed-cache.php' ),
 			),
 			array(
@@ -535,13 +535,13 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => false,
 			),
 			//--
 			array(
-				'title'       => esc_html__( "Woocommerce", 'hide-my-wp' ),
-				'description' => esc_html__( "Fully compatible with Woocommerce plugin.", 'hide-my-wp' ),
+				'title'       => esc_html__( "WooCommerce", 'hide-my-wp' ),
+				'description' => esc_html__( "Fully compatible with WooCommerce plugin.", 'hide-my-wp' ),
 				'free'        => true,
 				'option'      => false,
 				'active'      => true,
@@ -549,7 +549,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'woocommerce/woocommerce.php' ),
 			),
 			array(
@@ -562,7 +562,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'elementor/elementor.php' ),
 			),
 			array(
@@ -575,7 +575,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'oxygen/functions.php' ),
 			),
 			array(
@@ -588,7 +588,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => false,
 			),
 			array(
@@ -601,7 +601,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => ( HMWP_Classes_Tools::isPluginActive( 'beaver-builder-lite-version/fl-builder.php' ) || HMWP_Classes_Tools::isPluginActive( 'beaver-builder/fl-builder.php' ) ),
 			),
 			array(
@@ -614,7 +614,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-admin-plugins',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/hide-my-wp-compatibility-plugins-list/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-compatibility-plugins-list/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'fusion-builder/fusion-builder.php' ),
 			),
 
@@ -634,7 +634,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 	public function action() {
 		parent::action();
 
-		if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+		if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 			return;
 		}
 

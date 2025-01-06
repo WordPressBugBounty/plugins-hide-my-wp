@@ -17,7 +17,7 @@
 
                 <div id="firewall" class="card col-sm-12 p-0 m-0 tab-panel">
                     <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Firewall', 'hide-my-wp' ); ?>
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#firewall_script_injection' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
+                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/firewall-security/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                     </h3>
                     <div class="card-body">
 
@@ -27,7 +27,7 @@
                                     <input type="hidden" name="hmwp_sqlinjection" value="0"/>
                                     <input type="checkbox" id="hmwp_sqlinjection" name="hmwp_sqlinjection" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_sqlinjection"><?php echo esc_html__( 'Firewall Against Script Injection', 'hide-my-wp' ); ?>
-                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#firewall_script_injection' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/firewall-security/#ghost-activate-firewall-against-injections' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                                     </label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Most WordPress installations are hosted on the popular Apache, Nginx and IIS web servers.', 'hide-my-wp' ); ?></div>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'A thorough set of rules can prevent many types of SQL Injection and URL hacks from being interpreted.', 'hide-my-wp' ); ?></div>
@@ -48,7 +48,7 @@
                                     <option value="3" <?php echo selected( 3, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '7G Firewall', 'hide-my-wp' ); ?></option>
                                     <option value="4" <?php echo selected( 4, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '8G Firewall', 'hide-my-wp' ); ?></option>
                                 </select>
-                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#8g-firewall-e7f54a06-fce1-41b2-8f7a-0429bc3276db' ) ?>" target="_blank" class="position-absolute float-right" style="right: 50px;top: 12%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/firewall-security/#ghost-8g-firewall' ) ?>" target="_blank" class="position-absolute float-right" style="right: 50px;top: 12%;"><i class="dashicons dashicons-editor-help"></i></a>
                             </div>
 
                         </div>
@@ -77,7 +77,7 @@
                                     <input type="hidden" name="hmwp_hide_unsafe_headers" value="0"/>
                                     <input type="checkbox" id="hmwp_hide_unsafe_headers" name="hmwp_hide_unsafe_headers" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_hide_unsafe_headers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_hide_unsafe_headers"><?php echo esc_html__( 'Remove Unsafe Headers', 'hide-my-wp' ); ?>
-                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#remove_headers' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/firewall-security/#ghost-remove-unsafe-header' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                                     </label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Remove PHP version, Server info, Server Signature from header.', 'hide-my-wp' ); ?></div>
                                 </div>
@@ -90,7 +90,7 @@
                                     <input type="hidden" name="hmwp_detectors_block" value="0"/>
                                     <input type="checkbox" id="hmwp_detectors_block" name="hmwp_detectors_block" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_detectors_block' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_detectors_block"><?php echo esc_html__( 'Block Theme Detectors Crawlers', 'hide-my-wp' ); ?>
-                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#block_theme_detectors' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/firewall-security/#ghost-block-theme-detectors' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                                     </label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Block known Users-Agents from popular Theme Detectors.', 'hide-my-wp' ); ?></div>
                                 </div>
@@ -102,7 +102,7 @@
 
                 <div id="header" class="card col-sm-12 p-0 m-0 tab-panel">
                     <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Header Security', 'hide-my-wp' ); ?>
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#hide_security_headers' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
+                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/header-security/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                     </h3>
                     <div class="card-body">
 
@@ -112,7 +112,7 @@
                                     <input type="hidden" name="hmwp_security_header" value="0"/>
                                     <input type="checkbox" id="hmwp_security_header" name="hmwp_security_header" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_security_header' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_security_header"><?php echo esc_html__( 'Add Security Headers for XSS and Code Injection Attacks', 'hide-my-wp' ); ?>
-                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#hide_security_headers' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/header-security/#ghost-activate-header-security' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                                     </label>
                                 </div>
                                 <div class="text-black-50 col-sm-12 p-0 ml-5"><?php echo esc_html__( "Add Strict-Transport-Security header", 'hide-my-wp' ); ?>
@@ -276,7 +276,7 @@
 
                 <div id="geoblock" class="card col-sm-12 p-0 m-0 tab-panel">
                     <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Geo Security', 'hide-my-wp' ); ?>
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#geo_security' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
+                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/geo-security-country-blocking/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                     </h3>
                     <div class="card-body">
 
@@ -289,7 +289,7 @@
                                     <input type="hidden" name="hmwp_geoblock" value="0"/>
                                     <input type="checkbox" id="hmwp_geoblock" name="hmwp_geoblock" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_geoblock' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_geoblock"><?php echo esc_html__( 'Country Blocking', 'hide-my-wp' ); ?>
-                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#country_blocking' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/geo-security-country-blocking/#ghost-activate-country-blocking' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                                     </label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Geographic Security is a feature designed to stops attacks from different countries, and to put an end to harmful activity that comes from specific regions.', 'hide-my-wp' ); ?></div>
                                 </div>
@@ -301,7 +301,7 @@
 
                 <div id="whitelist" class="card col-sm-12 p-0 m-0 tab-panel">
                     <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Whitelist', 'hide-my-wp' ); ?>
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#whitelisting' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
+                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/whitelist-ips-paths/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                     </h3>
                     <div class="card-body">
                         <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
@@ -317,7 +317,12 @@
 								}
 								?>
                                 <textarea type="text" class="form-control" name="whitelist_ip" style="height: 100px"><?php echo( ! empty( $ips ) ? implode( PHP_EOL, $ips ) : '' ) ?></textarea>
-                                <div class="small text-black-50 col-md-12 py-2 px-0"><?php echo sprintf( esc_html__( 'You can white-list a single IP address like 192.168.0.1 or a range of 245 IPs like 192.168.0.*. Find your IP with %s', 'hide-my-wp' ), '<a href="https://whatismyipaddress.com/" target="_blank">https://whatismyipaddress.com/</a>' ) ?></div>
+                                <div class="small text-black-50 col-md-12 pt-2 px-0"><?php echo sprintf( esc_html__( 'You can white-list a single IP address like 192.168.0.1 or a range of 245 IPs like 192.168.0.*. Find your IP with %s', 'hide-my-wp' ), '<a href="https://whatismyipaddress.com/" target="_blank">https://whatismyipaddress.com/</a>' ) ?></div>
+	                            <?php
+	                            $domain = ( HMWP_Classes_Tools::isMultisites() && defined( 'BLOG_ID_CURRENT_SITE' ) ) ? get_home_url( BLOG_ID_CURRENT_SITE ) : site_url();
+	                            if( $ip = @gethostbyname( wp_parse_url($domain, PHP_URL_HOST) ) ) { ?>
+                                    <div class="small text-black-50 col-md-12 pt-1 px-0"><?php echo sprintf( esc_html__( 'To whitelist your website IP address, add: %s', 'hide-my-wp' ), '<strong>'.$ip.'</strong>' ) ?></div>
+	                            <?php } ?>
                             </div>
                         </div>
 
@@ -358,7 +363,7 @@
 
                 <div id="blacklist" class="card col-sm-12 p-0 m-0 tab-panel">
                     <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Blacklist', 'hide-my-wp' ); ?>
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/firewall-geo-security/#blacklisting' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
+                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/blacklist/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                     </h3>
                     <div class="card-body">
                         <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">

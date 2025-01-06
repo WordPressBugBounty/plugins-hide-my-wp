@@ -110,7 +110,7 @@ class HMWP_Models_Files {
 	 * Determines if the current URL corresponds to a file and displays it if so.
 	 *
 	 * This method checks if the current URL points to a file, and if the file
-	 * is managed by WordPress and has been modified by HMWP (Hide My WP).
+	 * is managed by WordPress and has been modified by the plugin.
 	 * If both conditions are met, it will display the file content.
 	 *
 	 * @return void
@@ -334,15 +334,8 @@ class HMWP_Models_Files {
 		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
 
 		// Remove the redirect hook
-		remove_filter( 'wp_redirect', array(
-			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' ),
-			'sanitize_redirect'
-		), PHP_INT_MAX );
-
-		remove_filter( 'template_directory_uri', array(
-			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' ),
-			'find_replace_url'
-		), PHP_INT_MAX );
+		remove_filter( 'wp_redirect', array( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' ), 'sanitize_redirect' ), PHP_INT_MAX );
+		remove_filter( 'template_directory_uri', array( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' ), 'find_replace_url' ), PHP_INT_MAX );
 
 		// In case of SAFE MODE URL or File mapping
 		if ( HMW_DYNAMIC_FILES ) {
@@ -370,11 +363,7 @@ class HMWP_Models_Files {
 				if ( ! HMW_DYNAMIC_FILES && ! HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 					// If file is loaded through WordPress rewrites and not through config file
 					if ( wp_parse_url( $url ) && $url <> $new_url && in_array( $ext, array(
-							'png',
-							'jpg',
-							'jpeg',
-							'webp',
-							'gif'
+							'png', 'jpg', 'jpeg', 'webp', 'gif'
 						) ) ) {
 						if ( stripos( $new_url, 'wp-admin' ) === false ) {
 							// If it's a valid URL
@@ -726,11 +715,7 @@ class HMWP_Models_Files {
 					$redirect_to           = $_REQUEST['redirect_to'];
 					$requested_redirect_to = $redirect_to;
 				} else {
-					$redirect_to = add_query_arg( array(
-							'loggedout' => 'true',
-							'wp_lang'   => get_user_locale( $user ),
-						), wp_login_url() );
-
+					$redirect_to = add_query_arg( array( 'loggedout' => 'true', 'wp_lang'   => get_user_locale( $user ), ), wp_login_url() );
 					$requested_redirect_to = '';
 				}
 

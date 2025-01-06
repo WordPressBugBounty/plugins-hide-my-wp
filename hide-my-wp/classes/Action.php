@@ -91,6 +91,7 @@ class HMWP_Classes_Action extends HMWP_Classes_FrontController {
 						"hmwp_advanced_install",
 						"hmwp_pause_enable",
 						"hmwp_pause_disable",
+						"hmwp_update_product_name",
 					)
 				),
 			),

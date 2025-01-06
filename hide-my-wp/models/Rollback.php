@@ -112,7 +112,7 @@ class HMWP_Models_Rollback
     {
         include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 
-	    $logo_url = _HMWP_ASSETS_URL_ . 'img/logo.png';
+	    $logo_url = _HMWP_ASSETS_URL_ . 'img/logo.svg';
 
 	    $upgrader_args = [
 		    'url' => 'update.php?action=upgrade-plugin&plugin=' . rawurlencode($this->plugin_name),

@@ -136,7 +136,7 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
 								<?php if ( ! HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ) ) { ?>
                                     <tr>
                                         <td colspan="2" style="padding: 20px 0;">
-                                            <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_log#tab=log', true ) ?>" class="wp_button wp_button_default"><?php echo esc_html__( 'Activate Events Log', 'hide-my-wp' ); ?></a>
+                                            <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_log#tab=log', true ) ?>" class="wp_button"><?php echo esc_html__( 'Activate Events Log', 'hide-my-wp' ); ?></a>
                                         </td>
                                     </tr>
 								<?php } ?>

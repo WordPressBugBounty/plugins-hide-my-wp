@@ -108,7 +108,7 @@ class HMWP_Classes_Error {
 	 */
 	public function action() {
 
-		if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+		if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 			return;
 		}
 

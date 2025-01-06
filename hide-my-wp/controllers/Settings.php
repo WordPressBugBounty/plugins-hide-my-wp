@@ -52,7 +52,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 			//check the frontend on settings successfully saved
 			add_action( 'hmwp_confirmed_settings', function () {
 				//check the frontend and prevent from showing brake websites
-				$url      = _HMWP_URL_ . '/view/assets/img/logo.png?hmwp_preview=1&test=' . mt_rand( 11111, 99999 );
+				$url      = _HMWP_URL_ . '/view/assets/img/logo.svg?hmwp_preview=1&test=' . mt_rand( 11111, 99999 );
 				$url      = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
 				$response = HMWP_Classes_Tools::hmwp_localcall( $url, array( 'redirection' => 0, 'cookies' => false ) );
 
@@ -115,18 +115,15 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				if ( strpos( $config_file, '/includes/' ) !== false ) {
 					$config_file = substr( $config_file, strpos( $config_file, '/includes/' ) + 1 );
 				}
-				HMWP_Classes_Error::setNotification( sprintf( esc_html__( "Local & NGINX detected. In case you didn't add the code in the NGINX config already, please add the following line. %s", 'hide-my-wp' ), '<br /><br /><code><strong>include ' . $config_file . ';</strong></code> <br /><strong><br /><a href="' . HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/how-to-setup-hide-my-wp-on-local-flywheel/" target="_blank">' . esc_html__( "Learn how to setup on Local & Nginx", 'hide-my-wp' ) . ' >></a></strong>' ), 'notice', false );
+				HMWP_Classes_Error::setNotification( sprintf( esc_html__( "Local & NGINX detected. In case you didn't add the code in the NGINX config already, please add the following line. %s", 'hide-my-wp' ), '<br /><br /><code><strong>include ' . $config_file . ';</strong></code> <br /><strong><br /><a href="' . esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/how-to-setup-hide-my-wp-on-local-flywheel/' ) . '" target="_blank">' . esc_html__( "Learn how to setup on Local & Nginx", 'hide-my-wp' ) . ' >></a></strong>' ), 'notice', false );
 			} else {
-				HMWP_Classes_Error::setNotification( sprintf( esc_html__( "NGINX detected. In case you didn't add the code in the NGINX config already, please add the following line. %s", 'hide-my-wp' ), '<br /><br /><code><strong>include ' . $config_file . ';</strong></code> <br /><strong><br /><a href="' . HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/how-to-setup-hide-my-wp-on-nginx-server/" target="_blank">' . esc_html__( "Learn how to setup on Nginx server", 'hide-my-wp' ) . ' >></a></strong>' ), 'notice', false );
+				HMWP_Classes_Error::setNotification( sprintf( esc_html__( "NGINX detected. In case you didn't add the code in the NGINX config already, please add the following line. %s", 'hide-my-wp' ), '<br /><br /><code><strong>include ' . $config_file . ';</strong></code> <br /><strong><br /><a href="' . esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/how-to-setup-hide-my-wp-on-nginx-server/' ) . '" target="_blank">' . esc_html__( "Learn how to setup on Nginx server", 'hide-my-wp' ) . ' >></a></strong>' ), 'notice', false );
 			}
 		}
 
 		// Setting Alerts based on Logout and Error statements
 		if ( get_transient( 'hmwp_restore' ) == 1 ) {
-			$restoreLink = '<a href="' . add_query_arg( array(
-					'hmwp_nonce' => wp_create_nonce( 'hmwp_restore_settings' ),
-					'action'     => 'hmwp_restore_settings'
-				) ) . '" class="btn btn-default btn-sm ml-3" />' . esc_html__( "Restore Settings", 'hide-my-wp' ) . '</a>';
+			$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_restore_settings' ), 'action'     => 'hmwp_restore_settings' ) ) ) . '" class="btn btn-default btn-sm ml-3" />' . esc_html__( "Restore Settings", 'hide-my-wp' ) . '</a>';
 			HMWP_Classes_Error::setNotification( esc_html__( 'Do you want to restore the last saved settings?', 'hide-my-wp' ) . $restoreLink );
 		}
 
@@ -371,7 +368,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 		$subtabs = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Menu' )->getSubMenu( $current );
 
 		$content = '<div class="hmwp_nav d-flex flex-column bd-highlight mb-3">';
-		$content .= '<div  class="m-0 px-3 pt-2 pb-3 font-dark font-weight-bold text-logo"><a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) ) . '" target="_blank"><img src="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_logo' ) ? HMWP_Classes_Tools::getOption( 'hmwp_plugin_logo' ) : _HMWP_ASSETS_URL_ . 'img/logo.png' ) . '" class="ml-0 mr-2" style="height:35px; max-width: 180px;" alt=""></a></div>';
+		$content .= '<div  class="m-0 px-3 pt-2 pb-3 font-dark font-weight-bold text-logo"><a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) ) . '" target="_blank"><img src="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_logo' ) ? HMWP_Classes_Tools::getOption( 'hmwp_plugin_logo' ) : _HMWP_ASSETS_URL_ . 'img/logo.svg' ) . '" class="ml-0 mr-2" style="height:35px; max-width: 140px;" alt=""></a></div>';
 
 		foreach ( $subtabs as $tab ) {
 			$content .= '<a href="#' . esc_attr( $tab['tab'] ) . '" class="m-0 px-3 py-3 font-dark hmwp_nav_item" data-tab="' . esc_attr( $tab['tab'] ) . '">' . wp_kses_post( $tab['title'] ) . '</a>';
@@ -390,7 +387,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 	public function action() {
 		parent::action();
 
-		if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+		if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 			return;
 		}
 
@@ -489,8 +486,6 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				// Save the settings
 				if ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 
-					$this->model->saveValues( $_POST );
-
 					// Save the whitelist IPs
 					$this->saveWhiteListIps();
 
@@ -502,6 +497,9 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 
 					// Save the whitelist paths
 					$this->saveWhiteListPaths();
+
+                    // Save the rest of the settings
+					$this->model->saveValues( $_POST );
 
 					// Save CDN URLs
 					if ( $codes = HMWP_Classes_Tools::getValue( 'hmwp_geoblock_countries' ) ) {
@@ -624,7 +622,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				// Set header as text
 				HMWP_Classes_Tools::setHeader( 'text' );
 				$filename = preg_replace( '/[-.]/', '_', wp_parse_url( home_url(), PHP_URL_HOST ) );
-				header( "Content-Disposition: attachment; filename=" . $filename . "_hidemywp_debug.txt" );
+				header( "Content-Disposition: attachment; filename=" . $filename . "_wghost_debug.txt" );
 
 				if ( function_exists( 'glob' ) ) {
 					$pattern = _HMWP_CACHE_DIR_ . '*.log';
@@ -753,13 +751,13 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				break;
 			case 'hmwp_backup':
 				// Save the Settings into backup
-				if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+				if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 					return;
 				}
 				HMWP_Classes_Tools::getOptions();
 				HMWP_Classes_Tools::setHeader( 'text' );
 				$filename = preg_replace( '/[-.]/', '_', wp_parse_url( home_url(), PHP_URL_HOST ) );
-				header( "Content-Disposition: attachment; filename=" . $filename . "_hidemywp_backup.txt" );
+				header( "Content-Disposition: attachment; filename=" . $filename . "_wghost_backup.txt" );
 
 				if ( function_exists( 'base64_encode' ) ) {
 					echo base64_encode( json_encode( HMWP_Classes_Tools::$options ) );
@@ -809,7 +807,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
 
 				// Restore the backup
-				if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+				if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 					return;
 				}
 
@@ -846,7 +844,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				break;
 			case 'hmwp_download_settings':
 				// Save the Settings into backup
-				if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+				if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 					return;
 				}
 
@@ -855,7 +853,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				HMWP_Classes_Tools::getOptions();
 				HMWP_Classes_Tools::setHeader( 'text' );
 				$filename = preg_replace( '/[-.]/', '_', wp_parse_url( home_url(), PHP_URL_HOST ) );
-				header( "Content-Disposition: attachment; filename=" . $filename . "_hidemywp_login.txt" );
+				header( "Content-Disposition: attachment; filename=" . $filename . "_wghost_login.txt" );
 
 				$line    = "\n" . "________________________________________" . PHP_EOL;
 				$message = sprintf( esc_html__( "Thank you for using %s!", 'hide-my-wp' ), HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ) ) . PHP_EOL;
@@ -875,7 +873,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				exit();
 			case 'hmwp_advanced_install':
 
-				if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+				if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 					return;
 				}
 
@@ -913,7 +911,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				break;
 			case 'hmwp_pause_enable':
 
-				if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+				if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 					return;
 				}
 
@@ -922,12 +920,24 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				break;
 			case 'hmwp_pause_disable':
 
-				if ( ! HMWP_Classes_Tools::userCan( 'hmwp_manage_settings' ) ) {
+				if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 					return;
 				}
 
 				delete_transient( 'hmwp_disable' );
 
+				break;
+
+			case 'hmwp_update_product_name':
+				if(HMWP_Classes_Tools::getOption('hmwp_plugin_name') == 'Hide My WP Ghost'){
+					HMWP_Classes_Tools::saveOptions('hmwp_plugin_name', _HMWP_PLUGIN_FULL_NAME_);
+				}
+				if(HMWP_Classes_Tools::getOption('hmwp_plugin_menu') == 'Hide My WP'){
+					HMWP_Classes_Tools::saveOptions('hmwp_plugin_menu', _HMWP_PLUGIN_FULL_NAME_);
+				}
+				if(HMWP_Classes_Tools::getOption('hmwp_plugin_website') == 'https://hidemywpghost.com'){
+					HMWP_Classes_Tools::saveOptions('hmwp_plugin_website', 'https://wpghost.com');
+				}
 				break;
 		}
 

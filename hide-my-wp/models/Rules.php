@@ -12,6 +12,9 @@ defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' );
 class HMWP_Models_Rules {
 
 	public $root_path;
+	/**
+	 * @var false|string Current Server Config File for rewrite rules
+	 */
 	public $config_file;
 	public $config_chmod;
 
@@ -194,7 +197,7 @@ class HMWP_Models_Rules {
 	}
 
 	/**
-	 * Write the rules in the hidemywp conf file
+	 * Write the rules in the conf file
 	 *
 	 * @param $rules
 	 * @param $header
@@ -434,17 +437,17 @@ class HMWP_Models_Rules {
 			}
 
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_detectors_block' ) ) {
-				$rules .= 'if ( $remote_addr ~ \'35.214.130.87\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $remote_addr ~ \'192.185.4.40\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $remote_addr ~ \'15.235.50.223\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $remote_addr ~ \'172.105.48.130\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $remote_addr ~ \'167.99.233.123\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_referer ~ \'wpthemedetector\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_user_agent ~ \'builtwith\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_user_agent ~ \'isitwp\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_user_agent ~ \'wapalyzer\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_referer ~ \'mShots\' ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_referer ~ \'WhatCMS\' ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $remote_addr = "35.214.130.87" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $remote_addr = "192.185.4.40" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $remote_addr = "15.235.50.223" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $remote_addr = "172.105.48.130" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $remote_addr = "167.99.233.123" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_referer ~ "wpthemedetector" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_user_agent ~ "builtwith" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_user_agent ~ "isitwp" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_user_agent ~ "wapalyzer" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_referer ~ "mShots" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_referer ~ "WhatCMS" ) { return 404; }' . PHP_EOL;
 			}
 
 		} elseif ( HMWP_Classes_Tools::isApache() || HMWP_Classes_Tools::isLitespeed() ) {

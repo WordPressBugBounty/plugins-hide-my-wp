@@ -13,11 +13,12 @@
             <form method="POST">
 				<?php wp_nonce_field( 'hmwp_logsettings', 'hmwp_nonce' ) ?>
                 <input type="hidden" name="action" value="hmwp_logsettings"/>
+
                 <div id="log" class="card col-sm-12 p-0 m-0 tab-panel ">
                     <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Events Log Settings', 'hide-my-wp' ); ?>
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/users-activity-log/#check_user_events' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
+                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/events-log-report/#ghost-events-log-report-on-wordpress-dashboard' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                     </h3>
-                    <div class="card-body">
+                    <div class="card-body p-2 m-0">
                         <div class="col-sm-12 row mb-1 py-3 mx-2 hmwp_pro">
                             <div class="box">
                                 <div class="ribbon"><span><?php echo esc_html__( 'PRO', 'hide-my-wp' ) ?></span></div>
@@ -26,13 +27,11 @@
                                 <div class="col-sm-12 p-0 switch switch-sm">
                                     <input type="checkbox" id="hmwp_activity_log" name="hmwp_activity_log" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_activity_log"><?php echo esc_html__( 'Log Users Events', 'hide-my-wp' ); ?></label>
-                                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/users-activity-log/#activate_user_events_log' ) ?>" target="_blank" class="d-inline-block ml-2"><i class="dashicons dashicons-editor-help"></i></a>
+                                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/events-log-report/#ghost-activate-events-log' ) ?>" target="_blank" class="d-inline-block ml-2"><i class="dashicons dashicons-editor-help"></i></a>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Track and log events that happen on your WordPress site', 'hide-my-wp' ); ?></div>
                                 </div>
                             </div>
                         </div>
-
-
                     </div>
 
                     <div class="col-sm-12 m-0 p-2 bg-light text-center" style="position: fixed; bottom: 0; right: 0; z-index: 100; box-shadow: 0 0 8px -3px #444;">
