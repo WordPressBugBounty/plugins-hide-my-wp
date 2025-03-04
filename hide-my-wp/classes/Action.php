@@ -121,6 +121,7 @@ class HMWP_Classes_Action extends HMWP_Classes_FrontController {
 				"actions" => array(
 					"action" => array(
 						"hmwp_brutesettings",
+						"hmwp_google_enterprise",
 						"hmwp_blockedips",
 						"hmwp_deleteip",
 						"hmwp_deleteallips"

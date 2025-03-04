@@ -88,6 +88,7 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 		if (HMWP_Classes_Tools::getValue('hmwp_preview') ) {
 			$_COOKIE = array();
 			@header_remove("Cookie");
+			add_filter( 'show_admin_bar', '__return_false' ); //phpcs:ignore
 		}
 
         //Hook the Hide URLs before the plugin

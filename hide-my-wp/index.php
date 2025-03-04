@@ -1,14 +1,14 @@
 <?php
 /*
-  Copyright (c) 2016 - 2025, WP Ghost
+  Copyright (c) 2016 - 2025, Hide My WP Ghost
   The copyrights to the software code in this file are licensed under the (revised) BSD open source license.
 
   Plugin Name: WP Ghost Lite
   Plugin URI: https://wordpress.org/plugins/hide-my-wp/
   Description: #1 Hack Prevention Security Solution: Hide WP CMS, 7G/8G Firewall, Brute Force Protection, 2FA, GEO Security, Temporary Logins, Alerts & more.
-  Version: 5.4.01
-  Author: WP Ghost
-  Author URI: https://hidemywp.com
+  Version: 5.4.02
+  Author: Hide My WP Ghost
+  Author URI: https://hidemywpghost.com
   License: GPLv2 or later
   License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
   Text Domain: hide-my-wp
@@ -21,7 +21,7 @@
 if ( defined( 'ABSPATH' ) && ! defined( 'HMW_VERSION' ) ) {
 
 	// Set current plugin version
-	define( 'HMWP_VERSION', '5.4.01' );
+	define( 'HMWP_VERSION', '5.4.02' );
 
 	// Set the last stable version of the plugin
 	define( 'HMWP_STABLE_VERSION', '5.3.02' );

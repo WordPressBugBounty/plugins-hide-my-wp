@@ -265,6 +265,11 @@ class HMWP_Models_Files {
 		// Parse the URL components
 		$parse_url = wp_parse_url( $url );
 
+		// Only if there is a path to change
+		if( !isset( $parse_url['path'] ) ) {
+			return $url;
+		}
+
 		// Get the home root path
 		$path = wp_parse_url( home_url(), PHP_URL_PATH );
 
@@ -346,6 +351,7 @@ class HMWP_Models_Files {
 		$this->buildRedirect();
 
 		//Get the original URL and path based on rewrite rules
+		$url_no_query = ( ( strpos( $url, '?' ) !== false ) ? substr( $url, 0, strpos( $url, '?' ) ) : $url );
 		$new_url          = $this->getOriginalUrl( $url );
 		$new_url_no_query = ( ( strpos( $new_url, '?' ) !== false ) ? substr( $new_url, 0, strpos( $new_url, '?' ) ) : $new_url );
 		$new_path         = $this->getOriginalPath( $new_url );
@@ -362,9 +368,7 @@ class HMWP_Models_Files {
 				// If the plugin is not set to mapp all the files dynamically
 				if ( ! HMW_DYNAMIC_FILES && ! HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 					// If file is loaded through WordPress rewrites and not through config file
-					if ( wp_parse_url( $url ) && $url <> $new_url && in_array( $ext, array(
-							'png', 'jpg', 'jpeg', 'webp', 'gif'
-						) ) ) {
+					if ( wp_parse_url( $url ) && $url <> $new_url && in_array( $ext, array( 'png', 'jpg', 'jpeg', 'webp', 'gif') ) ) {
 						if ( stripos( $new_url, 'wp-admin' ) === false ) {
 							// If it's a valid URL
 							// add the url in the WP rewrite list
@@ -436,38 +440,10 @@ class HMWP_Models_Files {
 				// If CSS, JS or SCSS
 				if ( strpos( $new_url, '.js' ) || strpos( $new_url, '.css' ) || strpos( $new_url, '.scss' ) ) {
 
-					// Remove comments
-					$content = preg_replace( '/\/\*.*?\*\//s', '', $content, 1 );
-
-					// Text Mapping for all css and js files
-					if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) && ! is_admin() && ( function_exists( 'is_user_logged_in' ) && ! is_user_logged_in() ) ) {
-
-						$hmwp_text_mapping = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ), true );
-						if ( isset( $hmwp_text_mapping['from'] ) && ! empty( $hmwp_text_mapping['from'] ) && isset( $hmwp_text_mapping['to'] ) && ! empty( $hmwp_text_mapping['to'] ) ) {
-
-							foreach ( $hmwp_text_mapping['to'] as &$value ) {
-								if ( $value <> '' ) {
-									if ( strpos( $value, '{rand}' ) !== false ) {
-										$value = str_replace( '{rand}', HMWP_Classes_Tools::generateRandomString( 5 ), $value );
-									} elseif ( strpos( $value, '{blank}' ) !== false ) {
-										$value = str_replace( '{blank}', '', $value );
-									}
-								}
-							}
-
-							//change only the classes and ids
-							if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_classes' ) ) {
-
-								foreach ( $hmwp_text_mapping['from'] as $index => $from ) {
-									$content = preg_replace( "'(?:([^/])" . addslashes( $from ) . "([^/]))'is", '$1' . $hmwp_text_mapping['to'][ $index ] . '$2', $content );
-								}
-
-							} else {
-								$content = str_ireplace( $hmwp_text_mapping['from'], $hmwp_text_mapping['to'], $content );
-							}
-
-						}
-					}
+					//URL Mapping for all css and js files
+					$content = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $content );
+					//Text Mapping for all css and js files
+					$content = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->replaceTextMapping( $content, true );
 				}
 
 				// Gzip the CSS
@@ -481,14 +457,6 @@ class HMWP_Models_Files {
 				echo $content;
 				exit();
 			}
-
-		} elseif ( strpos( trailingslashit( $new_url_no_query ), '/' . HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) . '/' ) || strpos( trailingslashit( $new_url_no_query ), '/' . HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) . '/' ) ) {
-
-			add_filter( 'hmwp_option_hmwp_remove_third_hooks', '__return_true' );
-
-			header( "HTTP/1.1 200 OK" );
-
-			$this->handleLogin( $new_url );
 
 		} elseif ( $url <> $new_url ) {
 
@@ -517,28 +485,41 @@ class HMWP_Models_Files {
 
 				exit();
 
-			} elseif ( strpos( trailingslashit( $new_url_no_query ), '/' . HMWP_Classes_Tools::getDefault( 'hmwp_activate_url' ) . '/' ) !== false || strpos( trailingslashit( $new_url_no_query ), '/' . HMWP_Classes_Tools::getDefault( 'hmwp_wp-signup_url' ) . '/' ) !== false ) {
+			} elseif ( stripos( trailingslashit( $url_no_query ), '/' . HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) . '/' ) !== false ||
+			           ( HMWP_Classes_Tools::getOption( 'hmwp_logout_url' ) <> '' && stripos( trailingslashit( $url_no_query ), '/' . HMWP_Classes_Tools::getOption( 'hmwp_logout_url' ) . '/' ) !== false ) ||
+			           ( HMWP_Classes_Tools::getOption( 'hmwp_lostpassword_url' ) <> '' && stripos( trailingslashit( $url_no_query ), '/' . HMWP_Classes_Tools::getOption( 'hmwp_lostpassword_url' ) . '/' ) !== false ) ||
+			           ( HMWP_Classes_Tools::getOption( 'hmwp_register_url' ) <> '' && stripos( trailingslashit( $url_no_query ), '/' . HMWP_Classes_Tools::getOption( 'hmwp_register_url' ) . '/' ) !== false ) ||
+			           stripos( trailingslashit( $new_url_no_query ), '/' . HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) . '/' ) !== false ) {
 
-				ob_start();
-				include $new_path;
-				$content = ob_get_clean();
+				add_filter( 'hmwp_option_hmwp_remove_third_hooks', '__return_true' );
 
 				header( "HTTP/1.1 200 OK" );
 
-				//Echo the html file content
-				echo $content;
+				$this->handleLogin( $new_url );
+
+			} elseif ( stripos( trailingslashit( $url_no_query ), '/' . HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ) . '/' ) !== false ||
+			           stripos( trailingslashit( $new_url_no_query ), '/' . HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '/' ) !== false ) {
+
+				wp_safe_redirect( $new_url, 301 );
 				exit();
 
-			} elseif ( ! HMWP_Classes_Tools::getValue( 'nordt' ) ) {
+			} elseif (  HMWP_Classes_Tools::isMultisites() && stripos( trailingslashit( $url_no_query ), '/' . HMWP_Classes_Tools::getOption( 'hmwp_activate_url' ) . '/' ) !== false ) {
 
-				$uri = wp_parse_url( $url, PHP_URL_QUERY );
+				$new_path = realpath( $new_path );
 
-				if ( $uri && strpos( $new_url, '?' ) === false ) {
-					$new_url .= '?' . $uri;
+				if ( strpos( $new_path, 'wp-activate.php' ) && $wp_filesystem->exists( $new_path ) ) {
+					header( "HTTP/1.1 200 OK" );
+
+					ob_start();
+					global $wp_object_cache, $wp_query;
+					require_once $new_path;
+					$content = ob_get_clean();
+
+					//Echo the html file content
+					echo $content;
+					die();
 				}
 
-				wp_safe_redirect( add_query_arg( array( 'nordt' => true ), $new_url ), 301 );
-				exit();
 			}
 
 		}
@@ -697,8 +678,14 @@ class HMWP_Models_Files {
 					}
 				}
 
-				global $error, $interim_login, $action, $user_login;
-				@require_once ABSPATH . 'wp-login.php';
+				global $wp_query, $error, $interim_login, $action, $user_login;
+
+				$wp_query->is_404 = false;
+				if( ! empty($error) ) {
+					$error = false;
+				}
+
+				require_once ABSPATH . 'wp-login.php';
 				die();
 
 			} elseif ( HMWP_Classes_Tools::getOption( 'hmwp_logout_url' ) <> '' && strpos( $url, '/' . HMWP_Classes_Tools::getOption( 'hmwp_logout_url' ) ) ) {

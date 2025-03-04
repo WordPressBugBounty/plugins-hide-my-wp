@@ -67,9 +67,13 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 			if ( $this->securitycheck_time = get_option( HMWP_SECURITY_CHECK_TIME ) ) {
 				if ( time() - $this->securitycheck_time['timestamp'] > ( 3600 * 24 * 7 ) ) {
 					HMWP_Classes_Error::setNotification( esc_html__( 'You should check your website every week to see if there are any security changes.', 'hide-my-wp' ) );
-					HMWP_Classes_ObjController::getClass( 'HMWP_Classes_Error' )->hookNotices();
 				}
 			}
+		}
+
+		// Show source code analysed on Security Check
+		if ( HMWP_Classes_Tools::getValue( 'hmwp_crawled' ) ) {
+			HMWP_Classes_Error::setNotification( '<pre>' . htmlentities($this->getSourceCode()) . '</pre>' );
 		}
 
 		//Show connect for activation
@@ -82,6 +86,10 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 		$this->risktasks  = $this->getRiskTasks();
 		$this->riskreport = $this->getRiskReport();
 
+		// Show errors on top
+		HMWP_Classes_ObjController::getClass( 'HMWP_Classes_Error' )->hookNotices();
+
+		echo '<noscript><div class="alert-danger text-center py-3">' . sprintf( esc_html__( "Javascript is disabled on your browser! You need to activate the javascript in order to use %s plugin.", 'hide-my-wp' ), esc_html(HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' )) ) . '</div></noscript>';
 		$this->show( 'SecurityCheck' );
 		$this->show( 'blocks/Upgrade' );
 

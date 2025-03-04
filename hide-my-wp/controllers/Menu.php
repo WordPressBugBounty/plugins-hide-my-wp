@@ -65,10 +65,18 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 			//Change the plugin name on customization.
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ) <> _HMWP_PLUGIN_FULL_NAME_ ) {
 
+				$websites = array(
+					'https://wpplugins.tips',
+					'https://hidemywpghost.com',
+					'https://wpghost.com',
+					'https://hidemywp.com'
+				);
+
 				//Hook plugin details.
 				add_filter( 'gettext', function ( $string ) {
 
 					//Change the plugin name in the plugins list.
+					$string = str_replace( _HMWP_PLUGIN_AUTHOR_NAME_, HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ), $string );
 					$string = str_replace( _HMWP_PLUGIN_FULL_NAME_, HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ), $string );
 
 					//Return the changed text
@@ -77,15 +85,12 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 				}, 11, 1 );
 
 				//Hook plugin row metas.
-				add_filter( 'plugin_row_meta', function ( $plugin_meta ) {
+				add_filter( 'plugin_row_meta', function( $plugin_meta ) use ( $websites ) {
 					foreach ( $plugin_meta as $key => &$string ) {
 						//Change the author URL.
-						$string = str_ireplace( array(
-							'https://wpplugins.tips',
-							'https://hidemywpghost.com',
-							'https://wpghost.com',
-							'https://hidemywp.com'
-						), HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ), $string );
+						if( !in_array(HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ), $websites) ) {
+							$string = str_ireplace( $websites, HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ), $string );
+						}
 						//Change the plugin details.
 						if ( stripos( $string, 'plugin=' . dirname( HMWP_BASENAME ) ) !== false ) {
 							//Unset the plugin meta is plugin found
@@ -96,6 +101,18 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 					return $plugin_meta;
 				}, 11, 1 );
 
+				if( ! in_array(HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ), $websites) ){
+					add_filter('hmwp_getview', function ($view){
+						$style = '<style>#hmwp_wrap .dashicons-editor-help,.hmwp_help{display: none !important;}</style>';
+						return $style . $view;
+					}, 11, 1);
+				}
+
+			} elseif ( strpos( HMWP_Classes_Tools::getValue( 'page' ), 'hmwp_' ) !== false && apply_filters('hmwp_showaccount', true) ) {
+				add_filter('hmwp_getview', function ($view){
+					$style = '<script>window.intercomSettings = {api_base: "https://api-iam.intercom.io",app_id: "y45xtsgw",};</script><script>(function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic(\'reattach_activator\');ic(\'update\',w.intercomSettings);}else{var d=document;var i=function(){i.c(arguments);};i.q=[];i.c=function(args){i.q.push(args);};w.Intercom=i;var l=function(){var s=d.createElement(\'script\');s.type=\'text/javascript\';s.async=true;s.src=\'https://widget.intercom.io/widget/y45xtsgw\';var x=d.getElementsByTagName(\'script\')[0];x.parentNode.insertBefore(s,x);};if(document.readyState===\'complete\'){l();}else if(w.attachEvent){w.attachEvent(\'onload\',l);}else{w.addEventListener(\'load\',l,false);}}})();</script>';
+					return $style . $view;
+				}, 11, 1);
 			}
 
 			//Hook the show account option in admin.

@@ -69,7 +69,7 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		if ( HMWP_Classes_Tools::getIsset( HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ) ) {
 			if ( HMWP_Classes_Tools::getValue( HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ) == HMWP_Classes_Tools::getOption( 'hmwp_disable' ) ) {
 
-				HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Brute' )->clearBlockedIPs();
+				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->clearBlockedIPs();
 				HMWP_Classes_Tools::saveOptions( 'banlist_ip', json_encode( array() ) );
 
 				add_filter( 'site_url', array( $this->model, 'site_url' ), PHP_INT_MAX, 2 );
@@ -139,12 +139,14 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		add_action( 'wp_logout', array( $this->model, 'wp_logout' ), PHP_INT_MAX );
 		add_action( 'check_admin_referer', array( $this->model, 'check_admin_referer' ), PHP_INT_MAX, 2 );
 		// Change the admin url and login url
+		if( empty( (array) HMWP_Classes_Tools::getOption( 'file_mappings' ) ) ) {
+			add_filter( 'admin_url', array( $this->model, 'admin_url' ), PHP_INT_MAX, 3 );
+		}
 		add_filter( 'lostpassword_url', array( $this->model, 'lostpassword_url' ), PHP_INT_MAX, 1 );
 		add_filter( 'login_title', array( $this->model, 'login_title' ), PHP_INT_MAX, 1 );
 		add_filter( 'register', array( $this->model, 'register_url' ), PHP_INT_MAX, 1 );
 		add_filter( 'login_url', array( $this->model, 'login_url' ), PHP_INT_MAX, 1 );
 		add_filter( 'logout_url', array( $this->model, 'logout_url' ), PHP_INT_MAX, 2 );
-		add_filter( 'admin_url', array( $this->model, 'admin_url' ), PHP_INT_MAX, 3 );
 		add_filter( 'network_admin_url', array( $this->model, 'network_admin_url' ), PHP_INT_MAX, 3 );
 		add_filter( 'site_url', array( $this->model, 'site_url' ), PHP_INT_MAX, 2 );
 		add_filter( 'network_site_url', array( $this->model, 'site_url' ), PHP_INT_MAX, 3 );

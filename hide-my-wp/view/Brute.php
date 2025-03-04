@@ -45,6 +45,7 @@
             <form method="POST">
 				<?php wp_nonce_field( 'hmwp_brutesettings', 'hmwp_nonce' ) ?>
                 <input type="hidden" name="action" value="hmwp_brutesettings"/>
+                <input type="hidden" name="hmwp_bruteforce_login" value="1"/>
 
 				<?php do_action( 'hmwp_brute_force_form_beginning' ) ?>
 
@@ -56,6 +57,7 @@
                         <div class="col-sm-12 row mb-1 ml-1 p-2">
                             <div class="checker col-sm-12 row my-2 py-1">
                                 <div class="col-sm-12 p-0 switch switch-sm">
+                                    <input type="hidden" name="hmwp_bruteforce" value="0"/>
                                     <input type="checkbox" id="hmwp_bruteforce" name="hmwp_bruteforce" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_bruteforce"><?php echo esc_html__( 'Use Brute Force Protection', 'hide-my-wp' ); ?></label>
                                     <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/brute-force-attack-protection/#ghost-activate-brute-force-protection' ) ?>" target="_blank" class="d-inline-block ml-2"><i class="dashicons dashicons-editor-help"></i></a>
@@ -67,6 +69,7 @@
                         <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_bruteforce">
                             <div class="checker col-sm-12 row my-2 py-0">
                                 <div class="col-sm-12 p-0 switch switch-xxs pl-5">
+                                    <input type="hidden" name="hmwp_bruteforce_lostpassword" value="0"/>
                                     <input type="checkbox" id="hmwp_bruteforce_lostpassword" name="hmwp_bruteforce_lostpassword" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_lostpassword' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_bruteforce_lostpassword"><?php echo esc_html__( 'Lost Password Form Protection', 'hide-my-wp' ); ?></label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Activate the Brute Force protection on lost password form.', 'hide-my-wp' ); ?></div>
@@ -78,6 +81,7 @@
                             <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_bruteforce">
                                 <div class="checker col-sm-12 row my-2 py-0">
                                     <div class="col-sm-12 p-0 switch switch-xxs pl-5">
+                                        <input type="hidden" name="hmwp_bruteforce_register" value="0"/>
                                         <input type="checkbox" id="hmwp_bruteforce_register" name="hmwp_bruteforce_register" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_register' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                         <label for="hmwp_bruteforce_register"><?php echo esc_html__( 'Sign Up Form Protection', 'hide-my-wp' ); ?></label>
                                         <div class="text-black-50 ml-5"><?php echo esc_html__( 'Activate the Brute Force protection on sign up form.', 'hide-my-wp' ); ?></div>
@@ -89,6 +93,7 @@
                         <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_bruteforce">
                             <div class="checker col-sm-12 row my-2 py-0">
                                 <div class="col-sm-12 p-0 switch switch-xxs pl-5">
+                                    <input type="hidden" name="hmwp_bruteforce_comments" value="0"/>
                                     <input type="checkbox" id="hmwp_bruteforce_comments" name="hmwp_bruteforce_comments" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_comments' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_bruteforce_comments"><?php echo esc_html__( 'Comment Form Protection', 'hide-my-wp' ); ?></label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Activate the Brute Force protection on website comment form.', 'hide-my-wp' ); ?></div>
@@ -99,6 +104,7 @@
                         <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_bruteforce">
                             <div class="checker col-sm-12 row my-2 py-0">
                                 <div class="col-sm-12 p-0 switch switch-xxs pl-5">
+                                    <input type="hidden" name="hmwp_bruteforce_username" value="0"/>
                                     <input type="checkbox" id="hmwp_bruteforce_username" name="hmwp_bruteforce_username" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_username' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_bruteforce_username"><?php echo esc_html__( 'Wrong Username Protection', 'hide-my-wp' ); ?></label>
                                     <div class="text-black-50 ml-5"><?php echo esc_html__( 'Immediately block incorrect usernames on login form.', 'hide-my-wp' ); ?></div>
@@ -110,22 +116,156 @@
 
                             <div class="border-top"></div>
                             <input type="hidden" value="<?php echo( HMWP_Classes_Tools::getOption( 'brute_use_math' ) ? '1' : '0' ) ?>" name="brute_use_math">
-                            <input type="hidden" value="<?php echo( HMWP_Classes_Tools::getOption( 'brute_use_captcha' ) ? '1' : '0' ) ?>" name="brute_use_captcha">
-                            <input type="hidden" value="<?php echo( HMWP_Classes_Tools::getOption( 'brute_use_captcha_v3' ) ? '1' : '0' ) ?>" name="brute_use_captcha_v3">
+	                        <?php if ( HMWP_Classes_Tools::getOption( 'brute_use_google_enterprise' ) ) { ?>
+                                <input type="hidden" name="brute_use_captcha" value="0"/>
+                                <input type="hidden" name="brute_use_captcha_v3" value="0"/>
+                                <input type="hidden" value="<?php echo( HMWP_Classes_Tools::getOption( 'brute_use_google' ) ? '1' : '0' ) ?>" name="brute_use_google">
+	                        <?php }else{ ?>
+                                <input type="hidden" name="brute_use_google" value="0"/>
+                                <input type="hidden" value="<?php echo( HMWP_Classes_Tools::getOption( 'brute_use_captcha' ) ? '1' : '0' ) ?>" name="brute_use_captcha">
+		                        <?php if ( ! HMWP_Classes_Tools::isPluginActive( 'ultimate-member/ultimate-member.php' ) ) { ?>
+                                    <input type="hidden" value="<?php echo( HMWP_Classes_Tools::getOption( 'brute_use_captcha_v3' ) ? '1' : '0' ) ?>" name="brute_use_captcha_v3">
+		                        <?php } ?>
+	                        <?php } ?>
 
                             <div class="col-sm-12 group_autoload d-flex justify-content-center btn-group btn-group-lg mt-3 px-0" role="group">
                                 <button type="button" class="btn btn-outline-info brute_use_math mx-1 py-4 px-4 <?php echo( HMWP_Classes_Tools::getOption( 'brute_use_math' ) ? 'active' : '' ) ?>"><?php echo esc_html__( 'Math reCAPTCHA', 'hide-my-wp' ); ?></button>
-                                <button type="button" class="btn btn-outline-info brute_use_captcha mx-1 py-4 px-4 <?php echo( HMWP_Classes_Tools::getOption( 'brute_use_captcha' ) ? 'active' : '' ) ?>"><?php echo esc_html__( "Google reCAPTCHA V2", 'hide-my-wp' ) ?></button>
-                                <button type="button" class="btn btn-outline-info brute_use_captcha_v3 mx-1 py-4 px-4 <?php echo( HMWP_Classes_Tools::getOption( 'brute_use_captcha_v3' ) ? 'active' : '' ) ?>"><?php echo esc_html__( "Google reCAPTCHA V3", 'hide-my-wp' ) ?></button>
+		                        <?php if ( HMWP_Classes_Tools::getOption( 'brute_use_google_enterprise' ) ) { ?>
+                                    <button type="button" class="btn btn-outline-info brute_use_google mx-1 py-4 px-4 <?php echo( HMWP_Classes_Tools::getOption( 'brute_use_google' ) ? 'active' : '' ) ?>"><?php echo esc_html__( "Google reCAPTCHA", 'hide-my-wp' ) ?></button>
+		                        <?php }else{ ?>
+                                    <button type="button" class="btn btn-outline-info brute_use_captcha mx-1 py-4 px-4 <?php echo( HMWP_Classes_Tools::getOption( 'brute_use_captcha' ) ? 'active' : '' ) ?>"><?php echo esc_html__( "Google reCAPTCHA V2", 'hide-my-wp' ) ?></button>
+			                        <?php if ( ! HMWP_Classes_Tools::isPluginActive( 'ultimate-member/ultimate-member.php' ) ) { ?>
+                                        <button type="button" class="btn btn-outline-info brute_use_captcha_v3 mx-1 py-4 px-4 <?php echo( HMWP_Classes_Tools::getOption( 'brute_use_captcha_v3' ) ? 'active' : '' ) ?>"><?php echo esc_html__( "Google reCAPTCHA V3", 'hide-my-wp' ) ?></button>
+			                        <?php } ?>
+		                        <?php } ?>
                             </div>
 
+	                        <?php if ( HMWP_Classes_Tools::getOption( 'brute_use_google_enterprise' ) ) { ?>
+                                <div class="brute_use_google" <?php echo( ! HMWP_Classes_Tools::getOption( 'brute_use_google' ) ? 'style="display:none;"' : '' ) ?>>
+                                    <div class="col-sm-12 text-center border-bottom border-light py-3 mx-0 my-3">
+				                        <?php echo sprintf( esc_html__( "%sClick here%s to create or view keys for Google reCAPTCHA.", 'hide-my-wp' ), '<a href="https://console.cloud.google.com/security/recaptcha/" class="mx-1 text-link font-weight-bold text-uppercase" target="_blank">', '</a>' ); ?>
+                                    </div>
+                                    <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
+                                        <div class="col-md-4 p-0 font-weight-bold">
+					                        <?php echo esc_html__( 'Site Key', 'hide-my-wp' ); ?>:
+                                            <div class="small text-black-50"><?php echo sprintf( esc_html__( "Site keys for %s Google reCaptcha %s.", 'hide-my-wp' ), '<a href="https://console.cloud.google.com/security/recaptcha" class="text-link" target="_blank">', '</a>' ); ?></div>
+                                        </div>
+                                        <div class="col-md-8 p-0 input-group">
+                                            <input type="text" class="form-control " name="brute_google_site_key" value="<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) ) ?>"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
+                                        <div class="col-md-4 p-0 font-weight-bold">
+					                        <?php echo esc_html__( 'Project ID', 'hide-my-wp' ); ?>:
+                                            <div class="small text-black-50"><?php echo sprintf( esc_html__( "Project ID for %s Google Enterprise %s.", 'hide-my-wp' ), '<a href="https://console.cloud.google.com/cloud-resource-manager" class="text-link" target="_blank">', '</a>' ); ?></div>
+                                        </div>
+                                        <div class="col-md-8 p-0 input-group">
+                                            <input type="text" class="form-control " name="brute_google_project_id" value="<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_project_id' ) ) ?>"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
+                                        <div class="col-md-4 p-0 font-weight-bold">
+					                        <?php echo esc_html__( 'Api Key', 'hide-my-wp' ); ?>:
+                                            <div class="small text-black-50"><?php echo sprintf( esc_html__( "Api key from %s Google API Console %s.", 'hide-my-wp' ), '<a href="https://console.cloud.google.com/apis/credentials" class="text-link" target="_blank">', '</a>' ); ?></div>
+                                        </div>
+                                        <div class="col-md-8 p-0 input-group">
+                                            <input type="password" class="form-control " name="brute_google_api_key" value="<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_api_key' ) ) ?>"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-12 row mb-1 ml-1 p-2">
+                                        <div class="checker col-sm-12 row my-2 py-1">
+                                            <div class="col-sm-12 p-0 switch switch-sm">
+                                                <input type="hidden" name="brute_google_checkbox" value="0"/>
+                                                <input type="checkbox" id="brute_google_checkbox" name="brute_google_checkbox" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'brute_google_checkbox' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                                <label for="brute_google_checkbox"><?php echo esc_html__( 'Use Checkbox Challenge', 'hide-my-wp' ); ?></label>
+                                                <div class="text-black-50 ml-5"><?php echo sprintf( esc_html__( "Verifies users by requiring them to check %s I'm not a robot %s checkbox.", 'hide-my-wp' ), '<strong>', '</strong>' ); ?></div>
+                                                <div class="text-danger ml-5"><?php echo sprintf( esc_html__( "%s Important! %s Enable this option only if it is already activated in the %s Google reCAPTCHA Key %s settings.", 'hide-my-wp' ), '<strong>', '</strong>', '<a href="https://console.cloud.google.com/security/recaptcha/'.esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) ).'/edit" target="_blank">', '</a>'); ?></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3 brute_google_checkbox">
+                                        <div class="col-sm-4 p-1">
+                                            <div class="font-weight-bold"><?php echo esc_html__( 'reCaptcha Language', 'hide-my-wp' ); ?>:
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-8 p-0 input-group">
+                                            <select name="brute_google_language" class="selectpicker form-control mb-1">
+						                        <?php
+						                        $languages = array(
+							                        esc_html__( 'Auto Detect', 'hide-my-wp' )         => '',
+							                        esc_html__( 'English', 'hide-my-wp' )             => 'en',
+							                        esc_html__( 'Arabic', 'hide-my-wp' )              => 'ar',
+							                        esc_html__( 'Bulgarian', 'hide-my-wp' )           => 'bg',
+							                        esc_html__( 'Catalan Valencian', 'hide-my-wp' )   => 'ca',
+							                        esc_html__( 'Czech', 'hide-my-wp' )               => 'cs',
+							                        esc_html__( 'Danish', 'hide-my-wp' )              => 'da',
+							                        esc_html__( 'German', 'hide-my-wp' )              => 'de',
+							                        esc_html__( 'Greek', 'hide-my-wp' )               => 'el',
+							                        esc_html__( 'British English', 'hide-my-wp' )     => 'en_gb',
+							                        esc_html__( 'Spanish', 'hide-my-wp' )             => 'es',
+							                        esc_html__( 'Persian', 'hide-my-wp' )             => 'fa',
+							                        esc_html__( 'French', 'hide-my-wp' )              => 'fr',
+							                        esc_html__( 'Canadian French', 'hide-my-wp' )     => 'fr_ca',
+							                        esc_html__( 'Hindi', 'hide-my-wp' )               => 'hi',
+							                        esc_html__( 'Croatian', 'hide-my-wp' )            => 'hr',
+							                        esc_html__( 'Hungarian', 'hide-my-wp' )           => 'hu',
+							                        esc_html__( 'Indonesian', 'hide-my-wp' )          => 'id',
+							                        esc_html__( 'Italian', 'hide-my-wp' )             => 'it',
+							                        esc_html__( 'Hebrew', 'hide-my-wp' )              => 'iw',
+							                        esc_html__( 'Jananese', 'hide-my-wp' )            => 'ja',
+							                        esc_html__( 'Korean', 'hide-my-wp' )              => 'ko',
+							                        esc_html__( 'Lithuanian', 'hide-my-wp' )          => 'lt',
+							                        esc_html__( 'Latvian', 'hide-my-wp' )             => 'lv',
+							                        esc_html__( 'Dutch', 'hide-my-wp' )               => 'nl',
+							                        esc_html__( 'Norwegian', 'hide-my-wp' )           => 'no',
+							                        esc_html__( 'Polish', 'hide-my-wp' )              => 'pl',
+							                        esc_html__( 'Portuguese', 'hide-my-wp' )          => 'pt',
+							                        esc_html__( 'Romanian', 'hide-my-wp' )            => 'ro',
+							                        esc_html__( 'Russian', 'hide-my-wp' )             => 'ru',
+							                        esc_html__( 'Slovak', 'hide-my-wp' )              => 'sk',
+							                        esc_html__( 'Slovene', 'hide-my-wp' )             => 'sl',
+							                        esc_html__( 'Serbian', 'hide-my-wp' )             => 'sr',
+							                        esc_html__( 'Swedish', 'hide-my-wp' )             => 'sv',
+							                        esc_html__( 'Thai', 'hide-my-wp' )                => 'th',
+							                        esc_html__( 'Turkish', 'hide-my-wp' )             => 'tr',
+							                        esc_html__( 'Ukrainian', 'hide-my-wp' )           => 'uk',
+							                        esc_html__( 'Vietnamese', 'hide-my-wp' )          => 'vi',
+							                        esc_html__( 'Simplified Chinese', 'hide-my-wp' )  => 'zh_cn',
+							                        esc_html__( 'Traditional Chinese', 'hide-my-wp' ) => 'zh_tw'
+						                        );
+						                        foreach ( $languages as $key => $language ) {
+							                        echo '<option value="' . esc_attr( $language ) . '"  ' . selected( $language, HMWP_Classes_Tools::getOption( 'brute_google_language' ) ) . '>' . esc_html( ucfirst( $key ) ) . '</option>';
+						                        } ?>
+                                            </select>
+                                        </div>
+                                    </div>
+
+			                        <?php if ( HMWP_Classes_Tools::getOption( 'brute_google_project_id' ) <> '' && HMWP_Classes_Tools::getOption( 'brute_google_api_key' ) <> '' && HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) <> '' ) { ?>
+                                        <div class="col-sm-12 border-bottom border-light py-3 mx-0 my-3">
+                                            <button type="button" class="btn btn-lg btn-default brute_recaptcha_test hmwp_modal" data-remote="<?php echo esc_url( site_url( 'wp-login.php' ) ) ?>?nordt=1" data-target="#brute_recaptcha_modal"><?php echo esc_html__( 'reCAPTCHA Test', 'hide-my-wp' ); ?></button>
+
+                                            <h4 class="mt-5 mb-3"><?php echo esc_html__( 'Next Steps', 'hide-my-wp' ); ?></h4>
+                                            <ol>
+                                                <li><?php echo sprintf( esc_html__( "Run %sreCAPTCHA Test%s and login inside the popup.", 'hide-my-wp' ), '<strong>', '</strong>' ); ?></li>
+                                                <li><?php echo esc_html__( "If you're able to login, you've set reCAPTCHA correctly.", 'hide-my-wp' ); ?></li>
+                                                <li><?php echo esc_html__( 'If the reCAPTCHA displays any error, please make sure you fix them before moving forward.', 'hide-my-wp' ); ?></li>
+                                                <li><?php echo esc_html__( 'Do not logout from your account until you are confident that reCAPTCHA is working and you will be able to login again.', 'hide-my-wp' ); ?></li>
+                                                <li><?php echo esc_html__( "If you can't configure reCAPTCHA, switch to Math reCaptcha protection.", 'hide-my-wp' ); ?></li>
+                                            </ol>
+                                        </div>
+			                        <?php } ?>
+
+                                </div>
+	                        <?php } else { ?>
                             <div class="brute_use_captcha" <?php echo( ! HMWP_Classes_Tools::getOption( 'brute_use_captcha' ) ? 'style="display:none"' : '' ) ?>>
                                 <div class="col-sm-12 text-center border-bottom border-light py-3 mx-0 my-3">
 									<?php echo sprintf( esc_html__( "%sClick here%s to create or view keys for Google reCAPTCHA v2.", 'hide-my-wp' ), '<a href="https://www.google.com/recaptcha/admin/create" class="mx-1 text-link font-weight-bold text-uppercase" target="_blank">', '</a>' ); ?>
                                 </div>
                                 <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
                                     <div class="col-md-4 p-0 font-weight-bold">
-										<?php echo esc_html__( 'Site key', 'hide-my-wp' ); ?>:
+	                                    <?php echo esc_html__( 'Site Key', 'hide-my-wp' ); ?>:
                                         <div class="small text-black-50"><?php echo sprintf( esc_html__( "Site keys for %sGoogle reCaptcha%s.", 'hide-my-wp' ), '<a href="https://www.google.com/recaptcha/admin#list" class="text-link" target="_blank">', '</a>' ); ?></div>
                                     </div>
                                     <div class="col-md-8 p-0 input-group">
@@ -236,7 +376,7 @@
                                 </div>
                                 <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
                                     <div class="col-md-4 p-0 font-weight-bold">
-										<?php echo esc_html__( 'Site key', 'hide-my-wp' ); ?>:
+	                                    <?php echo esc_html__( 'Site Key', 'hide-my-wp' ); ?>:
                                         <div class="small text-black-50"><?php echo sprintf( esc_html__( "Site keys for %sGoogle reCaptcha%s.", 'hide-my-wp' ), '<a href="https://www.google.com/recaptcha/admin#list" class="text-link" target="_blank">', '</a>' ); ?></div>
                                     </div>
                                     <div class="col-md-8 p-0 input-group">
@@ -269,6 +409,8 @@
 								<?php } ?>
 
                             </div>
+	                        <?php } ?>
+
                             <div>
                                 <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
                                     <div class="col-md-4 p-0 font-weight-bold">
@@ -375,6 +517,11 @@
 
         </div>
         <div class="hmwp_col hmwp_col_side p-0 pr-2 mr-2">
+	        <?php
+	        if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce' ) ) {
+		        $view->show('blocks/GoogleEnterprise');
+	        }
+	        ?>
             <div class="card col-sm-12 m-0 p-0 rounded-0">
                 <div class="card-body f-gray-dark text-left">
                     <h3 class="card-title"><?php echo esc_html__( 'Brute Force Login Protection', 'hide-my-wp' ); ?></h3>

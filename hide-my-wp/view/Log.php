@@ -25,10 +25,7 @@
                             </div>
                             <div class="checker col-sm-12 row my-2 py-1" style="opacity: 0.3" onclick="jQuery('#hmwp_ghost_mode_modal').modal('show')">
                                 <div class="col-sm-12 p-0 switch switch-sm">
-                                    <input type="checkbox" id="hmwp_activity_log" name="hmwp_activity_log" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                    <label for="hmwp_activity_log"><?php echo esc_html__( 'Log Users Events', 'hide-my-wp' ); ?></label>
-                                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/events-log-report/#ghost-activate-events-log' ) ?>" target="_blank" class="d-inline-block ml-2"><i class="dashicons dashicons-editor-help"></i></a>
-                                    <div class="text-black-50 ml-5"><?php echo esc_html__( 'Track and log events that happen on your WordPress site', 'hide-my-wp' ); ?></div>
+                                    <img src="<?php echo esc_url( _HMWP_ASSETS_URL_ . 'img/events.png' ) ?>" style="width: 100%" />
                                 </div>
                             </div>
                         </div>
@@ -45,8 +42,8 @@
             <div class="card col-sm-12 m-0 p-0 rounded-0">
                 <div class="card-body f-gray-dark text-left">
                     <h3 class="card-title"><?php echo esc_html__( 'Events Log', 'hide-my-wp' ); ?></h3>
-                    <div class="text-info mb-3"><?php echo esc_html__( "Monitor everything that happens on your WordPress site!", 'hide-my-wp' ); ?></div>
-                    <div class="text-info mb-3"><?php echo esc_html__( "All the logs are saved on Cloud for 30 days and the report is available if your website is attacked.", 'hide-my-wp' ); ?></div>
+                    <div class="text-info mb-3"><?php echo esc_html__( "The Events Log Report will document every action users take when trying to log in or are already logged in to your site (for the last 30 days), so you’ll know who does what on your site.", 'hide-my-wp' ); ?></div>
+                    <div class="text-black-50 mb-3"><?php echo esc_html__( "This refers to actions that could impact your site’s security. WP Ghost will NOT log users’ actions such as clicking on a Menu or other similar, everyday actions that a user regularly takes in the frontend of a site.", 'hide-my-wp' ); ?></div>
                 </div>
             </div>
             <div class="card col-sm-12 p-0">

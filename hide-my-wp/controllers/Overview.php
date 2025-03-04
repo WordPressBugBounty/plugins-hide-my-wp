@@ -250,7 +250,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'show'        => true,
 			),
 			array(
-				'title'       => esc_html__( "User Events Log", 'hide-my-wp' ),
+				'title'       => esc_html__( "Events Log", 'hide-my-wp' ),
 				'description' => esc_html__( "Track and Log the website events and receive security alerts by email.", 'hide-my-wp' ),
 				'free'        => false,
 				'option'      => 'hmwp_activity_log',

@@ -754,7 +754,7 @@ class HMWP_Models_Compatibility {
 	 * @return array|false
 	 */
 	public function findCDNServers() {
-		$domains = array();
+		$cdn_urls = array();
 
 		//If WP_CONTENT_URL is set as a different domain
 		if ( defined( 'WP_CONTENT_URL' ) && WP_CONTENT_URL <> '' ) {
@@ -762,7 +762,7 @@ class HMWP_Models_Compatibility {
 			$domain = wp_parse_url( home_url(), PHP_URL_HOST );
 
 			if ( $cdn <> '' && $domain <> '' && $cdn <> $domain ) {
-				$domains[] = $cdn;
+				$cdn_urls[] = WP_CONTENT_URL;
 			}
 		}
 
@@ -775,7 +775,7 @@ class HMWP_Models_Compatibility {
 				$_urls = array_map( 'trim', $_urls );
 
 				foreach ( $_urls as $url ) {
-					$domains[] = $url;
+					$cdn_urls[] = $url;
 				}
 			}
 		}
@@ -785,9 +785,7 @@ class HMWP_Models_Compatibility {
 			if ( $cdn_enabler = get_option( 'cdn_enabler' ) ) {
 				if ( isset( $cdn_enabler['url'] ) ) {
 					$url = $cdn_enabler['url'];
-					if($url = wp_parse_url( $url, PHP_URL_HOST )){
-						$domains[] = $url;
-					}
+					$cdn_urls[] = $url;
 				}
 			}
 		}
@@ -800,7 +798,7 @@ class HMWP_Models_Compatibility {
 				if ( ! empty( $hostnames ) ) {
 					foreach ( $hostnames as $host ) {
 						if ( ! empty( $host ) ) {
-							$domains[] = $host;
+							$cdn_urls[] = $host;
 						}
 					}
 				}
@@ -811,9 +809,7 @@ class HMWP_Models_Compatibility {
 		if ( HMWP_Classes_Tools::isPluginActive( 'wp-super-cache/wp-cache.php' ) ) {
 			if ( get_option( 'ossdl_off_cdn_url' ) <> '' && get_option( 'ossdl_off_cdn_url' ) <> home_url() ) {
 				$url = get_option( 'ossdl_off_cdn_url' );
-				if($url = wp_parse_url( $url, PHP_URL_HOST )){
-					$domains[] = $url;
-				}
+				$cdn_urls[] = $url;
 			}
 		}
 
@@ -821,7 +817,7 @@ class HMWP_Models_Compatibility {
 		if ( HMWP_Classes_Tools::isPluginActive( 'ewww-image-optimizer/ewww-image-optimizer.php' ) ) {
 			$domain = get_option( 'ewww_image_optimizer_exactdn_domain', false );
 			if ( $domain ) {
-				$domains[] = $domain;
+				$cdn_urls[] = $domain;
 			}
 		}
 
@@ -830,19 +826,8 @@ class HMWP_Models_Compatibility {
 			if ( $jch = get_option( 'jch_options' ) ) {
 				if ( is_array( $jch ) ) {
 					if ( isset( $jch['cookielessdomain_enable'] ) && $jch['cookielessdomain_enable'] && isset( $jch['cookielessdomain'] ) && $jch['cookielessdomain'] <> '' ) {
-						$domains[] = $jch['cookielessdomain'];
+						$cdn_urls[] = $jch['cookielessdomain'];
 					}
-				}
-			}
-		}
-
-
-		//get the plugin CDN list
-		$hmwp_cdn_urls = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_cdn_urls' ), true );
-		if ( ! empty( $hmwp_cdn_urls ) ) {
-			foreach ( $hmwp_cdn_urls as $url ) {
-				if($url = wp_parse_url( $url, PHP_URL_HOST )){
-					$domains[] = $url;
 				}
 			}
 		}
@@ -852,9 +837,7 @@ class HMWP_Models_Compatibility {
 			if ( $cdn = get_option( 'hyper-cache' ) ) {
 				if ( isset( $cdn['cdn_enabled'] ) && $cdn['cdn_enabled'] && isset( $cdn['cdn_url'] ) && $cdn['cdn_url'] ) {
 					$url = $cdn['cdn_url'];
-					if($url = wp_parse_url( $url, PHP_URL_HOST )){
-						$domains[] = $url;
-					}
+					$cdn_urls[] = $url;
 				}
 			}
 		}
@@ -863,14 +846,21 @@ class HMWP_Models_Compatibility {
 		if ( HMWP_Classes_Tools::isPluginActive( 'bunnycdn/bunnycdn.php' ) ) {
 			if ( $bunnycdn = get_option( 'bunnycdn' ) ) {
 				if ( isset( $bunnycdn['cdn_domain_name'] ) && $bunnycdn['cdn_domain_name'] ) {
-					$domains[] = $bunnycdn['cdn_domain_name'];
+					$cdn_urls[] = $bunnycdn['cdn_domain_name'];
 				}
 			}
 		}
 
+		//get plugin DB CDN list
+		$hmwp_cdn_urls = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_cdn_urls' ), true );
+		if ( ! empty( $hmwp_cdn_urls ) ) {
+			foreach ( $hmwp_cdn_urls as $url ) {
+				$cdn_urls[] = $url;
+			}
+		}
 
-		if ( ! empty( $domains ) ) {
-			return array_unique( $domains );
+		if ( ! empty( $cdn_urls ) ) {
+			return array_unique( $cdn_urls );
 		}
 
 		return false;

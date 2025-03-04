@@ -165,8 +165,9 @@ class HMWP_Classes_Tools {
 
 			//-- Brute Force
 			'hmwp_bruteforce'                => 0,
-			'hmwp_bruteforce_register'       => 0,
+			'hmwp_bruteforce_login'          => 1,
 			'hmwp_bruteforce_lostpassword'   => 0,
+			'hmwp_bruteforce_register'       => 0,
 			'hmwp_bruteforce_comments'       => 0,
 			'hmwp_bruteforce_woocommerce'    => 0,
 			'hmwp_bruteforce_username'       => 0,
@@ -182,6 +183,14 @@ class HMWP_Classes_Tools {
 			'brute_use_math'                 => 1,
 			'brute_max_attempts'             => 5,
 			'brute_max_timeout'              => 3600,
+			//reCaptcha Google
+			'brute_use_google_enterprise'    => 0,
+			'brute_use_google'               => 0,
+			'brute_google_checkbox'          => 0,
+			'brute_google_project_id'        => '',
+			'brute_google_api_key'           => '',
+			'brute_google_site_key'          => '',
+			'brute_google_language'          => '',
 			//reCaptcha V2
 			'brute_use_captcha'              => 0,
 			'brute_captcha_site_key'         => '',
@@ -865,7 +874,7 @@ class HMWP_Classes_Tools {
 	}
 
 	public static function getCloudUrl( $page = 'login' ) {
-		return _HMWP_ACCOUNT_SITE_ . '/user/auth/' . $page;
+		return _HMWP_ACCOUNT_SITE_ . '/user/' . $page;
 	}
 
 	/**
@@ -1602,37 +1611,59 @@ class HMWP_Classes_Tools {
 	}
 
 	/**
-	 * Get the absolute filesystem path to the root of the WordPress installation
+	 * Get the absolute filesystem path to the config root of the WordPress installation
 	 *
 	 * @return string Full filesystem path to the root of the WordPress installation
 	 */
 	public static function getRootPath() {
-		$root_path = ABSPATH;
 
-		if ( defined( '_HMWP_CONFIGPATH' ) ) {
-			$root_path = _HMWP_CONFIGPATH;
+		// Get the absolute path by default
+		$root_path = str_replace( '\\', '/', ABSPATH );
+
+		if ( _HMWP_CONFIG_DIR_ ) {
+
+			// If it's defined by the user in wp-config.php
+			$root_path = str_replace( '\\', '/', _HMWP_CONFIG_DIR_ );
+
+		} elseif ( HMWP_Classes_Tools::isMultisites() ) {
+
+			// Check the abs root path in case of multisite
+			// If the config is not present in the absolute path, go back a level
+			if ( ! file_exists( ABSPATH . 'wp-config.php' ) && file_exists( dirname( ABSPATH ) . '/wp-config.php' ) ) {
+				$root_path = dirname( $root_path );
+			}
+
 		} elseif ( self::isFlywheel() && defined( 'WP_CONTENT_DIR' ) && dirname( WP_CONTENT_DIR ) ) {
-			$root_path = str_replace( '\\', '/', dirname( WP_CONTENT_DIR ) ) . '/';
+
+			// If is Flywheel server and the content dir is defined
+			$root_path = str_replace( '\\', '/', dirname( WP_CONTENT_DIR ) );
+
 		}
 
-		return apply_filters( 'hmwp_root_path', $root_path );
+		// Let third party to modify the config root path
+		return apply_filters( 'hmwp_root_path', trailingslashit( $root_path ) );
 
 	}
 
 	/**
-	 * Get the absolute filesystem path to the root of the WordPress installation
+	 * Get the relative path to the home root of the WordPress installation
 	 *
 	 * @return string Full filesystem path to the root of the WordPress installation
 	 */
 	public static function getHomeRootPath() {
 		$home_root = '/';
+
+		// If it's multisite amd the main site path is defined
 		if ( HMWP_Classes_Tools::isMultisites() && defined( 'PATH_CURRENT_SITE' ) ) {
+			// Set the home root path as the main website
 			$path = PATH_CURRENT_SITE;
 		} else {
+			// Set the home root path from the site url
 			$path = wp_parse_url( site_url(), PHP_URL_PATH );
 		}
 
 		if ( $path ) {
+			// If there is a sub-path ...
 			$home_root = trailingslashit( $path );
 		}
 
@@ -1845,7 +1876,7 @@ class HMWP_Classes_Tools {
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->writeToFile( '', 'HMWP_RULES' );
 
 		//clear the locked ips
-		HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Brute' )->clearBlockedIPs();
+		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->clearBlockedIPs();
 
 		//Build the redirect table
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->flushChanges();

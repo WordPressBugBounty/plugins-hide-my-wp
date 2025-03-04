@@ -18,7 +18,7 @@
                             <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
                                 <div class="col-sm-4 p-1 font-weight-bold">
 									<?php echo esc_html__( 'Email Address', 'hide-my-wp' ); ?>:
-                                    <div class="small text-black-50"><?php echo sprintf( esc_html__( 'Enter the 32 chars token from Order/Licence on %s', 'hide-my-wp' ), '<a href="' . _HMWP_ACCOUNT_SITE_ . '/user/auth/orders" target="_blank" style="font-weight: bold">' . _HMWP_ACCOUNT_SITE_ . '</a>' ); ?></div>
+                                    <div class="small text-black-50"><?php echo sprintf( esc_html__( 'Enter the email address for website security monitor on %s', 'hide-my-wp' ), '<a href="' . _HMWP_ACCOUNT_SITE_ . '/user/orders" target="_blank" style="font-weight: bold">' . _HMWP_ACCOUNT_SITE_ . '</a>' ); ?></div>
                                 </div>
                                 <div class="col-sm-8 p-0 input-group ">
 									<?php

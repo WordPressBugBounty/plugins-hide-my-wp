@@ -77,7 +77,7 @@ class HMWP_Models_Menu {
 				'title'      => esc_html__( "Two-factor authentication", 'hide-my-wp' ),
 				'capability' => HMWP_CAPABILITY,
 				'parent'     => 'hmwp_settings',
-				'show'       => HMWP_Classes_Tools::getOption( 'hmwp_2falogin' ),
+				//'show'       => HMWP_Classes_Tools::getOption( 'hmwp_2falogin' ),
 				'function'   => array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Settings' ), 'init' ),
 			),
 			'hmwp_log'           => array(
@@ -85,7 +85,7 @@ class HMWP_Models_Menu {
 				'title'      => esc_html__( "Events Log", 'hide-my-wp' ),
 				'capability' => HMWP_CAPABILITY,
 				'parent'     => 'hmwp_settings',
-				'show'       => HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ),
+				//'show'       => HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ),
 				'function'   => array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Settings' ), 'init' ),
 			),
 			'hmwp_securitycheck' => array(
@@ -469,7 +469,8 @@ class HMWP_Models_Menu {
 			'bootstrap',
 			'wp-reset',
 			'buy-me-a-coffee',
-			'mylisting-admin-general'
+			'mylisting-admin-general',
+			'stm-admin-vmc-style'
 		);
 
 		//Exclude the styles and scripts that affects the plugin functionality

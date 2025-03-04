@@ -9,11 +9,12 @@
 		<?php do_action( 'hmwp_notices' ); ?>
         <div class="hmwp_col flex-grow-1 p-0 pr-2 mr-2 mb-3">
 			<?php
-			//Check the frontend new paths and login
+			// Check the frontend new paths and login
 			$view->show( 'blocks/FrontendLoginCheck' );
 
-			//Download the new paths once they are confirmed
-			if ( HMWP_Classes_Tools::getOption( 'download_settings' ) ) { ?>
+			// Download the new paths once they are confirmed
+			// Update: disable the download of custom login on confirmation
+			if ( false && HMWP_Classes_Tools::getOption( 'download_settings' ) ) { ?>
                 <form id="hmwp_download_settings" class="ajax_submit" method="POST">
 					<?php wp_nonce_field( 'hmwp_download_settings', 'hmwp_nonce' ) ?>
                     <input type="hidden" name="action" value="hmwp_download_settings"/>
@@ -1033,14 +1034,14 @@
         </div>
 
         <div class="hmwp_col hmwp_col_side p-0 pr-2 mr-2">
+	        <?php
+	        if ( ! HMWP_Classes_Tools::getOption( 'api_token' ) ) {
+		        $view->show( 'blocks/Connect' );
+	        }
+	        ?>
 			<?php $view->show( 'blocks/ChangeCacheFiles' ); ?>
 			<?php $view->show( 'blocks/SecurityCheck' ); ?>
 			<?php $view->show( 'blocks/FrontendCheck' ); ?>
-			<?php
-			if ( ! HMWP_Classes_Tools::getOption( 'api_token' ) ) {
-				$view->show( 'blocks/Connect' );
-			}
-			?>
         </div>
     </div>
 </div>

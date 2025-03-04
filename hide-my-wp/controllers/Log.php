@@ -14,13 +14,14 @@ class HMWP_Controllers_Log extends HMWP_Classes_FrontController {
 
 	public function __construct() {
 		parent::__construct();
+		// Hook the login process to authenticate
+		add_filter( 'authenticate', array( $this, 'authenticate' ), 99, 1 );
 
-		// Hook the login process
-		add_filter( 'authenticate', array( $this, 'hmwp_authenticate' ), 99, 1 );
-		apply_filters( 'woocommerce_process_login_errors', array( $this, 'hmwp_authenticate' ), 99, 1 );
+		// Apply filter for WooCommerce login process
+		apply_filters( 'woocommerce_process_login_errors', array( $this, 'authenticate' ), 99, 1 );
 
-		// Hook all actions
-		add_action( 'wp_loaded', array( $this, 'hmwp_log' ), 9 );
+		// Hook log function to wp_loaded action
+		add_action( 'wp_loaded', array( $this, 'listenEvents' ), 9 );
 	}
 
 	/**
@@ -29,6 +30,7 @@ class HMWP_Controllers_Log extends HMWP_Classes_FrontController {
 	public function action() {
 		parent::action();
 
+		// Save options if the action is 'hmwp_logsettings'
 		if ( HMWP_Classes_Tools::getValue( 'action' ) == 'hmwp_logsettings' ) {
 			HMWP_Classes_Tools::saveOptions( 'hmwp_activity_log', HMWP_Classes_Tools::getValue( 'hmwp_activity_log', 0 ) );
 			HMWP_Classes_Tools::saveOptions( 'hmwp_activity_log_roles', HMWP_Classes_Tools::getValue( 'hmwp_activity_log_roles', array() ) );
@@ -49,11 +51,11 @@ class HMWP_Controllers_Log extends HMWP_Classes_FrontController {
 	/**
 	 * Function called on login process
 	 *
-	 * @param  null  $user
+	 * @param null $user
 	 *
 	 * @return null
 	 */
-	public function hmwp_authenticate( $user = null ) {
+	public function authenticate( $user = null ) {
 		if ( empty( $_POST ) ) {
 			return $user;
 		}
@@ -61,13 +63,14 @@ class HMWP_Controllers_Log extends HMWP_Classes_FrontController {
 		//set default action name
 		$action = 'login';
 
+		// If there is an error in the user authentication
 		if ( is_wp_error( $user ) ) {
 			if ( method_exists( $user, 'get_error_codes' ) ) {
 				$codes = $user->get_error_codes();
 				if ( ! empty( $codes ) ) {
 					foreach ( $codes as $action ) {
-						//Log the authenticate process
-						$this->model->hmwp_log_actions( $action );//log the login process
+						// Log the authentication process error
+						$this->model->save( $action );
 					}
 				}
 			}
@@ -75,8 +78,8 @@ class HMWP_Controllers_Log extends HMWP_Classes_FrontController {
 			return $user;
 		}
 
-		//Log the success authenticate process
-		$this->model->hmwp_log_actions( $action );//log the login process
+		// Log the successful authentication process
+		$this->model->save( $action );
 
 		return $user;
 	}
@@ -84,42 +87,52 @@ class HMWP_Controllers_Log extends HMWP_Classes_FrontController {
 	/**
 	 * Function called on user events
 	 */
-	public function hmwp_log() {
+	public function listenEvents() {
 
 		try {
-			//Log user activity
+			// Log user activity if there is an action value
 			if ( HMWP_Classes_Tools::getValue( 'action' ) ) {
+
+				// Return if both POST and GET are empty
 				if ( empty( $_POST ) && empty( $_GET ) ) {
 					return;
 				}
 
-				//Get user roles
+				// Get current user
 				$current_user = wp_get_current_user();
 
-				//If the user has roles
+				// If user is logged in and has roles
 				if ( isset( $current_user->user_login ) && is_array( $current_user->roles ) ) {
 
-					//If there is use role restriction
+					// Check if user roles match the allowed roles for logging
 					$user_roles   = $current_user->roles;
 					$option_roles = ( array ) HMWP_Classes_Tools::getOption( 'hmwp_activity_log_roles' );
 
-					//In case the user roles are selected
+					// If no user roles match the allowed roles, return
 					if ( ! empty( $option_roles ) && ! empty( $user_roles ) ) {
 						if ( ! array_intersect( $user_roles, $option_roles ) ) {
 							return;
 						}
 					}
 
+					// Get the user role from the roles array
+					$user_role = '';
+					if ( ! empty( $user_roles ) ) {
+						$user_role = current( $user_roles );
+					}
+
+					// Log the user action with username and role
 					$values = array(
 						'username' => $current_user->user_login,
-						'role'     => ( ! empty( $user_roles ) ? $user_roles[0] : '' ),
+						'role'     => $user_role,
 					);
 
-					$this->model->hmwp_log_actions( HMWP_Classes_Tools::getValue( 'action' ), $values );
+					$this->model->save( HMWP_Classes_Tools::getValue( 'action' ), $values );
 
 				}
 			}
 		} catch ( Exception $e ) {
+			// Handle exception (optional)
 		}
 
 	}

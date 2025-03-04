@@ -268,6 +268,7 @@ class HMWP_Models_Rules {
 
 		if ( ! is_array( $insertion ) ) {
 			$insertion = explode( "\n", $insertion );
+			$insertion = array_filter( $insertion );
 		}
 
 		//open the file only if writable

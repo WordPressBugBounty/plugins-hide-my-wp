@@ -394,17 +394,18 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 		switch ( HMWP_Classes_Tools::getValue( 'action' ) ) {
 			case 'hmwp_settings':
 
-				// Save the settings
-				if ( ! empty( $_POST ) ) {
+				//Save the settings
+				if ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST' ) {
+
+					// Save the whitelist IPs
+					$this->saveWhiteListIps();
+
+					// Save the whitelist paths
+					$this->saveWhiteListPaths();
+
 					/**  @var $this ->model HMWP_Models_Settings */
 					$this->model->savePermalinks( $_POST );
 				}
-
-				// Save the whitelist IPs
-				$this->saveWhiteListIps();
-
-				// Save the whitelist paths
-				$this->saveWhiteListPaths();
 
 				//load the after saving settings process
 				if ( $this->model->applyPermalinksChanged() ) {
@@ -418,7 +419,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 			case 'hmwp_tweakssettings':
 
 				// Save the settings
-				if ( ! empty( $_POST ) ) {
+				if ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 					$this->model->saveValues( $_POST );
 				}
 
@@ -539,7 +540,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				break;
 			case 'hmwp_advsettings':
 
-				if ( ! empty( $_POST ) ) {
+				if ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 					$this->model->saveValues( $_POST );
 
 					// Save the loading moment

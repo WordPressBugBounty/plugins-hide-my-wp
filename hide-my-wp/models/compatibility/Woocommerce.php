@@ -47,64 +47,39 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
 	    }
     }
 
-	public function hookBruteForce(){
+	public function hookBruteForce() {
 
-        if(!HMWP_Classes_Tools::getOption('brute_use_captcha_v3') ) {
+		// Get the active brute force class
+		$bruteforce = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Brute' )->getInstance();
 
-            add_filter('woocommerce_registration_errors', function($errors, $sanitizedLogin, $userEmail){
+		add_filter( 'woocommerce_login_form', array( $bruteforce, 'head' ), 99 );
+		add_filter( 'woocommerce_login_form', array( $bruteforce, 'form' ), 99 );
 
-                //check if the registering process is on woocommerce checkout
-                //if woocommerce nonce is correct return
-                $nonce_value    = HMWP_Classes_Tools::getValue('woocommerce-process-checkout-nonce', HMWP_Classes_Tools::getValue('_wpnonce') );
-                if(wp_verify_nonce( $nonce_value, 'woocommerce-process_checkout' )){
-                    return $errors;
-                }
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_register' ) ) {
+			if ( ! HMWP_Classes_Tools::getOption( 'brute_use_captcha_v3' ) ) {
 
-                return HMWP_Classes_ObjController::getClass('HMWP_Controllers_Brute')->hmwp_check_registration($errors, $sanitizedLogin, $userEmail);
-            }, 99, 3);
+				add_filter( 'woocommerce_registration_errors', function( $errors, $sanitizedLogin, $userEmail ) {
 
-        }
+					//check if the registering process is on woocommerce checkout
+					//if woocommerce nonce is correct return
+					$nonce_value = HMWP_Classes_Tools::getValue( 'woocommerce-process-checkout-nonce', HMWP_Classes_Tools::getValue( '_wpnonce' ) );
+					if ( wp_verify_nonce( $nonce_value, 'woocommerce-process_checkout' ) ) {
+						return $errors;
+					}
 
-		if(HMWP_Classes_Tools::getOption('hmwp_bruteforce_lostpassword')) {
-			add_action('lostpassword_post', array(HMWP_Classes_ObjController::getClass('HMWP_Controllers_Brute'), 'hmwp_check_lpassword'), 99, 2);
+					// Get the brute force registration class
+					return HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Registration' )->call( $errors, $sanitizedLogin, $userEmail );
+				}, 99, 3 );
+			}
+			add_filter( 'woocommerce_register_form', array( $bruteforce, 'head' ), 99 );
+			add_filter( 'woocommerce_register_form', array( $bruteforce, 'form' ), 99 );
 		}
 
-		if (HMWP_Classes_Tools::getOption('brute_use_math')) { //math recaptcha
-
-			add_filter('woocommerce_login_form', array(HMWP_Classes_ObjController::getClass('HMWP_Models_Brute'), 'brute_recaptcha_head'), 99);
-			add_filter('woocommerce_login_form', array(HMWP_Classes_ObjController::getClass('HMWP_Models_Brute'), 'brute_math_form'), 99);
-
-			if(HMWP_Classes_Tools::getOption('hmwp_bruteforce_register')) {
-				add_filter('woocommerce_register_form', array(HMWP_Classes_ObjController::getClass('HMWP_Models_Brute'), 'brute_recaptcha_head'), 99);
-				add_filter('woocommerce_register_form', array(HMWP_Classes_ObjController::getClass('HMWP_Models_Brute'), 'brute_math_form'), 99);
-			}
-
-			if(HMWP_Classes_Tools::getOption('hmwp_bruteforce_lostpassword')) {
-				add_filter('woocommerce_lostpassword_form', array(HMWP_Classes_ObjController::getClass('HMWP_Models_Brute'), 'brute_recaptcha_head'), 99);
-				add_filter('woocommerce_lostpassword_form', array(HMWP_Classes_ObjController::getClass('HMWP_Models_Brute'), 'brute_math_form'), 99);
-			}
-
-		}elseif (HMWP_Classes_Tools::getOption('brute_use_captcha')) { // recaptcha v2
-
-			add_filter('woocommerce_login_form', array($this, 'woocommerce_brute_recaptcha_form'), 99);
-
-			if(HMWP_Classes_Tools::getOption('hmwp_bruteforce_register')) {
-				add_filter('woocommerce_register_form', array($this, 'woocommerce_brute_recaptcha_form'), 99);
-			}
-
-			if(HMWP_Classes_Tools::getOption('hmwp_bruteforce_lostpassword')) {
-				add_filter('woocommerce_lostpassword_form', array($this, 'woocommerce_brute_recaptcha_form'), 99);
-			}
-
-		}elseif (HMWP_Classes_Tools::getOption('brute_use_captcha_v3')) { //recaptcha v3
-
-			add_filter('woocommerce_login_form', array($this, 'woocommerce_brute_recaptcha_form_v3'), 99);
-
-			if(HMWP_Classes_Tools::getOption('hmwp_bruteforce_lostpassword')) {
-				add_filter('woocommerce_lostpassword_form', array($this, 'woocommerce_brute_recaptcha_form_v3'), 99);
-			}
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_lostpassword' ) ) {
+			add_action( 'lostpassword_post', array( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_LostPassword' ), 'call' ), 99, 2 );
+			add_filter( 'woocommerce_lostpassword_form', array( $bruteforce, 'head' ), 99 );
+			add_filter( 'woocommerce_lostpassword_form', array( $bruteforce, 'form' ), 99 );
 		}
-
 
 	}
 

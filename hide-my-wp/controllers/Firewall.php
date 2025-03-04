@@ -236,19 +236,19 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 	 */
 	public function checkWhitelistIPs() {
 
-		if ( ! HMWP_Classes_Tools::getValue( 'hmwp_preview' ) && isset( $_SERVER['REMOTE_ADDR'] ) && strpos( $_SERVER['REMOTE_ADDR'], '.' ) !== false ) {
+		if ( ! HMWP_Classes_Tools::getValue( 'hmwp_preview' ) ) {
 
-			// Get caller server ips
+			// Get caller server IPs
 			$server = $this->getServerVariableIPs();
 
-			if ( isset( $server['REMOTE_ADDR'] ) ) {
-
-				// Get only the remote address for whitelist
-				$ip = $server['REMOTE_ADDR'];
-
+			if ( ! empty( $server ) ) {
 				// For each IP found on the caller
-				if ( HMWP_Classes_Tools::isWhitelistedIP( $ip ) ) {
-					$this->whitelistLevel( HMWP_Classes_Tools::getOption( 'whitelist_level' ) );
+				foreach ( $server as $ip ) {
+					// If the IP is whitelisted, apply the whitelist level of security
+					if ( HMWP_Classes_Tools::isWhitelistedIP( $ip ) ) {
+						$this->whitelistLevel( HMWP_Classes_Tools::getOption( 'whitelist_level' ) );
+						break;
+					}
 				}
 			}
 
@@ -303,19 +303,25 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 	 * Checks the server IP addresses against a blacklist and triggers a brute force protection mechanism if any IP is blacklisted.
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	public function checkBlacklistIPs() {
 
 		if ( ! HMWP_Classes_Tools::getValue( 'hmwp_preview' ) ) {
 
-			//get caller server ips
+			// Get caller server IPs
 			$server = $this->getServerVariableIPs();
 
 			if ( ! empty( $server ) ) {
-				//for each IP found on the caller
+				// For each IP found on the caller
 				foreach ( $server as $ip ) {
+					// If the IP is not whitelisted and is blacklisted, block it
 					if ( ! HMWP_Classes_Tools::isWhitelistedIP( $ip ) && HMWP_Classes_Tools::isBlacklistedIP( $ip ) ) {
-						HMWP_Classes_ObjController::getClass( 'HMWP_Models_Brute' )->brute_kill_login();
+						/** @var HMWP_Models_Brute $bruteForceModel */
+						$bruteForceModel = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Brute' );
+
+						// Register the process as failed
+						$bruteForceModel->bruteForceBlock();
 						break;
 					}
 				}
@@ -354,25 +360,46 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 	}
 
 	/**
+	 * Get valid headers for the real IP
+	 *
+	 * @return string[]
+	 */
+	public function getValidHeaders() {
+
+		// List of the valid header Ips
+		return array(
+			// CloudFlare IP address
+			'HTTP_CF_CONNECTING_IP',
+			// Real IP address behind proxy
+			'HTTP_X_REAL_IP',
+			'HTTP_X_MIDDLETON_IP',
+			// Remote IP address
+			'REMOTE_ADDR',
+		);
+	}
+
+	/**
 	 * Retrieves a list of server variables that contain IP addresses and processes them to clean any IP values found.
 	 *
 	 * @return array An associative array where keys are server variable names and values are cleaned IP addresses.
 	 */
 	public function getServerVariableIPs() {
-		$variables = array( 'REMOTE_ADDR', 'HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR' );
 		$ips       = array();
 
-		foreach ( $variables as $variable ) {
-			$ip = isset( $_SERVER[ $variable ] ) ? $_SERVER[ $variable ] : false;
+		// Set valid headers
+		$headers = $this->getValidHeaders();
+
+		foreach ( $headers as $header ) {
+			$ip = $_SERVER[ $header ] ?? false;
 
 			if ( $ip && strpos( $ip, ',' ) !== false ) {
 				$ip = preg_replace( '/[\s,]/', '', explode( ',', $ip ) );
 				if ( $clean_ip = $this->getCleanIp( $ip ) ) {
-					$ips[ $variable ] = $clean_ip;
+					$ips[ $header ] = $clean_ip;
 				}
 			} else {
 				if ( $clean_ip = $this->getCleanIp( $ip ) ) {
-					$ips[ $variable ] = $clean_ip;
+					$ips[ $header ] = $clean_ip;
 				}
 			}
 		}
