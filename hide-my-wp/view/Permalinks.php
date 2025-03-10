@@ -859,7 +859,18 @@
                                     </div>
                                 </div>
                             </div>
-
+                            <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_hide_plugins">
+                                <div class="checker col-sm-12 row my-2 py-0">
+                                    <div class="col-sm-12 p-0 switch switch-sm">
+                                        <input type="hidden" name="hmwp_hide_all_themes" value="0"/>
+                                        <input type="checkbox" id="hmwp_hide_all_themes" name="hmwp_hide_all_themes" class="switch" <?php echo(HMWP_Classes_Tools::getOption('hmwp_hide_all_themes') ? 'checked="checked"' : '') ?> value="1"/>
+                                        <label for="hmwp_hide_all_themes"><?php echo esc_html__('Hide All The Themes', 'hide-my-wp'); ?>
+                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/change-themes-path-with-wp-ghost/#ghost-hide-theme-names' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        </label>
+                                        <div class="text-black-50 ml-5"><?php echo esc_html__('Hide both active and inactive themes.', 'hide-my-wp'); ?></div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_pro">
                                 <div class="box">
                                     <div class="ribbon"><span><?php echo esc_html__( 'PRO', 'hide-my-wp' ) ?></span>

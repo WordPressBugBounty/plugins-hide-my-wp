@@ -63,11 +63,8 @@ class HMWP_Models_Bruteforce_Comments {
 		/** @var HMWP_Models_Brute $bruteForceModel */
 		$bruteForceModel = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Brute' );
 
-		// Get the active Brute Force name
-		$name = $bruteForceModel->getName();
-
 		// Get the active Brute Force class
-		$bruteforce = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_' . $name );
+		$bruteforce = $bruteForceModel->getInstance();
 
 		ob_start();
 		$bruteforce->head() . $bruteforce->form();

@@ -107,9 +107,11 @@ class HMWP_Controllers_Brute extends HMWP_Classes_FrontController {
 						HMWP_Classes_Error::setNotification( esc_html__( 'You need to set a positive waiting time.', 'hide-my-wp' ) );
 
 					}
-					HMWP_Classes_Tools::saveOptions( 'hmwp_brute_message', HMWP_Classes_Tools::getValue( 'hmwp_brute_message', '', true ) );
 					HMWP_Classes_Tools::saveOptions( 'brute_max_timeout', $timeout );
 				}
+
+				// Save the text every time to prevent from removing the white space from the text
+				HMWP_Classes_Tools::saveOptions( 'hmwp_brute_message', HMWP_Classes_Tools::getValue( 'hmwp_brute_message', '', true ) );
 
 				// Clear the cache if there are no errors
 				if ( ! HMWP_Classes_Tools::getOption( 'error' ) ) {

@@ -333,6 +333,7 @@ class HMWP_Classes_Tools {
 			'hmwp_hide_plugins'              => 0,
 			'hmwp_hide_all_plugins'          => 0,
 			'hmwp_hide_themes'               => 0,
+			'hmwp_hide_all_themes'           => 0,
 			'hmwp_emulate_cms'               => '',
 
 			//--secure headers
@@ -400,8 +401,9 @@ class HMWP_Classes_Tools {
 			'hmwp_hide_newlogin'             => 1,
 			'hmwp_disable_language_switcher' => 0,
 			'hmwp_hide_plugins'              => 1,
-			'hmwp_hide_all_plugins'          => 0,
+			'hmwp_hide_all_plugins'          => ( self::isMultisites() ? 1 : 0 ),
 			'hmwp_hide_themes'               => 1,
+			'hmwp_hide_all_themes'           => ( self::isMultisites() ? 1 : 0 ),
 			'hmwp_emulate_cms'               => 'drupal11',
 			//
 			'hmwp_hide_img_classes'          => 1,
@@ -878,6 +880,66 @@ class HMWP_Classes_Tools {
 	}
 
 	/**
+	 * Get the absolute filesystem path to the config root of the WordPress installation
+	 *
+	 * @return string Full filesystem path to the root of the WordPress installation
+	 */
+	public static function getRootPath() {
+
+		// Get the absolute path by default
+		$root_path = str_replace( '\\', '/', ABSPATH );
+
+		if ( _HMWP_CONFIG_DIR_ ) {
+
+			// If it's defined by the user in wp-config.php
+			$root_path = str_replace( '\\', '/', _HMWP_CONFIG_DIR_ );
+
+		} elseif ( HMWP_Classes_Tools::isMultisites() ) {
+
+			// Fix the root path on Multisite
+			$document_root_fix = str_replace( '\\', '/', realpath( $_SERVER['DOCUMENT_ROOT'] ) );
+			$slashed_home      = trailingslashit( get_option( 'home' ) );
+			$base              = parse_url( $slashed_home, PHP_URL_PATH );
+			$root_path         = ('' === $document_root_fix || 0 === strpos( $root_path, $document_root_fix )) ? $document_root_fix . $base : get_home_path();
+
+		} elseif ( self::isFlywheel() && defined( 'WP_CONTENT_DIR' ) && dirname( WP_CONTENT_DIR ) ) {
+
+			// If is Flywheel server and the content dir is defined
+			$root_path = str_replace( '\\', '/', dirname( WP_CONTENT_DIR ) );
+
+		}
+
+		// Let third party to modify the config root path
+		return apply_filters( 'hmwp_root_path', trailingslashit( $root_path ) );
+
+	}
+
+	/**
+	 * Get the relative path to the home root of the WordPress installation
+	 *
+	 * @return string Full filesystem path to the root of the WordPress installation
+	 */
+	public static function getHomeRootPath() {
+		$home_root = '/';
+
+		// If it's multisite amd the main site path is defined
+		if ( HMWP_Classes_Tools::isMultisites() && defined( 'PATH_CURRENT_SITE' ) ) {
+			// Set the home root path as the main website
+			$path = PATH_CURRENT_SITE;
+		} else {
+			// Set the home root path from the site url
+			$path = wp_parse_url( site_url(), PHP_URL_PATH );
+		}
+
+		if ( $path ) {
+			// If there is a sub-path ...
+			$home_root = trailingslashit( $path );
+		}
+
+		return apply_filters( 'hmwp_home_root', $home_root );
+	}
+
+	/**
 	 * Get the config file for WordPress
 	 *
 	 * @return string
@@ -887,12 +949,22 @@ class HMWP_Classes_Tools {
 		//Initialize WordPress Filesystem
 		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
 
-		if ( $wp_filesystem->exists( self::getRootPath() . 'wp-config.php' ) ) {
-			return self::getRootPath() . 'wp-config.php';
+		// Check config file in the root directory
+		if ( $wp_filesystem->exists( trailingslashit(self::getRootPath()) . 'wp-config.php' ) ) {
+			return trailingslashit(self::getRootPath()) . 'wp-config.php';
 		}
 
-		if ( $wp_filesystem->exists( dirname( ABSPATH ) . '/wp-config.php' ) ) {
-			return dirname( ABSPATH ) . '/wp-config.php';
+		// Get the absolute path by default
+		$abs_path = str_replace( '\\', '/', ABSPATH );
+
+		// Check config file in absolute path
+		if ( $wp_filesystem->exists( $abs_path . 'wp-config.php' ) ) {
+			return $abs_path . 'wp-config.php' ;
+		}
+
+		// Check config file in the parent path
+		if ( $wp_filesystem->exists( dirname( $abs_path ) . '/wp-config.php' ) ) {
+			return dirname( $abs_path ) . '/wp-config.php' ;
 		}
 
 		return false;
@@ -1573,6 +1645,7 @@ class HMWP_Classes_Tools {
 	 * @return array
 	 */
 	public static function getAllPlugins() {
+
 		// Check if the HMWP option to hide all plugins is enabled
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_all_plugins' ) ) {
 			// Ensure the get_plugins() function is included before use
@@ -1607,67 +1680,30 @@ class HMWP_Classes_Tools {
 	 * @return array
 	 */
 	public static function getAllThemes() {
-		return search_theme_directories();
-	}
 
-	/**
-	 * Get the absolute filesystem path to the config root of the WordPress installation
-	 *
-	 * @return string Full filesystem path to the root of the WordPress installation
-	 */
-	public static function getRootPath() {
-
-		// Get the absolute path by default
-		$root_path = str_replace( '\\', '/', ABSPATH );
-
-		if ( _HMWP_CONFIG_DIR_ ) {
-
-			// If it's defined by the user in wp-config.php
-			$root_path = str_replace( '\\', '/', _HMWP_CONFIG_DIR_ );
-
-		} elseif ( HMWP_Classes_Tools::isMultisites() ) {
-
-			// Check the abs root path in case of multisite
-			// If the config is not present in the absolute path, go back a level
-			if ( ! file_exists( ABSPATH . 'wp-config.php' ) && file_exists( dirname( ABSPATH ) . '/wp-config.php' ) ) {
-				$root_path = dirname( $root_path );
-			}
-
-		} elseif ( self::isFlywheel() && defined( 'WP_CONTENT_DIR' ) && dirname( WP_CONTENT_DIR ) ) {
-
-			// If is Flywheel server and the content dir is defined
-			$root_path = str_replace( '\\', '/', dirname( WP_CONTENT_DIR ) );
-
-		}
-
-		// Let third party to modify the config root path
-		return apply_filters( 'hmwp_root_path', trailingslashit( $root_path ) );
-
-	}
-
-	/**
-	 * Get the relative path to the home root of the WordPress installation
-	 *
-	 * @return string Full filesystem path to the root of the WordPress installation
-	 */
-	public static function getHomeRootPath() {
-		$home_root = '/';
-
-		// If it's multisite amd the main site path is defined
-		if ( HMWP_Classes_Tools::isMultisites() && defined( 'PATH_CURRENT_SITE' ) ) {
-			// Set the home root path as the main website
-			$path = PATH_CURRENT_SITE;
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_all_themes' ) ) {
+			// Get the all network themes
+			$all_themes = search_theme_directories();
 		} else {
-			// Set the home root path from the site url
-			$path = wp_parse_url( site_url(), PHP_URL_PATH );
+
+			// Get only the active theme
+			$theme = wp_get_theme();
+
+			if ( $theme->exists() && $theme->get_stylesheet() <> '' ) {
+				$all_themes[ $theme->get_stylesheet() ] = array(
+					'theme_root' => $theme->get_theme_root()
+				);
+
+				// If it's a child theme, include also the parent
+				if( strpos( $theme->get_stylesheet(), '-child' ) !== false ) {
+					$all_themes[ str_replace( '-child', '', $theme->get_stylesheet() ) ] = array(
+						'theme_root' => $theme->get_theme_root()
+					);
+				}
+			}
 		}
 
-		if ( $path ) {
-			// If there is a sub-path ...
-			$home_root = trailingslashit( $path );
-		}
-
-		return apply_filters( 'hmwp_home_root', $home_root );
+		return $all_themes;
 	}
 
 	/**

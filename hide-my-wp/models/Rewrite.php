@@ -469,28 +469,7 @@ class HMWP_Models_Rewrite {
 		//Initialize WordPress Filesystem
 		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
 
-		if ( HMWP_Classes_Tools::isMultisites() ) {
-			// Get the all network themes
-			$all_themes = HMWP_Classes_Tools::getAllThemes();
-		} else {
-
-			// Get only the active theme
-			$theme = wp_get_theme();
-			if ( $theme->exists() && $theme->get_stylesheet() <> '' ) {
-				$all_themes[ sanitize_text_field( $theme->get_stylesheet() ) ] = array(
-					'name'       => $theme->get( 'Name' ),
-					'theme_root' => $theme->get_theme_root()
-				);
-
-				// If it's a child theme, include also the parent
-				if( strpos( $theme->get_stylesheet(), '-child' ) !== false ) {
-					$all_themes[ str_replace( '-child', '', sanitize_text_field( $theme->get_stylesheet() )) ] = array(
-						'name'       => $theme->get( 'Name' ),
-						'theme_root' => $theme->get_theme_root()
-					);
-				}
-			}
-		}
+		$all_themes = HMWP_Classes_Tools::getAllThemes();
 
 		foreach ( $all_themes as $theme => $value ) {
 
@@ -502,7 +481,6 @@ class HMWP_Models_Rewrite {
 
 		HMWP_Classes_Tools::saveOptions( 'hmwp_themes', $dbthemes );
 	}
-
 
 	/**
 	 * ADMIN_PATH is the new path and set in /config.php
@@ -811,14 +789,14 @@ class HMWP_Models_Rewrite {
 				//Add the URL Mapping rules
 				if ( ! empty( $this->_umrewrites ) ) {
 					foreach ( $this->_umrewrites as $rewrite ) {
-						$rewritecode .= 'RewriteRule ^' . $rewrite['from'] . ' ' . $rewrite['to'] . " [QSA,L]" . PHP_EOL;
+						$rewritecode .= 'RewriteRule ^' . $rewrite['from'] . ' ' . $rewrite['to'] . " [QSA,NC,L]" . PHP_EOL;
 					}
 				}
 
 				//Add the New Paths rules
 				foreach ( $this->_rewrites as $rewrite ) {
 					if ( strpos( $rewrite['to'], 'index.php' ) === false ) {
-						$rewritecode .= 'RewriteRule ^' . $rewrite['from'] . ' ' . $rewrite['to'] . " [QSA,L]" . PHP_EOL;
+						$rewritecode .= 'RewriteRule ^' . $rewrite['from'] . ' ' . $rewrite['to'] . " [QSA,NC,L]" . PHP_EOL;
 					}
 				}
 				$rewritecode .= "</IfModule>" . PHP_EOL;
@@ -957,14 +935,14 @@ class HMWP_Models_Rewrite {
 				//Add the URL Mapping rules
 				if ( ! empty( $this->_umrewrites ) ) {
 					foreach ( $this->_umrewrites as $rewrite ) {
-						$rewritecode .= 'RewriteRule ^' . $rewrite['from'] . ' ' . $rewrite['to'] . " [QSA,L]" . PHP_EOL;
+						$rewritecode .= 'RewriteRule ^' . $rewrite['from'] . ' ' . $rewrite['to'] . " [QSA,NC,L]" . PHP_EOL;
 					}
 				}
 
 				//Add the New Paths rules
 				foreach ( $this->_rewrites as $rewrite ) {
 					if ( strpos( $rewrite['to'], 'index.php' ) === false ) {
-						$rewritecode .= 'RewriteRule ^' . $rewrite['from'] . ' ' . $rewrite['to'] . " [QSA,L]" . PHP_EOL;
+						$rewritecode .= 'RewriteRule ^' . $rewrite['from'] . ' ' . $rewrite['to'] . " [QSA,NC,L]" . PHP_EOL;
 					}
 				}
 				$rewritecode .= "</IfModule>" . PHP_EOL;
@@ -1533,6 +1511,7 @@ class HMWP_Models_Rewrite {
 
 			wp_register_script( 'password-strength-meter', _HMWP_WPLOGIN_URL_ . 'js/password-strength-meter.min.js', array(
 				'jquery',
+				'wp-i18n',
 				'zxcvbn-async'
 			), HMWP_VERSION_ID, true );
 			wp_register_script( 'user-profile', _HMWP_WPLOGIN_URL_ . 'js/user-profile.min.js', array(

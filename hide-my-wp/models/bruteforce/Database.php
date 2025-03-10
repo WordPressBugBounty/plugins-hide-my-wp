@@ -24,19 +24,26 @@ class HMWP_Models_Bruteforce_Database {
 	 */
 	public function save( $ip, $value ) {
 
-		$transient = $this->prefix . md5( $ip );
+		if ( isset( $ip ) ) {
 
-		$expiration = (int) HMWP_Classes_Tools::getOption( 'brute_max_timeout' );
+			$transient = $this->prefix . md5( $ip );
 
-		if ( HMWP_Classes_Tools::isMultisites() && ! is_main_site() ) {
-			switch_to_blog( $this->getMainBlogId() );
-			$return = set_transient( $transient, $value, $expiration );
-			restore_current_blog();
+			$expiration = (int) HMWP_Classes_Tools::getOption( 'brute_max_timeout' );
 
-			return $return;
+			if ( HMWP_Classes_Tools::isMultisites() && ! is_main_site() ) {
+				switch_to_blog( $this->getMainBlogId() );
+				$return = set_transient( $transient, $value, $expiration );
+				restore_current_blog();
+
+				return $return;
+			}
+
+			return set_transient( $transient, $value, $expiration );
+
 		}
 
-		return set_transient( $transient, $value, $expiration );
+		return false;
+
 	}
 
 
@@ -49,17 +56,23 @@ class HMWP_Models_Bruteforce_Database {
 	 */
 	public function get( $ip ) {
 
-		$transient = $this->prefix . md5( $ip );
+		if ( isset( $ip ) ) {
 
-		if ( HMWP_Classes_Tools::isMultisites() && ! is_main_site() ) {
-			switch_to_blog( $this->getMainBlogId() );
-			$return = get_transient( $transient );
-			restore_current_blog();
+			$transient = $this->prefix . md5( $ip );
 
-			return $return;
+			if ( HMWP_Classes_Tools::isMultisites() && ! is_main_site() ) {
+				switch_to_blog( $this->getMainBlogId() );
+				$return = get_transient( $transient );
+				restore_current_blog();
+
+				return $return;
+			}
+
+			return get_transient( $transient );
+
 		}
 
-		return get_transient( $transient );
+		return false;
 	}
 
 	/**
