@@ -582,6 +582,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 				$urls       = $error = array();
 				$filesystem = HMWP_Classes_Tools::initFilesystem();
+				$rnd        = mt_rand( 1111, 9999 );
 
 				//set hmwp_preview and not load the broken paths with WordPress rules
 				$custom_logo_id = get_theme_mod( 'custom_logo' );
@@ -590,7 +591,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 						$image = $logo[0];
 
 						if ( $filesystem->exists( str_replace( home_url( '/' ), ABSPATH, $image ) ) ) {
-							$url    = $image . '?hmwp_preview=1';
+							$url    = $image . '?rnd=' . $rnd . '&hmwp_preview=1';
 							$url    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
 							$urls[] = $url;
 						}
@@ -601,21 +602,21 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 					$image = _HMWP_ROOT_DIR_ . '/view/assets/img/logo.svg';
 					if ( $filesystem->exists( str_replace( home_url( '/' ), ABSPATH, $image ) ) ) {
-						$url    = _HMWP_URL_ . '/view/assets/img/logo.svg?hmwp_preview=1';
+						$url    = _HMWP_URL_ . '/view/assets/img/logo.svg?rnd=' . $rnd . '&hmwp_preview=1';
 						$url    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
 						$urls[] = $url;
 					}
 
 				}
 
-				$url    = home_url( '/' ) . '?hmwp_preview=1';
+				$url    = home_url( '/' ) . '?rnd=' . $rnd . '&hmwp_preview=1';
 				$url    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
 				$urls[] = $url;
 
 				if ( HMWP_Classes_Tools::getOption( 'hmwp_hideajax_admin' ) ) {
-					$url = home_url( HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) ) . '?hmwp_preview=1';
+					$url = home_url( HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) ) . '?rnd=' . $rnd . '&hmwp_preview=1';
 				} else {
-					$url = admin_url( HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) ) . '?hmwp_preview=1';
+					$url = admin_url( HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) ) . '?rnd=' . $rnd . '&hmwp_preview=1';
 				}
 				$url    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
 				$urls[] = $url;
@@ -640,7 +641,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 							302,
 							301
 						) ) ) {
-						$error[] = '<a href="' . $url . '" target="_blank" style="word-break: break-word;">' . str_replace( '?hmwp_preview=1', '', $url ) . '</a> (' . wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response ) . ')';
+						$error[] = '<a href="' . $url . '" target="_blank" style="word-break: break-word;">' . str_replace( '?rnd=' . $rnd . '&hmwp_preview=1', '', $url ) . '</a> (' . wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response ) . ')';
 					}
 				}
 
@@ -664,7 +665,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 							302,
 							301
 						) ) ) {
-						$error[] = '<a href="' . $url . '" target="_blank" style="word-break: break-word;">' . str_replace( '?hmwp_preview=1', '', $url ) . '</a> (' . wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response ) . ')';
+						$error[] = '<a href="' . $url . '" target="_blank" style="word-break: break-word;">' . str_replace( '?rnd=' . $rnd . '&hmwp_preview=1', '', $url ) . '</a> (' . wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response ) . ')';
 
 					}
 				}

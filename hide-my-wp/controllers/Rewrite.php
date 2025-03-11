@@ -129,7 +129,7 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		}
 
 		// Custom hook for WPEngine
-		if ( HMWP_Classes_Tools::isWpengine() && PHP_VERSION_ID >= 70400 ) {
+		if ( HMWP_Classes_Tools::isWpengine() ) {
 			add_filter( 'wp_redirect', array( $this->model, 'loopCheck' ), PHP_INT_MAX, 1 );
 		}
 

@@ -315,6 +315,9 @@
 								if ( HMWP_Classes_Tools::isGodaddy() ) {
 									echo ' <div class="text-danger col-sm-12 border-bottom border-light py-3 mx-0 my-3">' . sprintf( esc_html__( "Your admin URL can't be changed on %s hosting because of the %s security terms.", 'hide-my-wp' ), '<strong>Godaddy</strong>', '<strong>Godaddy</strong>' ) . '</div>';
 									echo '<input type="hidden" name="hmwp_admin_url" value="' . HMWP_Classes_Tools::$default['hmwp_admin_url'] . '"/>';
+								} elseif (HMWP_Classes_Tools::isWpengine() ) {
+									echo ' <div class="text-danger col-sm-12 border-bottom border-light py-3 mx-0 my-3">' . sprintf(esc_html__("Your admin URL can't be changed on %s hosting because of the %s security terms.", 'hide-my-wp'), '<strong>WPEngine</strong>', '<strong>WPEngine</strong>') . '</div>';
+									echo '<input type="hidden" name="hmwp_admin_url" value="' . esc_attr(HMWP_Classes_Tools::getDefault('hmwp_admin_url')) . '"/>';
 								} elseif ( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->isConfigAdminCookie() ) {
 									echo ' <div class="text-danger col-sm-12 border-bottom border-light py-3 mx-0 my-3">' . sprintf( esc_html__( "The constant ADMIN_COOKIE_PATH is defined in wp-config.php by another plugin. You can't change %s unless you remove the line define('ADMIN_COOKIE_PATH', ...);.", 'hide-my-wp' ), '<strong>' . HMWP_Classes_Tools::$default['hmwp_admin_url'] . '</strong>' ) . '</div>';
 									echo '<input type="hidden" name="hmwp_admin_url" value="' . HMWP_Classes_Tools::$default['hmwp_admin_url'] . '"/>';
