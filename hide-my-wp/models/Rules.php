@@ -553,7 +553,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (s)?(ftp|inurl|php)(s)?(:(/|%2f|%u2215)(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (\.|20)(get|the)(_|%5f)(permalink|posts_page_url)(\(|%28) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} ((boot|win)((\.|%2e)ini)|etc(/|%2f)passwd|self(/|%2f)environ) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (((/|%2f){3,3})|((\.|%2e){3,3})|((\.|%2e){2,2})(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (((/|%2f){3,3})((\.|%2e){3,3})|((\.|%2e){2,2})(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (benchmark|char|exec|fopen|function|html)(.*)(\(|%28)(.*)(\)|%29) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (php)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (e|%65|%45)(v|%76|%56)(a|%61|%31)(l|%6c|%4c)(.*)(\(|%28)(.*)(\)|%29) [NC,OR]" . PHP_EOL;
@@ -588,7 +588,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} /((.*)header:|(.*)set-cookie:(.*)=) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(ckfinder|fck|fckeditor|fullclick) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\.(s?ftp-?)config|(s?ftp-?)config\.) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (\{0\}|\\\"?0\\\"?=\\\"?0|\(/\(|\.\.\.|\+\+\+|\\\\\\\") [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (\{0\}|\\\"?0\\\"?=\\\"?0|\(/\(|\+\+\+|\\\\\\\") [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (thumbs?(_editor|open)?|tim(thumbs?)?)(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\.|20)(get|the)(_)(permalink|posts_page_url)(\() [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (///|\?\?|/&&|/\*(.*)\*/|/:/|\\\\\\\\|0x00|%00|%0d%0a) [NC,OR]" . PHP_EOL;
@@ -636,7 +636,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (s)?(ftp|inurl|php)(s)?(:(/|%2f|%u2215)(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (\.|20)(get|the)(_|%5f)(permalink|posts_page_url)(\(|%28) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} ((boot|win)((\.|%2e)ini)|etc(/|%2f)passwd|self(/|%2f)environ) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (((/|%2f){3,3})|((\.|%2e){3,3})|((\.|%2e){2,2})(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (((/|%2f){3,3})((\.|%2e){3,3})|((\.|%2e){2,2})(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (benchmark|char|exec|fopen|function|html)(.*)(\(|%28)(.*)(\)|%29) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (php)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (e|%65|%45)(v|%76|%56)(a|%61|%31)(l|%6c|%4c)(.*)(\(|%28)(.*)(\)|%29) [NC,OR]" . PHP_EOL;
@@ -675,7 +675,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(ckfinder|fck|fckeditor|fullclick) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\.(s?ftp-?)config|(s?ftp-?)config\.) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)((force-)?download|framework/main)(\.php) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (\{0\}|\\\"?0\\\"?=\\\"?0|\(/\(|\.\.\.|\+\+\+|\\\\\\\") [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (\{0\}|\\\"?0\\\"?=\\\"?0|\(/\(|\+\+\+|\\\\\\\") [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(vbull(etin)?|boards|vbforum|vbweb|webvb)(/)? [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (thumbs?(_editor|open)?|tim(thumbs?)?)(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\.|20)(get|the)(_)(permalink|posts_page_url)(\() [NC,OR]" . PHP_EOL;

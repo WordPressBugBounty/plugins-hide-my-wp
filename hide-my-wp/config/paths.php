@@ -27,7 +27,6 @@ define( '_HMWP_CONFIG_DIR_', ( defined( '_HMWP_CONFIGPATH' ) ? _HMWP_CONFIGPATH 
 define( '_HMWP_CLASSES_DIR_', _HMWP_ROOT_DIR_ . '/classes/' );
 define( '_HMWP_CONTROLLER_DIR_', _HMWP_ROOT_DIR_ . '/controllers/' );
 define( '_HMWP_MODEL_DIR_', _HMWP_ROOT_DIR_ . '/models/' );
-define( '_HMWP_TRANSLATIONS_DIR_', _HMWP_ROOT_DIR_ . '/languages/' );
 define( '_HMWP_THEME_DIR_', _HMWP_ROOT_DIR_ . '/view/' );
 define( '_HMWP_ASSETS_DIR_', _HMWP_THEME_DIR_ . 'assets/' );
 

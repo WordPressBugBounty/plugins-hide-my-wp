@@ -107,29 +107,6 @@ class HMWP_Models_Settings {
 		}
 
 		////////////////////////////////////////////
-		//Set the Category and Tags dirs
-		global $wp_rewrite;
-		$blog_prefix = '';
-		if ( HMWP_Classes_Tools::isMultisites() && ! is_subdomain_install() && is_main_site() && 0 === strpos( get_option( 'permalink_structure' ), '/blog/' ) ) {
-			$blog_prefix = '/blog';
-		}
-
-		if ( isset( $params['hmwp_category_base'] ) && method_exists( $wp_rewrite, 'set_category_base' ) ) {
-			$category_base = $params['hmwp_category_base'];
-			if ( ! empty( $category_base ) ) {
-				$category_base = $blog_prefix . preg_replace( '#/+#', '/', '/' . str_replace( '#', '', $category_base ) );
-			}
-			$wp_rewrite->set_category_base( $category_base );
-		}
-
-		if ( isset( $params['hmwp_tag_base'] ) && method_exists( $wp_rewrite, 'set_tag_base' ) ) {
-			$tag_base = $params['hmwp_tag_base'];
-			if ( ! empty( $tag_base ) ) {
-				$tag_base = $blog_prefix . preg_replace( '#/+#', '/', '/' . str_replace( '#', '', $tag_base ) );
-			}
-			$wp_rewrite->set_tag_base( $tag_base );
-		}
-		////////////////////////////////////////////
 
 		//Save all values
 		$this->saveValues( $params, true );

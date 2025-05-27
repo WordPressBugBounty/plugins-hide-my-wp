@@ -109,11 +109,11 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 				}
 
 			} elseif ( strpos( HMWP_Classes_Tools::getValue( 'page' ), 'hmwp_' ) !== false && apply_filters('hmwp_showaccount', true) ) {
-				add_filter('hmwp_getview', function ($view){
-					$style = '<script>window.intercomSettings = {api_base: "https://api-iam.intercom.io",app_id: "y45xtsgw",};</script><script>(function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic(\'reattach_activator\');ic(\'update\',w.intercomSettings);}else{var d=document;var i=function(){i.c(arguments);};i.q=[];i.c=function(args){i.q.push(args);};w.Intercom=i;var l=function(){var s=d.createElement(\'script\');s.type=\'text/javascript\';s.async=true;s.src=\'https://widget.intercom.io/widget/y45xtsgw\';var x=d.getElementsByTagName(\'script\')[0];x.parentNode.insertBefore(s,x);};if(document.readyState===\'complete\'){l();}else if(w.attachEvent){w.attachEvent(\'onload\',l);}else{w.addEventListener(\'load\',l,false);}}})();</script>';
-					return $style . $view;
-				}, 11, 1);
-			}
+                add_filter('hmwp_getview', function ($view){
+                    $style = '<script src="https://storage.googleapis.com/contentlook/agent/widget.min.js?key=f07f616c-e167-49fd-94f1-81b42cd874b7&ver=1.0.0"></script>';
+                    return $style . $view;
+                }, 11, 1);
+            }
 
 			//Hook the show account option in admin.
 			if ( ! HMWP_Classes_Tools::getOption( 'hmwp_plugin_account_show' ) ) {

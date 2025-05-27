@@ -12,6 +12,10 @@ defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' );
 
 class HMWP_Models_Bruteforce_Google extends HMWP_Models_Bruteforce_Abstract {
 
+    /**
+     * @var bool Prevent from loading Google script more than once
+     */
+    private $loaded = false;
 	/**
 	 * Verifies the Google Captcha while logging in.
 	 *
@@ -67,21 +71,27 @@ class HMWP_Models_Bruteforce_Google extends HMWP_Models_Bruteforce_Abstract {
 	/**
 	 * reCAPTCHA head and login form
 	 */
-	public function head() {
-		if ( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) <> '' ) {
-			if ( HMWP_Classes_Tools::getOption( 'brute_google_checkbox' ) ) {
-				?>
+    public function head() {
+
+        // Return is the header is already loaded
+        if ($this->loaded) return;
+
+        if ( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) <> '' ) {
+            if ( HMWP_Classes_Tools::getOption( 'brute_google_checkbox' ) ) {
+                ?>
                 <script src="https://www.google.com/recaptcha/enterprise.js?hl=<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_captcha_language' ) <> '' ? HMWP_Classes_Tools::getOption( 'brute_captcha_language' ) : get_locale() ) ?>" async defer></script>
                 <style> #login { min-width: 354px; } </style>
-				<?php
-			} else {
-				?>
+                <?php
+            } else {
+                ?>
                 <script src="https://www.google.com/recaptcha/enterprise.js?render=<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) ) ?>" async defer></script>
-				<?php
-			}
-		}
+                <?php
+            }
 
-	}
+            $this->loaded = true;
+        }
+
+    }
 
 	/**
 	 * reCAPTCHA head and login form
@@ -106,12 +116,20 @@ class HMWP_Models_Bruteforce_Google extends HMWP_Models_Bruteforce_Abstract {
                         e.preventDefault();
                         if( typeof grecaptcha !== 'undefined' ) {
                             grecaptcha.enterprise.ready(async () => {
-                                const token = await grecaptcha.enterprise.execute('<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) ) ?>', {action: 'LOGIN'});
-                                var input = document.createElement("input");
-                                input.type = "hidden";
-                                input.name = "g-recaptcha-response";
-                                input.value = token;
-                                form.appendChild(input);
+                                try {
+                                    const token = await grecaptcha.enterprise.execute('<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) ) ?>', {action: 'LOGIN'});
+                                    var input = document.createElement("input");
+                                    input.type = "hidden";
+                                    input.name = "g-recaptcha-response";
+                                    input.value = token;
+                                    form.appendChild(input);
+                                    var input = document.createElement("input");
+                                    input.type = "hidden";
+                                    input.name = "login";
+                                    form.appendChild(input);
+                                } catch (err) {
+                                    console.warn("reCAPTCHA error", err);
+                                }
                                 HTMLFormElement.prototype.submit.call(form);
                             });
                         } else {

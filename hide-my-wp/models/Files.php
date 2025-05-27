@@ -170,8 +170,7 @@ class HMWP_Models_Files {
 			// build the URL in the address bar
 			$url = is_ssl() ? 'https://' : 'http://';
 			$url .= $_SERVER['HTTP_HOST'];
-			if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) &&
-			     HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) &&
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) &&
 			     HMWP_Classes_Tools::getValue( 'hmwp_url' ) ) {
 				$url .= HMWP_Classes_Tools::getValue( 'hmwp_url' );
 			} elseif ( isset( $_SERVER['REQUEST_URI'] ) ) {
@@ -400,7 +399,7 @@ class HMWP_Models_Files {
 		do_action( 'hmwp_files_show_file', $new_url, $new_path );
 
 		// If there is a mapping in the current URL
-		if ( $url_no_query <> $new_url_no_query ) {
+		if ( $url <> $new_url ) {
 
 			// If it's a file type
 			if ( $ext = $this->isFile( $new_url ) ) {
@@ -409,7 +408,7 @@ class HMWP_Models_Files {
 				if ( $new_path && $wp_filesystem->exists( $new_path ) ) {
 
 					// If the plugin is not set to map all the files dynamically
-					if ( ! HMW_DYNAMIC_FILES && ! HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
+					if ( ! HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 						// If file is loaded through WordPress rewrites and not through config file
 						if ( wp_parse_url( $url ) && in_array( $ext, array( 'png', 'jpg', 'jpeg', 'webp', 'gif') ) ) {
 							if ( stripos( $new_url, 'wp-admin' ) === false ) {

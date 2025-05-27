@@ -12,6 +12,12 @@ defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' );
 
 class HMWP_Models_Bruteforce_GoogleV3 extends HMWP_Models_Bruteforce_Abstract {
 
+
+    /**
+     * @var bool Prevent from loading Google script more than once
+     */
+    private $loaded = false;
+
 	/**
 	 * Verifies the Google Captcha while logging in.
 	 *
@@ -82,9 +88,14 @@ class HMWP_Models_Bruteforce_GoogleV3 extends HMWP_Models_Bruteforce_Abstract {
 	 * reCAPTCHA head and login form
 	 */
 	public function head() {
-		?>
+        // Return is the header is already loaded
+        if ($this->loaded) return;
+
+        ?>
         <script src='https://www.google.com/recaptcha/api.js?render=<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_captcha_site_key_v3' ) ) ?>' async defer></script>
-		<?php
+        <?php
+
+        $this->loaded = true;
 	}
 
 	/**
@@ -104,16 +115,28 @@ class HMWP_Models_Bruteforce_GoogleV3 extends HMWP_Models_Bruteforce_Abstract {
                 function reCaptchaSubmit(e) {
                     var form = this;
                     e.preventDefault();
-                    grecaptcha.ready(function () {
-                        grecaptcha.execute('<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_captcha_site_key_v3' ) ) ?>', {action: 'submit'}).then(function (token) {
-                            var input = document.createElement("input");
-                            input.type = "hidden";
-                            input.name = "g-recaptcha-response";
-                            input.value = token;
-                            form.appendChild(input);
-                            HTMLFormElement.prototype.submit.call(form);
+                    if (typeof grecaptcha !== 'undefined') {
+                        grecaptcha.ready(function () {
+                            grecaptcha.execute('<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_captcha_site_key_v3' ) ) ?>', {action: 'submit'}).then(function (token) {
+                                try {
+                                    var input = document.createElement("input");
+                                    input.type = "hidden";
+                                    input.name = "g-recaptcha-response";
+                                    input.value = token;
+                                    form.appendChild(input);
+                                    var input = document.createElement("input");
+                                    input.type = "hidden";
+                                    input.name = "login";
+                                    form.appendChild(input);
+                                } catch (err) {
+                                    console.warn("reCAPTCHA error", err);
+                                }
+                                HTMLFormElement.prototype.submit.call(form);
+                            });
                         });
-                    });
+                    } else {
+                        HTMLFormElement.prototype.submit.call(form);
+                    }
                 }
 
                 if (document.getElementsByTagName("form").length > 0) {

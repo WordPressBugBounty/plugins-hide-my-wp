@@ -162,7 +162,7 @@ class HMWP_Models_Compatibility {
 
 
 		// Change the paths in the elementor cached css
-		if ( ! HMW_DYNAMIC_FILES && ! HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
+		if ( ! HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 			if ( HMWP_Classes_Tools::isPluginActive( 'elementor/elementor.php' ) ) {
 				if ( HMWP_Classes_Tools::isMultisites() ) {
 

@@ -32,6 +32,17 @@
                                 </div>
                             </div>
 
+                            <div class="col-sm-12 row mb-1 ml-1 hmwp_howtolessons_div">
+                                <div class="checker col-sm-12 row my-2 py-1">
+                                    <div class="col-sm-12 p-0 switch switch-sm">
+                                        <input type="hidden" name="howtolessons" value="0"/>
+                                        <input type="checkbox" id="howtolessons" name="howtolessons" class="switch" checked="checked" value="1"/>
+                                        <label for="howtolessons"><?php _e( 'Receive regular emails with essential security updates and practical lessons to enhance your online safety.', 'hide-my-wp' ); ?></label>
+                                    </div>
+                                </div>
+                            </div>
+
+
                         </div>
                     </div>
 

@@ -171,7 +171,7 @@ class HMWP_Classes_Tools {
 			'hmwp_bruteforce_comments'       => 0,
 			'hmwp_bruteforce_woocommerce'    => 0,
 			'hmwp_bruteforce_username'       => 0,
-			'hmwp_brute_message'             => esc_html__( 'Your IP has been flagged for potential security violations. Please try again in a little while.', 'hide-my-wp' ),
+			'hmwp_brute_message'             => 'Your IP has been flagged for potential security violations. Please try again in a little while.',
 			'hmwp_hide_classes'              => json_encode( array() ),
 			'trusted_ip_header'              => '',
 
@@ -366,10 +366,6 @@ class HMWP_Classes_Tools {
 				'bb-config.php',
 				'error_log'
 			),
-			//
-			'hmwp_category_base'             => '',
-			'hmwp_tag_base'                  => '',
-			//
 		);
 
 		// Set options for "Lite Mode".
@@ -458,24 +454,15 @@ class HMWP_Classes_Tools {
 			$options['whitelist_level'] = ( $options['whitelist_paths'] == 1 ? 2 : 1 );
 		}
 
-		// Set the category and tag bases considering multisite setup.
-		$category_base = get_option( 'category_base' );
-		$tag_base      = get_option( 'tag_base' );
-
-		if ( self::isMultisites() && ! is_subdomain_install() && is_main_site() && 0 === strpos( get_option( 'permalink_structure' ), '/blog/' ) ) {
-			$category_base = preg_replace( '|^/?blog|', '', $category_base );
-			$tag_base      = preg_replace( '|^/?blog|', '', $tag_base );
-		}
-
-		$options['hmwp_category_base'] = $category_base;
-		$options['hmwp_tag_base']      = $tag_base;
-
 		// Set priority and rewrite rules settings if defined constants are set.
 		if ( HMW_PRIORITY ) {
 			$options['hmwp_priorityload'] = 1;
 		}
 		if ( HMW_RULES_IN_WP_RULES ) {
 			$options['hmwp_rewrites_in_wp_rules'] = 1;
+		}
+		if ( HMW_DYNAMIC_FILES ) {
+			$options['hmwp_mapping_file'] = 1;
 		}
 
 		// Return the final options array.
@@ -660,7 +647,15 @@ class HMWP_Classes_Tools {
 	 * @return void
 	 */
 	public static function loadMultilanguage() {
-		load_plugin_textdomain( dirname( HMWP_BASENAME ), false, dirname( HMWP_BASENAME ) . '/languages/' );
+
+		if ( function_exists('get_locale') ){
+			$locale = get_locale();
+
+			if ( $locale !== 'en_US' ) {
+				load_plugin_textdomain( dirname( HMWP_BASENAME ), false, dirname( HMWP_BASENAME ) . '/languages/' );
+			}
+		}
+
 	}
 
 	/**
@@ -2044,15 +2039,15 @@ class HMWP_Classes_Tools {
 	public static function checkAccountApi( $email = null, $redirect_to = '' ) {
 
 		$check   = array();
-		$monitor = HMWP_Classes_Tools::getValue( 'hmwp_monitor', 0 );
+		$howtolessons = HMWP_Classes_Tools::getValue( 'howtolessons', 1 );
 		$domain  = ( self::isMultisites() && defined( 'BLOG_ID_CURRENT_SITE' ) ) ? get_home_url( BLOG_ID_CURRENT_SITE ) : home_url();
 
 		if ( isset( $email ) && $email <> '' ) {
 			$args     = array(
 				'email'        => $email,
 				'url'          => $domain,
-				'howtolessons' => 1,
-				'monitor'      => (int) $monitor,
+				'howtolessons' => (int) $howtolessons,
+				'monitor'      => 0,
 				'source'       => 'hide-my-wp'
 			);
 			$response = HMWP_Classes_Tools::hmwp_remote_get( _HMWP_API_SITE_ . '/api/free/token', $args, array( 'timeout' => 10 ) );
@@ -2060,8 +2055,7 @@ class HMWP_Classes_Tools {
 			$args     = array(
 				'token'        => self::getOption( 'hmwp_token' ),
 				'url'          => $domain,
-				'howtolessons' => 1,
-				'monitor'      => (int) $monitor,
+				'howtolessons' => (int) $howtolessons,
 				'source'       => 'hide-my-wp'
 			);
 			$response = HMWP_Classes_Tools::hmwp_remote_get( _HMWP_API_SITE_ . '/api/free/token', $args, array( 'timeout' => 10 ) );

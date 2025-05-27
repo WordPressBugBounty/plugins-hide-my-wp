@@ -2,9 +2,9 @@
 Contributors: johndarrel
 Tags: hide,security,firewall,login,wp admin
 Requires at least: 5.3
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 7.0
-Stable tag: 5.4.03
+Stable tag: 5.4.05
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -327,6 +327,14 @@ Enjoy!
 17. New custom core paths changed with Hide My WP Ghost
 
 == Changelog ==
+= 5.4.05 (27 May 2025) =
+* Update - Add AI support in the plugin settings
+* Fixed - Compatibility WooCommerce login/register with reCaptcha V3
+
+= 5.4.04 (21 Mar 2025) =
+* Update - Compatibility with the WP 6.8
+* Fixed - Function _load_textdomain_just_in_time was called incorrectly
+
 = 5.4.03 (11 Mar 2025) =
 * Update - Compatibility with the new WP Engine rewrite rules
 * Update - Add the option to customize all active and inactive themes
