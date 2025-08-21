@@ -66,17 +66,14 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		}
 
 		// If safe parameter is set, clear the banned IPs and let the default paths
-		if ( HMWP_Classes_Tools::getIsset( HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ) ) {
-			if ( HMWP_Classes_Tools::getValue( HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ) == HMWP_Classes_Tools::getOption( 'hmwp_disable' ) ) {
+		if ( HMWP_Classes_Tools::calledSafeUrl( ) ) {
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->clearBlockedIPs();
+			HMWP_Classes_Tools::saveOptions( 'banlist_ip', json_encode( array() ) );
 
-				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->clearBlockedIPs();
-				HMWP_Classes_Tools::saveOptions( 'banlist_ip', json_encode( array() ) );
+			add_filter( 'site_url', array( $this->model, 'site_url' ), PHP_INT_MAX, 2 );
+			add_filter( 'hmwp_process_init', '__return_false' );
 
-				add_filter( 'site_url', array( $this->model, 'site_url' ), PHP_INT_MAX, 2 );
-				add_filter( 'hmwp_process_init', '__return_false' );
-
-				return;
-			}
+			return;
 		}
 
 		// Prevent slow websites due to misconfiguration in the config file
@@ -462,15 +459,18 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		///////////////////////////////////////////////
 		/// Check if changing the paths is true
 		if ( HMWP_Classes_Tools::doChangePaths() ) {
+			$priority = apply_filters( 'hmwp_priority_hook', 1 );
 
+			// If there is late loading, start the buffer on template_redirect PHP_INT_MAX
 			if ( apply_filters( 'hmwp_laterload', HMWP_Classes_Tools::getOption( 'hmwp_laterload' ) ) ) {
 				// On Late loading, start the buffer on template_redirect
-				add_action( 'template_redirect', array( $this->model, 'startBuffer' ), PHP_INT_MAX );
-			} else {
-				add_action( 'template_redirect', array( $this->model, 'startBuffer' ), 1 );
+				$priority = apply_filters( 'hmwp_priority_hook', PHP_INT_MAX );
 			}
 
-			// Start buffer on login init hook
+			// Start the buffer on template_redirect
+			add_action( 'template_redirect', array( $this->model, 'startBuffer' ), $priority  );
+
+			// For login page
 			add_action( 'login_init', array( $this->model, 'startBuffer' ) );
 
 		}

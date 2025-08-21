@@ -28,10 +28,8 @@ class HMWP_Controllers_Brute extends HMWP_Classes_FrontController {
 		parent::__construct();
 
 		// If the safe parameter is set, clear the banned IPs and let the default paths
-		if ( HMWP_Classes_Tools::getIsset( HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ) ) {
-			if ( HMWP_Classes_Tools::getValue( HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ) == HMWP_Classes_Tools::getOption( 'hmwp_disable' ) ) {
-				return;
-			}
+		if ( HMWP_Classes_Tools::calledSafeUrl( ) ) {
+			return;
 		}
 
 		// Load Brute Force for shortcodes

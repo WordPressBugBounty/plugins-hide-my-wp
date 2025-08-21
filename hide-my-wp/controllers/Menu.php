@@ -110,7 +110,7 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 
 			} elseif ( strpos( HMWP_Classes_Tools::getValue( 'page' ), 'hmwp_' ) !== false && apply_filters('hmwp_showaccount', true) ) {
                 add_filter('hmwp_getview', function ($view){
-                    $style = '<script src="https://storage.googleapis.com/contentlook/agent/widget.min.js?key=f07f616c-e167-49fd-94f1-81b42cd874b7&ver=1.0.0"></script>';
+                    $style = '<script src="https://storage.googleapis.com/contentlook/agent/widget.min.js?key=f07f616c-e167-49fd-94f1-81b42cd874b7&ver=1.0.1"></script>';
                     return $style . $view;
                 }, 11, 1);
             }

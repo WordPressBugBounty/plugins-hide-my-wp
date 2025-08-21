@@ -82,6 +82,7 @@ class HMWP_Models_Bruteforce_Math extends HMWP_Models_Bruteforce_Abstract {
             div.humanity input[name=brute_num] {
                 max-width: 60px;
                 display: inline !important;
+                border: 1px solid gray;
             }
         </style>
 		<?php

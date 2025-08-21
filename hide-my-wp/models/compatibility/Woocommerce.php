@@ -21,11 +21,16 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
             add_filter('woocommerce_is_rest_api_request', '__return_false');
         }
 
-		//if brute force is active
+	    // If brute force is active
 	    if (HMWP_Classes_Tools::getOption('hmwp_bruteforce') &&  HMWP_Classes_Tools::getOption('hmwp_bruteforce_woocommerce')) {
 
-			//load the brute force
+		    // Load the brute force for woocommerce login/register process
 		    $this->hookBruteForce();
+
+		    // Load brute force comments on Woocommerce reviews
+		    if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_comments' ) ) {
+			    add_filter( 'woocommerce_product_review_comment_form_args', array(HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Comments' ), 'formArgs'), 99 );
+		    }
 
 	    }else{
 

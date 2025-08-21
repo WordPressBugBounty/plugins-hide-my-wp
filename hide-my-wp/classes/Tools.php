@@ -704,6 +704,11 @@ class HMWP_Classes_Tools {
 	 */
 	public static function doFirewall() {
 
+		// If safe URL is called
+		if ( self::calledSafeUrl() ){
+			return false;
+		}
+
 		//If allways change paths admin & frontend
 		if ( defined( 'HMW_ALWAYS_RUN_FIREWALL' ) && HMW_ALWAYS_RUN_FIREWALL ) {
 			return true;
@@ -743,6 +748,11 @@ class HMWP_Classes_Tools {
 			return true;
 		}
 
+		// If safe URL is called
+		if ( self::calledSafeUrl() ){
+			return false;
+		}
+
 		if ( HMWP_Classes_Tools::isApi() ) {
 			return false;
 		}
@@ -769,6 +779,11 @@ class HMWP_Classes_Tools {
 
 		//Check if is valid for moving on
 		if ( ! apply_filters( 'hmwp_process_hide_disable', true ) ) {
+			return false;
+		}
+
+		// If safe URL is called
+		if ( self::calledSafeUrl() ){
 			return false;
 		}
 
@@ -804,6 +819,11 @@ class HMWP_Classes_Tools {
 			return false;
 		}
 
+		// If safe URL is called
+		if ( self::calledSafeUrl() ){
+			return false;
+		}
+
 		if ( self::isCron() ) {
 			return false;
 		}
@@ -833,6 +853,11 @@ class HMWP_Classes_Tools {
 			return false;
 		}
 
+		// If safe URL is called
+		if ( self::calledSafeUrl() ){
+			return false;
+		}
+
 		//make sure the function is loaded
 		if ( ! function_exists( 'is_user_logged_in' ) ) {
 			include_once ABSPATH . WPINC . '/pluggable.php';
@@ -849,6 +874,22 @@ class HMWP_Classes_Tools {
 		return true;
 	}
 
+	/**
+	 * Called the Safe URL
+	 *
+	 * @return bool
+	 */
+	public static function calledSafeUrl() {
+
+		// If safe parameter is set, clear the banned IPs and let the default paths
+		if ( HMWP_Classes_Tools::getIsset( HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ) ) {
+			if ( HMWP_Classes_Tools::getValue( HMWP_Classes_Tools::getOption( 'hmwp_disable_name' ) ) == HMWP_Classes_Tools::getOption( 'hmwp_disable' ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	/**
 	 * Get the plugin settings URL
