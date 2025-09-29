@@ -6,7 +6,7 @@
   Plugin Name: WP Ghost Lite
   Plugin URI: https://wordpress.org/plugins/hide-my-wp/
   Description: #1 Hack Prevention Security Solution: Hide WP CMS, 7G/8G Firewall, Brute Force Protection, 2FA, GEO Security, Temporary Logins, Alerts & more.
-  Version: 5.4.06
+  Version: 5.4.07
   Author: Hide My WP Ghost
   Author URI: https://hidemywpghost.com
   License: GPLv2 or later
@@ -21,10 +21,10 @@
 if ( defined( 'ABSPATH' ) && ! defined( 'HMW_VERSION' ) ) {
 
 	// Set current plugin version
-	define( 'HMWP_VERSION', '5.4.06' );
+	define( 'HMWP_VERSION', '5.4.07' );
 
 	// Set the last stable version of the plugin
-	define( 'HMWP_STABLE_VERSION', '5.4.03' );
+	define( 'HMWP_STABLE_VERSION', '5.4.06' );
 
 	// Set the plugin basename
 	define( 'HMWP_BASENAME', plugin_basename( __FILE__ ) );

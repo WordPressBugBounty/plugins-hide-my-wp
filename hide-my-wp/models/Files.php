@@ -238,7 +238,7 @@ class HMWP_Models_Files {
 		$parse_url = wp_parse_url( $url );
 
 		// Only if there is a path to change
-		if( !isset( $parse_url['path'] ) ) {
+		if ( ! isset( $parse_url['host'] ) || ! isset( $parse_url['path'] )) {
 			return $url;
 		}
 

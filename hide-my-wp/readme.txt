@@ -4,7 +4,7 @@ Tags: hide,security,firewall,login,wp admin
 Requires at least: 5.3
 Tested up to: 6.8
 Requires PHP: 7.0
-Stable tag: 5.4.06
+Stable tag: 5.4.07
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -327,6 +327,12 @@ Enjoy!
 17. New custom core paths changed with Hide My WP Ghost
 
 == Changelog ==
+= 5.4.07 (29 Sept 2025) =
+* Update - Compatibility with the plugin WP Social & WP Social PRO
+* Update - Compatibility with LiteSpeed Quic Cloud on IPV6
+* Update - Make REST API test work when permalinks are set to the default PHP parameter
+* Update - Minimum PHP version required is 8.0 in the Security Check section
+
 = 5.4.06 (21 Aug 2025) =
 * Update - Firewall rules for more compatibility
 * Update - Safe URL verification process

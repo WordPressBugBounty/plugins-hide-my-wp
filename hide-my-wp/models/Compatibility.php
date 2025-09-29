@@ -71,6 +71,7 @@ class HMWP_Models_Compatibility {
 			'mainwp-child/mainwp-child.php'                                                 => 'HMWP_Models_Compatibility_MainWP',
 			'userswp/userswp.php'                                                           => 'HMWP_Models_Compatibility_UsersWP',
 			'litespeed-cache/litespeed-cache.php'                                           => 'HMWP_Models_Compatibility_LiteSpeed',
+			'wp-social-pro/wp-social-pro.php'                                               => 'HMWP_Models_Compatibility_WPSocial',
 		);
 
 		try {

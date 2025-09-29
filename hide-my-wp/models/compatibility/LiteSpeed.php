@@ -25,7 +25,7 @@ class HMWP_Models_Compatibility_LiteSpeed extends HMWP_Models_Compatibility_Abst
 
 		// Whitelist Litespeed quic cloud Ips after settings save
 		add_action( 'hmwp_settings_saved', function (){
-			$quic_ips = HMWP_Classes_Tools::hmwp_remote_get( 'https://www.quic.cloud/ips?json' );
+			$quic_ips = HMWP_Classes_Tools::hmwp_remote_get( 'https://www.quic.cloud/ips-all?json' );
 			set_transient( 'hmwp_lispeed_ips', $quic_ips, WEEK_IN_SECONDS );
 		} );
 

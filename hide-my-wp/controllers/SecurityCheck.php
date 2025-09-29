@@ -204,7 +204,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 				'value'    => false,
 				'valid'    => false,
 				'warning'  => false,
-				'message'  => __( "Using an old version of PHP makes your site slow and prone to hacker attacks due to known vulnerabilities that exist in versions of PHP that are no longer maintained. <br /><br />You need <strong>PHP 7.4</strong> or higher for your website.", 'hide-my-wp' ),
+				'message'  => sprintf( __( "Using an old version of PHP makes your site slow and prone to hacker attacks due to known vulnerabilities that exist in versions of PHP that are no longer maintained. <br /><br />You need <strong>PHP %s</strong> or higher for your website.", 'hide-my-wp' ), '8.0'),
 				'solution' => esc_html__( "Email your hosting company and tell them you'd like to switch to a newer version of PHP or move your site to a better hosting company.", 'hide-my-wp' ),
 			),
 			'checkMysql'            => array(
@@ -621,8 +621,13 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 				$url    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
 				$urls[] = $url;
 
-				$url    = home_url() . '/' . HMWP_Classes_Tools::getOption( 'hmwp_wp-json' );
-				$urls[] = $url;
+				if ( ! HMWP_Classes_Tools::isPHPPermalink() ) {
+					$url    = home_url() . '/' . HMWP_Classes_Tools::getOption( 'hmwp_wp-json' );
+					$urls[] = $url;
+				}else{
+					$url    = home_url() . '/index.php?rest_route=/';
+					$urls[] = $url;
+				}
 
 
 				foreach ( $urls as $url ) {
@@ -636,11 +641,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 						'cookies'     => false
 					) );
 
-					if ( ! is_wp_error( $response ) && in_array( wp_remote_retrieve_response_code( $response ), array(
-							404,
-							302,
-							301
-						) ) ) {
+					if ( ! is_wp_error( $response ) && in_array( wp_remote_retrieve_response_code( $response ), array( 404, 302, 301 ) ) ) {
 						$error[] = '<a href="' . $url . '" target="_blank" style="word-break: break-word;">' . str_replace( '?rnd=' . $rnd . '&hmwp_preview=1', '', $url ) . '</a> (' . wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response ) . ')';
 					}
 				}
@@ -837,7 +838,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 		return array(
 			'value' => $phpversion,
-			'valid' => ( version_compare( $phpversion, '7.4', '>=' ) ),
+			'valid' => ( version_compare( $phpversion, '8.0', '>=' ) ),
 		);
 	}
 

@@ -405,7 +405,7 @@ class HMWP_Classes_Tools {
 			'hmwp_hide_img_classes'          => 1,
 			'hmwp_hide_rest_api'             => 1,
 			'hmwp_disable_rest_api'          => 0,
-			'hmwp_disable_rest_api_param'    => 1,
+			'hmwp_disable_rest_api_param'    => 0,
 			'hmwp_disable_xmlrpc'            => 1,
 			'hmwp_hide_rsd'                  => 1,
 			//
@@ -1577,10 +1577,8 @@ class HMWP_Classes_Tools {
 	 * @return bool
 	 */
 	public static function isPHPPermalink() {
-		if ( get_option( 'permalink_structure' ) ) {
-			if ( strpos( get_option( 'permalink_structure' ), 'index.php' ) !== false || stripos( get_option( 'permalink_structure' ), 'index.html' ) !== false || strpos( get_option( 'permalink_structure' ), 'index.htm' ) !== false ) {
-				return true;
-			}
+		if ( ! get_option( 'permalink_structure' ) || strpos( get_option( 'permalink_structure' ), 'index.php' ) !== false || stripos( get_option( 'permalink_structure' ), 'index.html' ) !== false || strpos( get_option( 'permalink_structure' ), 'index.htm' ) !== false ) {
+			return true;
 		}
 
 		return false;

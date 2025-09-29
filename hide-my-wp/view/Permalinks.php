@@ -934,19 +934,25 @@
                             <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/change-rest-api-path-with-wp-ghost/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                         </h3>
                         <div class="card-body">
-                            <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
-                                <div class="col-sm-4 p-0 font-weight-bold">
-									<?php echo esc_html__( 'Custom wp-json Path', 'hide-my-wp' ); ?>:
-                                    <div class="small text-black-50"><?php echo esc_html__( 'eg. json, api, call', 'hide-my-wp' ); ?></div>
-                                </div>
-                                <div class="col-sm-8 p-0 input-group">
-                                    <input type="text" class="form-control" maxlength="32" name="hmwp_wp-json" value="<?php echo HMWP_Classes_Tools::getOption( 'hmwp_wp-json' ) ?>" placeholder="<?php echo HMWP_Classes_Tools::$default['hmwp_wp-json'] ?>"/>
-                                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/change-rest-api-path-with-wp-ghost/#ghost-change-the-wp-json-path' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help"></i></a>
-                                </div>
+                            <?php if ( ! HMWP_Classes_Tools::isPHPPermalink() ) { ?>
+                                <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
+                                    <div class="col-sm-4 p-0 font-weight-bold">
+                                        <?php echo esc_html__('Custom wp-json Path', 'hide-my-wp'); ?>:
+                                        <div class="small text-black-50"><?php echo esc_html__('eg. json, api, call', 'hide-my-wp'); ?></div>
+                                    </div>
+                                    <div class="col-sm-8 p-0 input-group">
+                                        <input type="text" class="form-control" maxlength="32" name="hmwp_wp-json" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption('hmwp_wp-json')) ?>" placeholder="<?php echo esc_attr(HMWP_Classes_Tools::getDefault('hmwp_wp-json')) ?>"/>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/change-rest-api-path-with-wp-ghost/#ghost-change-the-wp-json-path' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 20%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                    </div>
 
-                                <div class="col-sm-12 mt-2 p-2 alert-danger text-center"><?php echo sprintf( esc_html__( "Update the settings on %s to refresh the paths after changing REST API path.", 'hide-my-wp' ), '<a href="' . admin_url( 'options-permalink.php' ) . '">' . esc_html__( 'Settings' ) . ' > ' . esc_html__( 'Permalinks' ) . '</a>' ); ?></div>
+                                    <div class="col-sm-12 mt-2 p-2 alert-danger text-center"><?php echo sprintf(esc_html__("Update the settings on %s to refresh the paths after changing REST API path.", 'hide-my-wp'), '<a href="'.esc_url(admin_url('options-permalink.php')).'">'.esc_html__('Settings') . ' > ' . esc_html__('Permalinks').'</a>'); ?></div>
 
-                            </div>
+                                </div>
+                            <?php } else{ ?>
+                                <div class="col-sm-12 text-danger text-center p-0 my-3">
+                                    <?php echo esc_html__( 'To customize the REST API path, ou need to set the permalink structure to friendly URL (without index.php).', 'hide-my-wp' ); ?>
+                                </div>
+                            <?php } ?>
 
                             <div class="col-sm-12 row mb-1 ml-1 p-2">
                                 <div class="checker col-sm-12 row my-2 py-1">
@@ -961,20 +967,22 @@
                                 </div>
                             </div>
 
-                            <div class="col-sm-12 row mb-1 ml-1 p-2">
-                                <div class="checker col-sm-12 row my-2 py-1">
-                                    <div class="col-sm-12 p-0 switch switch-sm">
-                                        <input type="hidden" name="hmwp_disable_rest_api" value="0"/>
-                                        <input type="checkbox" id="hmwp_disable_rest_api" name="hmwp_disable_rest_api" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_rest_api' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                        <label for="hmwp_disable_rest_api"><?php echo esc_html__( 'Disable REST API Access', 'hide-my-wp' ); ?>
-                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/change-rest-api-path-with-wp-ghost/#ghost-disable-rest-api-access' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                            <span class="text-black-50 small">(<?php echo esc_html__( "not recommended", 'hide-my-wp' ); ?>)</span>
-                                        </label>
-                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable REST API access for not logged in users", 'hide-my-wp' ); ?></div>
-                                        <div class="text-danger my-2 ml-5"><?php echo esc_html__( "The REST API is crucial for many plugins as it allows them to interact with the WordPress database and perform various actions programmatically.", 'hide-my-wp' ); ?></div>
+                            <?php if ( ! HMWP_Classes_Tools::isPHPPermalink() ) { ?>
+                                <div class="col-sm-12 row mb-1 ml-1 p-2">
+                                    <div class="checker col-sm-12 row my-2 py-1">
+                                        <div class="col-sm-12 p-0 switch switch-sm">
+                                            <input type="hidden" name="hmwp_disable_rest_api" value="0"/>
+                                            <input type="checkbox" id="hmwp_disable_rest_api" name="hmwp_disable_rest_api" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_rest_api' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_disable_rest_api"><?php echo esc_html__( 'Disable REST API Access', 'hide-my-wp' ); ?>
+                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/change-rest-api-path-with-wp-ghost/#ghost-disable-rest-api-access' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                                <span class="text-black-50 small">(<?php echo esc_html__( "not recommended", 'hide-my-wp' ); ?>)</span>
+                                            </label>
+                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable REST API access for not logged in users", 'hide-my-wp' ); ?></div>
+                                            <div class="text-danger my-2 ml-5"><?php echo esc_html__( "The REST API is crucial for many plugins as it allows them to interact with the WordPress database and perform various actions programmatically.", 'hide-my-wp' ); ?></div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            <?php }?>
 
                             <div class="col-sm-12 row mb-1 ml-1 p-2">
                                 <div class="checker col-sm-12 row my-2 py-1">
@@ -985,6 +993,9 @@
                                             <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/change-rest-api-path-with-wp-ghost/#ghost-disable-rest-route-parameter-access' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
                                         </label>
                                         <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable REST API access using the parameter 'rest_route'", 'hide-my-wp' ); ?></div>
+                                        <?php if ( HMWP_Classes_Tools::isPHPPermalink() ) { ?>
+                                            <div class="text-danger my-2 ml-5"><?php echo esc_html__("The REST API is crucial for many plugins as it allows them to interact with the WordPress database and perform various actions programmatically.", 'hide-my-wp'); ?></div>
+                                        <?php }?>
                                     </div>
                                 </div>
                             </div>
