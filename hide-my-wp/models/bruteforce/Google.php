@@ -96,57 +96,95 @@ class HMWP_Models_Bruteforce_Google extends HMWP_Models_Bruteforce_Abstract {
 	/**
 	 * reCAPTCHA head and login form
 	 */
-	public function form() {
-		if ( HMWP_Classes_Tools::getOption( 'brute_google_project_id' ) <> '' && HMWP_Classes_Tools::getOption( 'brute_google_api_key' ) <> '' && HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) <> '' ) {
-			global $hmwp_bruteforce;
+    public function form() {
+        if ( HMWP_Classes_Tools::getOption( 'brute_google_project_id' ) <> '' &&
+             HMWP_Classes_Tools::getOption( 'brute_google_api_key' ) <> '' &&
+             HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) <> '' ) {
 
-			//load header first if not triggered
-			if ( ! $hmwp_bruteforce && ! did_action( 'login_head' ) ) {
-				$this->head();
-			}
+            global $hmwp_bruteforce;
 
-			?>
+            // load header first if isn't triggered
+            if ( ! $hmwp_bruteforce && ! did_action( 'login_head' ) ) {
+                $this->head();
+            }
 
-			<?php if ( HMWP_Classes_Tools::getOption( 'brute_google_checkbox' ) ) { ?>
+            if ( HMWP_Classes_Tools::getOption( 'brute_google_checkbox' ) ) { ?>
                 <div class="g-recaptcha" data-sitekey="<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) ) ?>" data-action="LOGIN" style="margin: 12px 0 24px 0;"></div>
-			<?php } else { ?>
+            <?php } else { ?>
                 <script>
                     function reCaptchaSubmit(e) {
                         var form = this;
+
+                        // allow the second submit triggered after token injection
+                        if (form.__hmwp_recaptcha_ent_ready) {
+                            form.__hmwp_recaptcha_ent_ready = false;
+                            return;
+                        }
+
+                        // If grecaptcha isn't available, do nothing (let ajax/non-ajax handlers work)
+                        if (typeof grecaptcha === 'undefined' || !grecaptcha.enterprise || !grecaptcha.enterprise.execute) {
+                            return;
+                        }
+
                         e.preventDefault();
-                        if( typeof grecaptcha !== 'undefined' ) {
-                            grecaptcha.enterprise.ready(async () => {
-                                try {
-                                    const token = await grecaptcha.enterprise.execute('<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) ) ?>', {action: 'LOGIN'});
-                                    var input = document.createElement("input");
+                        e.stopPropagation();
+                        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+
+                        grecaptcha.enterprise.ready(async () => {
+                            try {
+                                const token = await grecaptcha.enterprise.execute(
+                                    '<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_google_site_key' ) ) ?>',
+                                    {action: 'LOGIN'}
+                                );
+
+                                // upsert g-recaptcha-response (avoid duplicates on repeated submits)
+                                var input = form.querySelector('input[name="g-recaptcha-response"]');
+                                if (!input) {
+                                    input = document.createElement("input");
                                     input.type = "hidden";
                                     input.name = "g-recaptcha-response";
-                                    input.value = token;
                                     form.appendChild(input);
-                                    var input = document.createElement("input");
-                                    input.type = "hidden";
-                                    input.name = "login";
-                                    form.appendChild(input);
-                                } catch (err) {
-                                    console.warn("reCAPTCHA error", err);
                                 }
-                                HTMLFormElement.prototype.submit.call(form);
-                            });
-                        } else {
-                            HTMLFormElement.prototype.submit.call(form);
-                        }
+                                input.value = token;
+
+                                // upsert login (avoid duplicates)
+                                var login = form.querySelector('input[name="login"]');
+                                if (!login) {
+                                    login = document.createElement("input");
+                                    login.type = "hidden";
+                                    login.name = "login";
+                                    form.appendChild(login);
+                                }
+                                if (login.value === "") login.value = "1";
+                            } catch (err) {
+                                console.warn("reCAPTCHA error", err);
+                            }
+
+                            // mark as ready, then re-trigger submit through the normal path (keeps AJAX handlers)
+                            form.__hmwp_recaptcha_ent_ready = true;
+
+                            if (typeof form.requestSubmit === "function") {
+                                form.requestSubmit();
+                            } else {
+                                // fallback: dispatch submit; if nobody cancels it, do native submit
+                                var ev = new Event("submit", {bubbles: true, cancelable: true});
+                                if (form.dispatchEvent(ev)) {
+                                    HTMLFormElement.prototype.submit.call(form);
+                                }
+                            }
+                        });
                     }
 
                     if (document.getElementsByTagName("form").length > 0) {
                         var x = document.getElementsByTagName("form");
                         for (var i = 0; i < x.length; i++) {
-                            x[i].addEventListener("submit", reCaptchaSubmit);
+                            // capture phase so token injection happens before most AJAX serializers
+                            x[i].addEventListener("submit", reCaptchaSubmit, true);
                         }
                     }
                 </script>
-				<?php
-			}
-		}
-	}
+            <?php }
+        }
+    }
 
 }

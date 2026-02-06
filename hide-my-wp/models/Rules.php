@@ -5,7 +5,7 @@
  *
  * @file  The Rules Model file
  * @package HMWP/RulesModel
- * @since 4.0.0
+ * @since 5.0.0
  */
 defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' );
 
@@ -17,6 +17,14 @@ class HMWP_Models_Rules {
 	 */
 	public $config_file;
 	public $config_chmod;
+	/**
+	 * @var array known logged in cookies & whitelist cookies
+	 */
+	public $whitelist_cookies = array();
+	/**
+	 * @var array known logged in ips & whitelist ips
+	 */
+	public $whitelist_ips = array();
 
 	public function __construct() {
 		$this->root_path = HMWP_Classes_Tools::getRootPath();
@@ -28,11 +36,11 @@ class HMWP_Models_Rules {
 
 			//check if config directory exists
 			if ( is_dir( $root_config ) ) {
-				$this->config_file = str_replace( '\\', '/', $root_config ) . '/' . 'hidemywpghost.conf';
+				$this->config_file = str_replace( '\\', '/', $root_config ) . '/' . 'hidemywp.conf';
 			}
 
 		} elseif ( HMWP_Classes_Tools::isNginx() ) {
-			$this->config_file = $this->root_path . 'hidemywpghost.conf';
+			$this->config_file = $this->root_path . 'hidemywp.conf';
 		} elseif ( HMWP_Classes_Tools::isIIS() ) {
 			$this->config_file = $this->root_path . 'web.config';
 		} elseif ( HMWP_Classes_Tools::isApache() || HMWP_Classes_Tools::isLitespeed() ) {
@@ -40,6 +48,38 @@ class HMWP_Models_Rules {
 		} else {
 			$this->config_file = false;
 		}
+
+		//Set known logged in cookies
+		$this->whitelist_cookies[] = 'wordpress_logged_in_';
+		$this->whitelist_cookies[] = HMWP_LOGGED_IN_COOKIE;
+		//Let third party cookie check
+		$this->whitelist_cookies = apply_filters( 'hmwp_rules_whitelisted_cookies', $this->whitelist_cookies );
+		$this->whitelist_cookies = array_unique( $this->whitelist_cookies );
+
+		// Add the whitelist IPs in config for hidden path access
+		if ( $whitelist_ip = HMWP_Classes_Tools::getOption( 'whitelist_ip' ) ) {
+			if ( ! empty( $whitelist_ip ) ) {
+				if ( $whitelist_ip = (array) json_decode( $whitelist_ip, true ) ) {
+					$this->whitelist_ips = array_merge( $this->whitelist_ips, $whitelist_ip );
+				}
+			}
+		}
+
+		// Let third party IP addresses
+		$this->whitelist_ips = apply_filters( 'hmwp_rules_whitelisted_ips', $this->whitelist_ips );
+
+		// Filter / Sanitize IP addresses
+		if ( ! empty( $this->whitelist_ips ) ) {
+			$this->whitelist_ips = array_filter( array_map( function ( $ip ) {
+				if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+					return false;
+				}
+
+				return trim( $ip );
+			}, $this->whitelist_ips ) );
+		}
+		$this->whitelist_ips = array_unique( $this->whitelist_ips );
+
 	}
 
 	/**
@@ -54,7 +94,7 @@ class HMWP_Models_Rules {
 	/**
 	 * Check if the config file is writable
 	 *
-	 * @param  string  $config_file
+	 * @param string $config_file
 	 *
 	 * @return bool
 	 */
@@ -93,7 +133,7 @@ class HMWP_Models_Rules {
 	 * Write to config file
 	 *
 	 * @param $rules
-	 * @param  string  $header
+	 * @param string $header
 	 *
 	 * @return bool
 	 * @throws Exception
@@ -115,8 +155,8 @@ class HMWP_Models_Rules {
 	/**
 	 * Find the regex text in specific file
 	 *
-	 * @param  string  $find
-	 * @param  string  $file
+	 * @param string $find
+	 * @param string $file
 	 *
 	 * @return bool
 	 */
@@ -231,8 +271,8 @@ class HMWP_Models_Rules {
 	 * Replaces existing marked info. Retains surrounding
 	 * data. Creates file if none exists.
 	 *
-	 * @param  string  $marker  The marker to alter.
-	 * @param  array|string  $insertion  The new content to insert.
+	 * @param string $marker The marker to alter.
+	 * @param array|string $insertion The new content to insert.
 	 *
 	 * @return bool True on write success, false on failure.
 	 */
@@ -264,7 +304,6 @@ class HMWP_Models_Rules {
 				}
 			}
 		}
-
 
 		if ( ! is_array( $insertion ) ) {
 			$insertion = explode( "\n", $insertion );
@@ -387,22 +426,15 @@ class HMWP_Models_Rules {
 		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
 
 		if ( $this->config_chmod && isset( $wp_filesystem ) ) {
-			if ( $this->config_chmod == '400' ) {
-				$wp_filesystem->chmod( $config_file, 0400 );
-			} elseif ( $this->config_chmod == '440' ) {
-				$wp_filesystem->chmod( $config_file, 0440 );
-			} else {
-				$wp_filesystem->chmod( $config_file, 0444 );
-			}
+			$wp_filesystem->chmod( $config_file, octdec( $this->config_chmod ) );
+
 		}
 	}
 
 	/**
-	 * Add rules to protect the website from sql injection
-	 *
-	 * @return string
+	 * Hide the Old Paths like /hmwp_wp-content_url, /hmwp_wp-includes_url
 	 */
-	public function getInjectionRewrite() {
+	public function getHideOldPathRewrite() {
 		$rules = '';
 
 		$home_root = '/';
@@ -416,39 +448,71 @@ class HMWP_Models_Rules {
 			$home_root = trailingslashit( $path );
 		}
 
+		$wp_content  = HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' );
+		$wp_includes = HMWP_Classes_Tools::getDefault( 'hmwp_wp-includes_url' );
+
+		$extensions = array();
+		$types      = array( 'txt', 'html', 'lock' );
+		$files      = array( 'wp-config.php', 'readme.html', 'readme.txt', 'license.txt' );
+
+		if(HMWP_Classes_Tools::getDefault('hmwp_wp-comments-post') <> HMWP_Classes_Tools::getOption('hmwp_wp-comments-post')) {
+			array_unshift($files, 'wp-comments-post.php');
+		}
+
+		if ( in_array( 'html', $types ) ) {
+			$extensions[] = '\.htm';
+			$extensions[] = '\.html';
+		}
+		if ( in_array( 'txt', $types ) ) {
+			$extensions[] = '\.rtf';
+			$extensions[] = '\.rtx';
+			$extensions[] = '\.txt';
+		}
+		if ( in_array( 'lock', $types ) ) {
+			$extensions[] = '\.lock';
+		}
+
+		//Hook the list of the extensions to block on old paths
+		$extensions = apply_filters( 'hmwp_common_paths_extensions', $extensions );
+
 		if ( HMWP_Classes_Tools::isNginx() ) {
 
-			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
-				$rules .= 'if ($http_cookie !~* "wordpress_logged_in_|' . HMWP_LOGGED_IN_COOKIE . '" ) {  set $cond cookie; }' . PHP_EOL;
-				$rules .= 'if ($request_uri ~* author=\d+$) { set $cond "${cond}+author_uri"; }' . PHP_EOL;
-				$rules .= 'if ($cond = "cookie+author_uri") {  return 404; } ' . PHP_EOL;
-			}
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths' ) ) {
 
-			if ( HMWP_Classes_Tools::getOption( 'hmwp_security_header' ) ) {
-
-				$headers = (array) HMWP_Classes_Tools::getOption( 'hmwp_security_headers' );
-
-				if ( ! empty( $headers ) ) {
-					foreach ( $headers as $name => $value ) {
-						if ( $value <> '' ) {
-							$rules .= 'add_header ' . $name . ' "' . str_replace( '"', '\"', $value ) . '";' . PHP_EOL;
+				if ( HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_wp-content_url' ) ) {
+					$rules .= 'set $cond "";' . PHP_EOL;
+					if ( ! empty( $this->whitelist_ips ) ) {
+						foreach ( $this->whitelist_ips as $ip ) {
+							$rules .= 'if ($remote_addr = "' . $ip . '" ) {  set $cond "whitelist"; }' . PHP_EOL;
 						}
 					}
+					$rules .= 'if ($http_cookie !~* "' . join( '|', $this->whitelist_cookies ) . '") {  set $cond "${cond}cookie"; }' . PHP_EOL;
+					$rules .= 'if ($request_uri ~* ^' . $home_root . $wp_content . '/?$) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+					$rules .= 'if ($request_uri ~* ^' . $home_root . $wp_content . '/[^\.]+/?$) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+					if ( HMWP_Classes_Tools::getDefault( 'hmwp_wp-includes_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_wp-includes_url' ) ) {
+						$rules .= 'if ($request_uri ~* ^' . $home_root . $wp_includes . '/?$) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+					}
+					if ( ! empty( $extensions ) ) {
+						if ( HMWP_Classes_Tools::getDefault( 'hmwp_plugin_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_plugin_url' ) ) {
+							$rules .= 'if ($request_uri ~* ^' . $home_root . HMWP_Classes_Tools::getDefault( 'hmwp_plugin_url' ) . '/[^\.]+(' . join( '|', $extensions ) . ')) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+						}
+						if ( HMWP_Classes_Tools::getDefault( 'hmwp_themes_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_themes_url' ) ) {
+							$rules .= 'if ($request_uri ~* ^' . $home_root . $wp_content . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_themes_url' ) . '/[^\.]+(' . join( '|', $extensions ) . ')) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+						}
+						if ( HMWP_Classes_Tools::getDefault( 'hmwp_upload_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_upload_url' ) ) {
+							$rules .= 'if ($request_uri ~* ^' . $home_root . $wp_content . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_upload_url' ) . '/[^\.]+(' . join( '|', $extensions ) . ')) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+						}
+						if ( HMWP_Classes_Tools::getDefault( 'hmwp_wp-includes_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_wp-includes_url' ) ) {
+							$rules .= 'if ($request_uri ~* ^' . $home_root . $wp_includes . '/[^\.]+(' . join( '|', $extensions ) . ')) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+						}
+					}
+
+					//hide the installation and upgrade files for not loggedin users
+					$rules .= 'if ($cond = "cookie+deny_uri") {  return 404; } ' . PHP_EOL;
 				}
 			}
-
-			if ( HMWP_Classes_Tools::getOption( 'hmwp_detectors_block' ) ) {
-				$rules .= 'if ( $remote_addr = "35.214.130.87" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $remote_addr = "192.185.4.40" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $remote_addr = "15.235.50.223" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $remote_addr = "172.105.48.130" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $remote_addr = "167.99.233.123" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_referer ~ "wpthemedetector" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_user_agent ~ "builtwith" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_user_agent ~ "isitwp" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_user_agent ~ "wapalyzer" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_referer ~ "mShots" ) { return 404; }' . PHP_EOL;
-				$rules .= 'if ( $http_referer ~ "WhatCMS" ) { return 404; }' . PHP_EOL;
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ) && ! empty( $files ) ) {
+				$rules .= 'location ~ ^/(' . join( '|', $files ) . ') { deny all; }' . PHP_EOL;
 			}
 
 		} elseif ( HMWP_Classes_Tools::isApache() || HMWP_Classes_Tools::isLitespeed() ) {
@@ -476,8 +540,6 @@ class HMWP_Models_Rules {
 
 
 				}
-
-				// Add rules for 6G Medium Firewall Security
 				if ( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 2 ) {
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (%0A|%0D|%3C|%3E|%00) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (;|<|>|'|\\\"|\\)|\\(|%0A|%0D|%22|%28|%3C|%3E|%00).*(libwww-perl|wget|python|nikto|curl|scan|java|winhttp|HTTrack|clshttp|archiver|loader|email|harvest|extract|grab|miner) [NC,OR]" . PHP_EOL;
@@ -528,7 +590,6 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (sp_executesql) [NC]" . PHP_EOL;
 
 				}
-				// Add rules for 7G Firewall Security
 				if ( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 3 ) {
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} ([a-z0-9]{2000,}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (&lt;|%0a|%0d|%27|%3c|%3e|%00|0x00) [NC,OR]" . PHP_EOL;
@@ -542,7 +603,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)(:|%3a)(/|%2f) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (order(\s|%20)by(\s|%20)1--) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)(\*|%2a)(\*|%2a)(/|%2f) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (ckfinder|fck|fckeditor|fullclick) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (ckfinder|fckeditor|fullclick) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} ((.*)header:|(.*)set-cookie:(.*)=) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (cmd|command)(=|%3d)(chdir|mkdir)(.*)(x20) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (globals|mosconfig([a-z_]{1,22})|request)(=|\[) [NC,OR]" . PHP_EOL;
@@ -586,7 +647,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} (\.)(php)(\()?([0-9]+)(\))?(/)?$ [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(vbulletin|boards|vbforum)(/)? [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} /((.*)header:|(.*)set-cookie:(.*)=) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (/)(ckfinder|fck|fckeditor|fullclick) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (/)(ckfinder|fckeditor|fullclick) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\.(s?ftp-?)config|(s?ftp-?)config\.) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\{0\}|\\\"?0\\\"?=\\\"?0|\(/\(|\+\+\+|\\\\\\\") [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (thumbs?(_editor|open)?|tim(thumbs?)?)(\.php) [NC,OR]" . PHP_EOL;
@@ -594,7 +655,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} (///|\?\?|/&&|/\*(.*)\*/|/:/|\\\\\\\\|0x00|%00|%0d%0a) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/%7e)(root|ftp|bin|nobody|named|guest|logs|sshd)(/) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(etc|var)(/)(hidden|secret|shadow|ninja|passwd|tmp)(/)?$ [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (s)?(ftp|http|inurl|php)(s)?(:(/|%2f|%u2215)(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (s)?(ftp|inurl|php)(s)?(:(/|%2f|%u2215)(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(=|\\\$&?|&?(pws|rk)=0|_mm|_vti_|(=|/|;|,)nt\.) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\.)(ds_store|htaccess|htpasswd|init?|mysql-select-db)(/)?$ [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(bin)(/)(cc|chmod|chsh|cpp|echo|id|kill|mail|nasm|perl|ping|ps|python|tclsh)(/)?$ [NC,OR]" . PHP_EOL;
@@ -606,7 +667,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(author-panel|bitrix|class|database|(db|mysql)-?admin|filemanager|htdocs|httpdocs|https?|mailman|mailto|msoffice|mysql|_?php-my-admin(.*)|tmp|undefined|usage|var|vhosts|webmaster|www)(/) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (base64_(en|de)code|benchmark|child_terminate|curl_exec|e?chr|eval|function|fwrite|(f|p)open|html|leak|passthru|p?fsockopen|phpinfo|posix_(kill|mkfifo|setpgid|setsid|setuid)|proc_(close|get_status|nice|open|terminate)|(shell_)?exec|system)(.*)(\()(.*)(\)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(^$|00.temp00|0day|3index|3xp|70bex?|admin_events|bkht|(php|web)?shell|c99|config(\.)?bak|curltest|db|dompdf|filenetworks|hmei7|index\.php/index\.php/index|jahat|kcrew|keywordspy|libsoft|marg|mobiquo|mysql|php-?info|racrew|sql|vuln|(web-?|wp-)?(conf\b|config(uration)?)|xertive)(\.php) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (\.)(7z|ab4|ace|afm|ashx|aspx?|bash|ba?k?|bin|bz2|cfg|cfml?|conf\b|config|ctl|dat|db|dist|dll|eml|engine|env|et2|exe|fec|fla|hg|inc|ini|inv|jsp|log|lqd|make|mbf|mdb|mmw|mny|module|old|one|orig|out|passwd|pdb|phtml|pl|profile|psd|pst|ptdb|pwd|py|qbb|qdf|rar|rdf|save|sdb|sql|sh|soa|svn|swf|swl|swo|swp|stx|tar|tax|tgz|theme|tls|tmd|wow|xtmpl|ya?ml|zlib)$ [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (\.)(7z|ab4|ace|afm|ashx|aspx?|bash|ba?k?|bin|bz2|cfg|cfml?|conf\b|config|ctl|dat|db|dist|dll|eml|engine|env|et2|exe|fec|fla|hg|inc|ini|inv|jsp|log|lqd|make|mbf|mdb|mmw|mny|module|old|one|orig|out|passwd|pdb|phtml|pl|psd|pst|ptdb|pwd|py|qbb|qdf|rar|rdf|save|sdb|sql|sh|soa|svn|swf|swl|swo|swp|stx|tar|tax|tgz|theme|tls|tmd|wow|xtmpl|ya?ml|zlib)$ [NC,OR]" . PHP_EOL;
 
 					$rules .= "RewriteCond %{REMOTE_HOST} (163data|amazonaws|colocrossing|crimea|g00g1e|justhost|kanagawa|loopia|masterhost|onlinehome|poneytel|sprintdatacenter|reverse.softlayer|safenet|ttnet|woodpecker|wowrack) [NC,OR]" . PHP_EOL;
 
@@ -617,8 +678,22 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_METHOD} ^(connect|debug|move|trace|track) [NC]" . PHP_EOL;
 
 				}
-				// Add rules for 8G Firewall Security
 				if ( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 4 ) {
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} ([a-z0-9]{2000,}) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (&lt;|%0a|%0d|%27|%3c|%3e|%00|0x00) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (ahrefs|alexibot|majestic|mj12bot|rogerbot) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (oppo\sa33|(c99|php|web)shell|site((.){0,2})copier) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (base64_decode|bin/bash|disconnect|eval|unserializ) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (acapbot|acoonbot|alexibot|asterias|attackbot|awario|backdor|becomebot|binlar|blackwidow|blekkobot|blex|blowfish|bullseye|bunnys|butterfly|careerbot|casper) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (checkpriv|cheesebot|cherrypick|chinaclaw|choppy|clshttp|cmsworld|copernic|copyrightcheck|cosmos|crescent|datacha|diavol|discobot|dittospyder) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (dotbot|dotnetdotcom|dumbot|econtext|emailcollector|emailsiphon|emailwolf|eolasbot|eventures|extract|eyenetie|feedfinder|flaming|flashget|flicky|foobot|fuck) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (g00g1e|getright|gigabot|go-ahead-got|gozilla|grabnet|grafula|harvest|heritrix|httracks?|icarus6j|jetbot|jetcar|jikespider|kmccrew|leechftp|libweb|liebaofast) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (linkscan|linkwalker|loader|lwp-download|majestic|masscan|miner|mechanize|mj12bot|morfeus|moveoverbot|netmechanic|netspider|nicerspro|nikto|ninja|nominet|nutch) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (pagegrabber|petalbot|planetwork|postrank|proximic|purebot|queryn|queryseeker|radian6|radiation|realdownload|remoteview|rogerbot|scan|scooter|seekerspid) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (semalt|siclab|sindice|sistrix|sitebot|siteexplorer|sitesnagger|skygrid|smartdownload|snoopy|sosospider|spankbot|spbot|sqlmap|stackrambler|stripper|sucker|surftbot) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (sux0r|suzukacz|suzuran|takeout|teleport|telesoft|true_robots|turingos|turnit|vampire|vikspider|voideye|webleacher|webreaper|webstripper|webvac|webviewer|webwhacker) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (winhttp|wwwoffle|woxbot|xaldon|xxxyy|yamanalab|yioopbot|youda|zeus|zmeu|zune|zyborg) [NC,OR]" . PHP_EOL;
+
 					$rules .= "RewriteCond %{QUERY_STRING} ([a-z0-9]{4000,}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)(:|%3a)(/|%2f) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (etc/(hosts|motd|shadow)) [NC,OR]" . PHP_EOL;
@@ -650,8 +725,8 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (_|%5f)(r|%72|%52)(e|%65|%45)(q|%71|%51)(u|%75|%55)(e|%65|%45)(s|%73|%53)(t|%74|%54)(=|\[|%[0-9A-Z]{2,}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (b|%62|%42)(a|%61|%41)(s|%73|%53)(e|%65|%45)(6|%36)(4|%34)(_|%5f)(e|%65|%45|d|%64|%44)(e|%65|%45|n|%6e|%4e)(c|%63|%43)(o|%6f|%4f)(d|%64|%44)(e|%65|%45)(.*)(\()(.*)(\)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (@copy|\\\$_(files|get|post)|allow_url_(fopen|include)|auto_prepend_file|blexbot|browsersploit|call_user_func_array|(php|web)shell|curl(_exec|test)|disable_functions?|document_root) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (elastix|encodeuricom|exploit|fclose|fgets|file_put_contents|fputs|fsbuff|fsockopen|gethostbyname|hmei7|hubs_post-cta|input_file|invokefunction|(\b)load_file|open_basedir|outfile|p3dlite) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (pass(=|%3d)shell|passthru|phpinfo|phpshells|popen|proc_open|quickbrute|remoteview|root_path|shell_exec|site((.){0,2})copier|sp_executesql|sux0r|trojan|udtudt|user_func_array|wget|wp_insert_user|xertive) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (elastix|encodeuricom|exploit|fclose|fgets|file_put_contents|fputs|fsbuff|fsockopen|gethostbyname|grablogin|hmei7|hubs_post-cta|input_file|invokefunction|(\b)load_file|open_basedir|outfile|p3dlite) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (pass(=|%3d)shell|passthru|phpinfo|phpshells|popen|proc_open|quickbrute|remoteview|root_path|safe_mode|shell_exec|site((.){0,2})copier|sp_executesql|sux0r|trojan|udtudt|user_func_array|wget|wp_insert_user|xertive) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} ((\+|%2b)(concat|delete|get|select|union)(\+|%2b)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (union)(.*)(select)(.*)(\(|%28) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (concat|eval)(.*)(\(|%28) [NC,OR]" . PHP_EOL;
@@ -672,7 +747,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(\*|\\\"|\'|\.|,|&|&amp;?)/?$ [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\.)(php)(\()?([0-9]+)(\))?(/)?$ [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} /((.*)header:|(.*)set-cookie:(.*)=) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (/)(ckfinder|fck|fckeditor|fullclick) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (/)(ckfinder|fckeditor|fullclick) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\.(s?ftp-?)config|(s?ftp-?)config\.) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)((force-)?download|framework/main)(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\{0\}|\\\"?0\\\"?=\\\"?0|\(/\(|\+\+\+|\\\\\\\") [NC,OR]" . PHP_EOL;
@@ -688,15 +763,14 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(\.?mad|alpha|c99|php|web)?sh(3|e)ll([0-9]+|\w)(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(admin-?|file-?)(upload)(bg|_?file|ify|svu|ye)?(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(etc|var)(/)(hidden|secret|shadow|ninja|passwd|tmp)(/)?$ [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (s)?(ftp|http|inurl|php)(s)?(:(/|%2f|%u2215)(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (s)?(ftp|inurl|php)(s)?(:(/|%2f|%u2215)(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(=|\\\$&?|&?(pws|rk)=0|_mm|_vti_|(=|/|;|,)nt\.) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\.)(ds_store|htaccess|htpasswd|init?|mysql-select-db)(/)?$ [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(bin)(/)(cc|chmod|chsh|cpp|echo|id|kill|mail|nasm|perl|ping|ps|python|tclsh)(/)?$ [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(::[0-9999]|%3a%3a[0-9999]|127\.0\.0\.1|ccx|localhost|makefile|pingserver|wwwroot)(/)? [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} ^(/)(123|backup|bak|beta|bkp|default|demo|dev(new|old)?|home|new-?site|null|old|old_files|old1)(/)?$ [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)?j((\s)+)?a((\s)+)?v((\s)+)?a((\s)+)?s((\s)+)?c((\s)+)?r((\s)+)?i((\s)+)?p((\s)+)?t((\s)+)?(%3a|:) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} ^(/)(old-?site(back)?|old(web)?site(here)?|sites?|staging|undefined)(/)?$ [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (/)(filemanager|htdocs|httpdocs|https?|mailman|mailto|msoffice|undefined|usage|var|vhosts|webmaster|www)(/) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (/)(filemanager|htdocs|httpdocs|https?|login|mailman|mailto|msoffice|undefined|usage|var|vhosts|webmaster|www)(/) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\(null\)|\{\\\$itemURL\}|cast\(0x|echo(.*)kae|etc/passwd|eval\(|null(.*)null|open_basedir|self/environ|\+union\+all\+select) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(db-?|j-?|my(sql)?-?|setup-?|web-?|wp-?)?(admin-?)?(setup-?)?(conf\b|conf(ig)?)(uration)?(\.?bak|\.inc)?(\.inc|\.old|\.php|\.txt) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)((.*)crlf-?injection|(.*)xss-?protection|__(inc|jsc)|administrator|author-panel|database|downloader|(db|mysql)-?admin)(/) [NC,OR]" . PHP_EOL;
@@ -710,7 +784,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(analyser|apache|apikey|apismtp|authenticat(e|ing)|autoload_classmap|backup(_index)?|bakup|bkht|black|bogel|bookmark|bypass|cachee?)(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(clean|cm(d|s)|con|connector\.minimal|contexmini|contral|curl(test)?|data(base)?|db|db-cache|db-safe-mode|defau11|defau1t|dompdf|dst)(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(elements|emails?|error.log|ecscache|edit-form|eval-stdin|export|evil|fbrrchive|filemga|filenetworks?|f0x|gank(\.php)?|gass|gel|guide)(\.php) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (/)(logo_img|lufix|mage|marg|mass|mide|moon|mssqli|mybak|myshe|mysql|mytag_js?|nasgor|newfile|news|nf_?tracking|nginx|ngoi|ohayo|old-?index)(\.php) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (/)(logo_img|lufix|mage|marg|mass|mide|moon|mssqli|mybak|myshe|mysql|mytag_js?|nasgor|newfile|nf_?tracking|nginx|ngoi|ohayo|old-?index)(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(olux|owl|pekok|petx|php-?info|phpping|popup-pomo|priv|r3x|radio|rahma|randominit|readindex|readmy|reads|repair-?bak|root)(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(router|savepng|semayan|shell|shootme|sky|socket(c|i|iasrgasf)ontrol|sql(bak|_?dump)?|support|sym403|sys|system_log|test|tmp-?(uploads)?)(\.php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(traffic-advice|u2p|udd|ukauka|up__uzegp|up14|upxx?|vega|vip|vu(ln)?(\w)?|webroot|weki|wikindex|wp_logns?|wp_wrong_datlib)(\.php) [NC,OR]" . PHP_EOL;
@@ -735,6 +809,176 @@ class HMWP_Models_Rules {
 				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
 			}
 
+			$rules .= "<IfModule mod_rewrite.c>" . PHP_EOL;
+			$rules .= "RewriteEngine On" . PHP_EOL;
+			$rules .= "RewriteBase $home_root" . PHP_EOL;
+			if ( ! empty( $this->whitelist_ips ) ) {
+				foreach ( $this->whitelist_ips as $ip ) {
+					$rules .= "RewriteCond %{REMOTE_ADDR} !^$ip$" . PHP_EOL;
+				}
+			}
+			$rules .= "RewriteCond %{HTTP:Cookie} !(" . join( '|', $this->whitelist_cookies ) . ") [NC]" . PHP_EOL;
+			if ( defined( 'WP_ROCKET_MINIFY_CACHE_URL' ) ) { //If WP-Rocket is installed
+				$rules .= "RewriteCond %{REQUEST_URI} !" . str_replace( array(
+						home_url() . '/',
+						HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' )
+					), '', ltrim( WP_ROCKET_MINIFY_CACHE_URL, '/' ) ) . " [NC]" . PHP_EOL;
+			}
+
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths' ) ) {
+				if ( HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_wp-content_url' ) ) {
+					$rules .= "RewriteCond %{REQUEST_URI} ^" . $home_root . $wp_content . "/?$ [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} ^" . $home_root . $wp_content . "/[^\.]+/?$ [NC,OR]" . PHP_EOL;
+				}
+				if ( HMWP_Classes_Tools::getDefault( 'hmwp_wp-includes_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_wp-includes_url' ) ) {
+					$rules .= "RewriteCond %{THE_REQUEST} " . $home_root . $wp_includes . "/?$ [NC,OR]" . PHP_EOL;
+				}
+				if ( ! empty( $extensions ) ) {
+
+					//hide wp-admin files like load-scripts.php when 7G and 8G firewall is loaded
+					if ( HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' ) &&
+					     ( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 3 || (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 4 ) ) {
+						if ( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ) ) {
+							$rules .= "RewriteCond %{THE_REQUEST} " . $home_root . HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . "/[^\.]+(" . join( '|', $extensions ) . ") [NC,OR]" . PHP_EOL;
+						}
+					}
+					if ( HMWP_Classes_Tools::getDefault( 'hmwp_plugin_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_plugin_url' ) ) {
+						$rules .= "RewriteCond %{THE_REQUEST} " . $home_root . HMWP_Classes_Tools::getDefault( 'hmwp_plugin_url' ) . "/[^\.]+(" . join( '|', $extensions ) . ") [NC,OR]" . PHP_EOL;
+					}
+					if ( HMWP_Classes_Tools::getDefault( 'hmwp_themes_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_themes_url' ) ) {
+						$rules .= "RewriteCond %{THE_REQUEST} " . $home_root . $wp_content . "/" . HMWP_Classes_Tools::getDefault( 'hmwp_themes_url' ) . "/[^\.]+(" . join( '|', $extensions ) . ")    [NC,OR]" . PHP_EOL;
+					}
+					if ( HMWP_Classes_Tools::getDefault( 'hmwp_upload_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_upload_url' ) ) {
+						$rules .= "RewriteCond %{THE_REQUEST} " . $home_root . $wp_content . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_upload_url' ) . "/[^\.]+(" . join( '|', $extensions ) . ") [NC,OR]" . PHP_EOL;
+					}
+					if ( HMWP_Classes_Tools::getDefault( 'hmwp_wp-includes_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_wp-includes_url' ) ) {
+						$rules .= "RewriteCond %{THE_REQUEST} " . $home_root . $wp_includes . "/[^\.]+(" . join( '|', $extensions ) . ") [NC,OR]" . PHP_EOL;
+					}
+				}
+
+			}
+
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ) && ! empty( $files ) ) {
+				$rules .= "RewriteCond %{THE_REQUEST} /([_0-9a-zA-Z-]+/)?(" . str_replace( '.', '\\.', join( '|', $files ) ) . ") [NC]" . PHP_EOL;
+			}
+
+			$rules .= "RewriteRule ^(.*)$ - [L,R=404]" . PHP_EOL;
+			$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
+
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ) ) {
+				$rules .= "<IfModule mod_rewrite.c>" . PHP_EOL;
+				$rules .= "RewriteEngine On" . PHP_EOL;
+				if ( ! empty( $files ) ) {
+					$rules .= "RewriteCond %{REQUEST_URI} /(" . str_replace( '.', '\\.', join( '|', $files ) ) . ") [NC]" . PHP_EOL;
+				} else {
+					$rules .= "RewriteCond %{REQUEST_URI} /(error_log|wp-config-sample\\.php|readme\\.html|readme\\.txt|license\\.txt|wp-config\\.php|php\\.ini|php5\\.ini|bb-config\\.php) [NC]" . PHP_EOL;
+				}
+				$rules .= "RewriteRule ^(.*)$ - [L,R=404]" . PHP_EOL;
+				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
+			}
+
+
+		} elseif ( HMWP_Classes_Tools::isIIS() ) {
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths' ) ) {
+				if ( HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_wp-content_url' ) ) {
+					$rules .= '
+                    <rule name="WpGhost: block_oldpaths_content" stopProcessing="true">
+                        <match url="^' . $wp_content . '/?$" ignoreCase="false" />
+                         <conditions>
+                          <add input="{HTTP_COOKIE}" pattern="(' . join( '|', $this->whitelist_cookies ) . ')" negate="true" />
+                         </conditions>
+                        <action type="CustomResponse" statusCode="404" statusReason="File Not Found" statusDescription="The requested path was not found" />
+                    </rule>';
+					$rules .= '
+                    <rule name="WpGhost: block_oldpaths_content_paths" stopProcessing="true">
+                        <match url="^' . $wp_content . '/[^\.]+/?$" ignoreCase="false" />
+                         <conditions>
+                          <add input="{HTTP_COOKIE}" pattern="(' . join( '|', $this->whitelist_cookies ) . ')" negate="true" />
+                         </conditions>
+                        <action type="CustomResponse" statusCode="404" statusReason="File Not Found" statusDescription="The requested path was not found" />
+                    </rule>';
+				}
+				if ( ! empty( $extensions ) ) {
+					if ( HMWP_Classes_Tools::getDefault( 'hmwp_plugin_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_plugin_url' ) ) {
+						$rules .= '
+                    <rule name="WpGhost: block_oldpaths_plugin" stopProcessing="true">
+                        <match url="^' . HMWP_Classes_Tools::getDefault( 'hmwp_plugin_url' ) . '/[^\.]+(' . join( '|', $extensions ) . ')' . '" ignoreCase="false" />
+                         <conditions>
+                          <add input="{HTTP_COOKIE}" pattern="(' . join( '|', $this->whitelist_cookies ) . ')" negate="true" />
+                         </conditions>
+                        <action type="CustomResponse" statusCode="404" statusReason="File Not Found" statusDescription="The requested path was not found" />
+                    </rule>';
+					}
+					if ( HMWP_Classes_Tools::getDefault( 'hmwp_themes_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_themes_url' ) ) {
+						$rules .= '
+                    <rule name="WpGhost: block_oldpaths_themes" stopProcessing="true">
+                        <match url="^' . HMWP_Classes_Tools::getDefault( 'hmwp_themes_url' ) . '/[^\.]+(' . join( '|', $extensions ) . ')' . '" ignoreCase="false" />
+                         <conditions>
+                          <add input="{HTTP_COOKIE}" pattern="(' . join( '|', $this->whitelist_cookies ) . ')" negate="true" />
+                         </conditions>
+                        <action type="CustomResponse" statusCode="404" statusReason="File Not Found" statusDescription="The requested path was not found" />
+                    </rule>';
+					}
+				}
+
+			}
+		}
+
+		return $rules;
+	}
+
+	/**
+	 * Add rules to protect the website from sql injection
+	 *
+	 * @return string
+	 */
+	public function getInjectionRewrite() {
+		$rules = '';
+
+		if ( HMWP_Classes_Tools::isNginx() ) {
+
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
+				$rules .= 'set $cond "";' . PHP_EOL;
+				$rules .= 'if ($http_cookie !~* "' . join( '|', $this->whitelist_cookies ) . '") {  set $cond cookie; }' . PHP_EOL;
+				$rules .= 'if ($request_uri ~* author=\d+$) { set $cond "${cond}+author_uri"; }' . PHP_EOL;
+				$rules .= 'if ($cond = "cookie+author_uri") {  return 404; } ' . PHP_EOL;
+			}
+
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_disable_browsing' ) ) {
+				$rules .= 'autoindex off;' . PHP_EOL;
+			}
+
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_security_header' ) ) {
+
+				$headers = (array) HMWP_Classes_Tools::getOption( 'hmwp_security_headers' );
+
+				if ( ! empty( $headers ) ) {
+					foreach ( $headers as $name => $value ) {
+						if ( $value <> '' ) {
+							$rules .= 'add_header ' . $name . ' "' . str_replace( '"', '\"', $value ) . '";' . PHP_EOL;
+						}
+					}
+				}
+			}
+
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_detectors_block' ) ) {
+				$rules .= 'if ( $remote_addr = "35.214.130.87" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $remote_addr = "192.185.4.40" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $remote_addr = "15.235.50.223" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $remote_addr = "172.105.48.130" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $remote_addr = "167.99.233.123" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_user_agent ~ "wpthemedetector" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_referer ~ "wpthemedetector" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_user_agent ~ "builtwith" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_user_agent ~ "isitwp" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_user_agent ~ "wappalyzer" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_user_agent ~ "Wappalyzer" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_referer ~ "mShots" ) { return 404; }' . PHP_EOL;
+				$rules .= 'if ( $http_referer ~ "WhatCMS" ) { return 404; }' . PHP_EOL;
+			}
+
+		} elseif ( HMWP_Classes_Tools::isApache() || HMWP_Classes_Tools::isLitespeed() ) {
+
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
 				$rules .= "<IfModule mod_rewrite.c>" . PHP_EOL;
 				$rules .= "RewriteEngine On" . PHP_EOL;
@@ -742,6 +986,10 @@ class HMWP_Models_Rules {
 				$rules .= "RewriteCond %{QUERY_STRING} ^author=\d+ [NC]" . PHP_EOL;
 				$rules .= "RewriteRule ^(.*)$ - [L,R=404]" . PHP_EOL;
 				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
+			}
+
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_disable_browsing' ) ) {
+				$rules .= "Options -Indexes" . PHP_EOL;
 			}
 
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_detectors_block' ) ) {
@@ -752,7 +1000,7 @@ class HMWP_Models_Rules {
 				$rules .= "RewriteCond %{REMOTE_ADDR} ^15.235.50.223$ [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{REMOTE_ADDR} ^172.105.48.130$ [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{REMOTE_ADDR} ^167.99.233.123$ [NC,OR]" . PHP_EOL;
-				$rules .= "RewriteCond %{HTTP_USER_AGENT} (wpthemedetector|builtwith|isitwp|wapalyzer|mShots|WhatCMS|gochyu|wpdetector|scanwp) [NC]" . PHP_EOL;
+				$rules .= "RewriteCond %{HTTP_USER_AGENT} (wpthemedetector|builtwith|isitwp|wappalyzer|Wappalyzer|mShots|WhatCMS|gochyu|wpdetector|scanwp) [NC]" . PHP_EOL;
 				$rules .= "RewriteRule ^(.*)$ - [L,R=404]" . PHP_EOL;
 				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
 			}
@@ -764,6 +1012,7 @@ class HMWP_Models_Rules {
 				$rules .= 'ServerSignature Off' . PHP_EOL;
 				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
 			}
+
 
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_security_header' ) ) {
 
@@ -782,14 +1031,29 @@ class HMWP_Models_Rules {
 				}
 			}
 
+		} elseif ( HMWP_Classes_Tools::isIIS() ) {
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ) ) {
+
+				$rules .= '
+                    <rule name="WpGhost: block_commonfiles" stopProcessing="true">
+                        <match url="^(error_log|wp-config-sample.php|readme.html|license.txt|wp-config.php|php.ini|bb-config.php)" ignoreCase="false" />
+                        <action type="CustomResponse" statusCode="404" statusReason="File Not Found" statusDescription="The requested path was not found" />
+                    </rule>';
+			}
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
+				$rules .= '
+                    <rule name="WpGhost: block_author_id" stopProcessing="true">
+                        <match url="(.*)"/>
+                        <conditions logicalGrouping="MatchAny">
+                          <add input="{QUERY_STRING}" pattern="^author=\d+" negate="false" />
+                        </conditions>
+                        <action type="CustomResponse" statusCode="404" statusReason="File Not Found" statusDescription="The requested path was not found" />
+                    </rule>';
+			}
 		}
 
 		// Add in the rules
-		if ( $rules <> '' ) {
-			return $rules . PHP_EOL;
-		}
-
-		return '';
+		return $rules . PHP_EOL;
 	}
 
 	/**
@@ -800,7 +1064,7 @@ class HMWP_Models_Rules {
 	public function isConfigAdminCookie() {
 		$config_file = HMWP_Classes_Tools::getConfigFile();
 
-		// Initialize WordPress Filesystem
+		//Initialize WordPress Filesystem
 		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
 
 		if ( $wp_filesystem->exists( $config_file ) ) {

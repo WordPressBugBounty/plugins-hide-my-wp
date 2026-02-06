@@ -33,8 +33,8 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
                             <div class="card-body text-center p-0">
                                 <div class="start_securitycheck">
 									<?php if ( ! $do_check ) { ?>
-                                        <div class="row col-10 my-4 mx-auto">
-                                            <div class="col-sm-5" style="text-align: center">
+                                        <div class="row col-11 my-4 mx-auto">
+                                            <div class="col-sm-6" style="text-align: center">
 												<?php if ( ( ( count( $view->riskreport ) * 100 ) / count( $view->risktasks ) ) > 90 ) { ?>
                                                     <img src="<?php echo esc_url( _HMWP_ASSETS_URL_ . 'img/speedometer_danger.png' ) ?>" alt="" style="max-width: 60%; margin: 10px auto;"/>
                                                     <div style="font-size: 1rem; font-style: italic; text-align: center; color: red;"><?php echo sprintf( esc_html__( "Your website security %sis extremely weak%s. %sMany hacking doors are available.", 'hide-my-wp' ), '<strong>', '</strong>', '<br />' ) ?></div>
@@ -49,10 +49,10 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
                                                     <div style="font-size: 1rem; font-style: italic; text-align: center; color: orangered;"><?php echo sprintf( esc_html__( "Your website security is getting better. %sJust make sure you complete all the security tasks.", 'hide-my-wp' ), '<br />' ) ?></div>
 												<?php } else { ?>
                                                     <img src="<?php echo esc_url( _HMWP_ASSETS_URL_ . 'img/speedometer_high.png' ) ?>" alt="" style="max-width: 60%; margin: 10px auto;"/>
-                                                    <div style="font-size: 1rem; font-style: italic; text-align: center; color: green;"><?php echo sprintf( esc_html__( "Your website security is strong. %sKeep checking the security every week.", 'hide-my-wp' ), '<br />' ) ?></div>
+                                                    <div style="font-size: 1rem; font-style: italic; text-align: center; color: green;"><?php echo sprintf( esc_html__( "Lite Mode is fully set up. If you want even fewer bot scans, Premium adds advanced hack protection and can block up to %s 99%% of automated attacks %s.", 'hide-my-wp' ), '<strong>', '</strong>' ) ?></div>
 												<?php } ?>
                                             </div>
-                                            <div class="col-sm-7 my-4">
+                                            <div class="col-sm-6 my-4 py-4">
                                                 <form id="hmwp_securitycheck" method="POST">
 													<?php wp_nonce_field( 'hmwp_securitycheck', 'hmwp_nonce' ) ?>
                                                     <input type="hidden" name="action" value="hmwp_securitycheck"/>
@@ -96,11 +96,11 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
 									<?php } ?>
 
 									<?php if ( isset( $view->securitycheck_time['timestamp'] ) ) { ?>
-                                        <div class="text-center text-black-50 my-1">
+                                        <div class="text-center my-1">
                                             <strong><?php echo esc_html__( 'Last check:', 'hide-my-wp' ); ?></strong> <?php echo date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), ( $view->securitycheck_time['timestamp'] + ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS ) ) ); ?>
                                         </div>
 									<?php } ?>
-                                    <div class="text-center small mt-4 border-top pt-2"><?php echo sprintf( esc_html__( "According to %sGoogle latest stats%s, over %s 30k websites are hacked every day %s and %s over 30&#37; of them are made in WordPress %s. %s It's better to prevent an attack than to spend a lot of money and time to recover your data after an attack not to mention the situation when your clients' data are stolen.", 'hide-my-wp' ), '<a href="https://transparencyreport.google.com/safe-browsing/overview" target="_blank"><strong>', '</strong></a>', '<strong>', '</strong>', '<strong>', '</strong>', '<br />' ) ?></div>
+                                    <div class="text-center text-black-50 small mt-4 border-top pt-3"><?php echo sprintf( esc_html__( "According to %sGoogle latest stats%s, over %s 30k websites are hacked every day %s and %s over 30&#37; of them are made in WordPress %s. %s It's better to prevent an attack than to spend a lot of money and time to recover your data after an attack not to mention the situation when your clients' data are stolen.", 'hide-my-wp' ), '<a href="https://transparencyreport.google.com/safe-browsing/overview" target="_blank"><strong>', '</strong></a>', '<strong>', '</strong>', '<strong>', '</strong>', '<br />' ) ?></div>
                                 </div>
                             </div>
                         </div>

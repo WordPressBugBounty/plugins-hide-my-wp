@@ -2,23 +2,23 @@
 Contributors: johndarrel
 Tags: hide,security,firewall,login,wp admin
 Requires at least: 5.3
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.0
-Stable tag: 5.4.07
+Stable tag: 5.5.01
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Hide and Secure WP paths, wp-login, wp-admin and more. Hack Prevention, Security, Brute Force protection, 8G Firewall, 2FA Login, and more.
+Hide and Secure WP paths, wp-login, wp-admin, and more. Hack Prevention, Security, Brute Force protection, 8G Firewall, 2FA Passkey Login, and more.
 
 == Description ==
 
-Level up your WordPress security with WP Ghost plugin!
+Level up your WordPress security with the WP Ghost plugin! <a href="https://wpghost.com/kb/99-fewer-hacker-attacks-on-wordpress-sites/" >99% Fewer Hacker Attacks on WordPress Sites</a>
 
-**WP Ghost** (short for Hide My WP Ghost) is a **comprehensive hack-prevention security solution for WordPress** websites. It adds **multiple layers of security to block hacker bots and prevent unauthorized access**.
+**WP Ghost** (formerly Hide My WP Ghost) is a **comprehensive hack-prevention security solution for WordPress** websites. It adds **multiple layers of security to block hacker bots and prevent unauthorized access**.
 
 It works by changing and hiding common vulnerabilities, making it difficult for bots and hackers to exploit weak points in plugins, themes, and the WordPress core itself.
 
-Join **over 200,000 secured websites** with WP Ghost. The plugin has **blocked over 9 million brute force attempts** and **stopped over 140,000 monthly hacks**.
+Join **over 200,000 secured websites** with WP Ghost. The plugin has **blocked over 9 million brute-force attempts** and **stopped over 140,000 monthly hacks**.
 
 Key features include powerful protection against:
 >  - Brute Force Attacks
@@ -34,18 +34,20 @@ Key features include powerful protection against:
 >  - Throttling of Access Attempts to Entry Points
 >  - and more
 
-Protect your site today! WP Ghost hides and secures all common paths, plugins and themes from hacker bots and spammers.
+Protect your site today! WP Ghost hides and secures all common paths, plugins, and themes from hacker bots and spammers.
 
 [youtube https://youtu.be/QMdoSN8dk1c]
-YouTube - Why You Must Have <a href="https://hidemywpghost.com/">Hide My WP</a>
+YouTube - Why You Must Have <a href="https://wpghost.com">Hide My WP</a>
 
 
-WP Ghost is packed with over 50 security free features:
+WP Ghost is packed with over 65 security-free features:
 
 > <strong>Change and Hide Paths:</strong>
 >
 > *   Hide WordPress wp-admin, and show 404 error or a custom page
 > *   Hide WordPress wp-login.php, and show 404 error or a custom page
+> *   Hide WordPress Common Paths
+> *   Hide WordPress Common Files
 > *   Change the wp-admin and wp-login URLs
 > *   Change lost password URL
 > *   Change register URL
@@ -80,6 +82,7 @@ WP Ghost is packed with over 50 security free features:
 >
 > *   Two-factor Authentication By Code (2FA)
 > *   Two-factor Authentication By Email (2FA)
+> *   Two-factor Authentication By Passkey (2FA)
 > *   Security Headers against XSS & Code Injections
 > *   Security Header Strict-Transport-Security
 > *   Security Header Content-Security-Policy
@@ -199,7 +202,7 @@ WP Ghost is packed with over 50 security free features:
 > *   Recommended by WPML
 >
 
-> <strong>Premium Security Features (over 70):</strong>
+> <strong>Premium Security Features (over 80):</strong>
 >
 > *   WordPress Hardening
 > *   Hide WordPress Common Paths by Extension
@@ -214,10 +217,10 @@ WP Ghost is packed with over 50 security free features:
 > *   SALT Keys Change
 > *   Premium Support
 > *   and more
-> <a href="https://hidemywpghost.com/hide-my-wp-ghost-security-features/">Hide My WP Premium Feature</a>
+> <a href="https://wpghost.com/features/">Hide My WP Premium Feature</a>
 
-Compatible server types: <strong>WP Multisite, Apache, Litespeed, Nginx and Windows IIS</strong>.
-Hosting Compatibility checked: **WP Engine, Inmotion Hosting, Hostgator Hosting, Godaddy Hosting, Host1plus, Payperhost, Fastcomet, Dreamhost, Bitnami Apache, Bitnami Nginx, Google Cloud Hosting, Amazon AWS Lightsail, Litespeed Hosting, Flywheels Hosting, Kinsta Hosting, Ploi.io, CloudPanel, RunCloud, Rocket Domain**
+Compatible server types: <strong>WP Multisite, Apache, Litespeed, Nginx, and Windows IIS</strong>.
+Hosting Compatibility checked: **WP Engine, Inmotion Hosting, Hostgator Hosting, Godaddy Hosting, Host1plus, Payperhost, Fastcomet, Dreamhost, Bitnami Apache, Bitnami Nginx, Google Cloud Hosting, Amazon AWS Lightsail, Litespeed Hosting, Flywheels Hosting, Kinsta Hosting, Ploi.io, CloudPanel, RunCloud, Rocket Domain, Yunohost**
 
 Plugins Compatibility updates: **Woocommerce, WPML, WPMUDEV, W3 Total Cache, Gravity, WP Super Cache, WP Fastest Cache, Hummingbird Cache, Cachify Cache, Litespeed Cache, SiteGround Optimizer, Nitropack,
 Cache Enabler, CDN Enabler, WOT Cache, Autoptimize, Jetpack by WordPress, Contact Form 7, bbPress, Manage WP,
@@ -270,8 +273,7 @@ If you don't protect yourself, you will end up having a hacked website sooner or
 
 Secure your website in just minutes with the WP Ghost plugin. Protect your WordPress site against hacker bots and spammers!
 
-Please support us and **translate the plugin in your language**:
-<a href="https://translate.wordpress.org/projects/wp-plugins/hide-my-wp">https://translate.wordpress.org/projects/wp-plugins/hide-my-wp</a>
+GitHub version: <a href="https://github.com/johndarrel/hide-my-wp">https://github.com/johndarrel/hide-my-wp</a>
 
 Thank you all for your trust, support, and positive reviews!
 
@@ -327,11 +329,26 @@ Enjoy!
 17. New custom core paths changed with Hide My WP Ghost
 
 == Changelog ==
+= 5.5.01 (22 Dec 2025) =
+* Update - Added the option to hide WordPress Common Paths with extension html, txt, lock
+* Update - Added the option to hide WordPress Common Files like wp-config, readme.html, license.html, php.ini
+* Update - Added the option to Hide Source Map References
+* Update - Added the option to Hide User Enumeration
+
+= 5.4.08 (09 Dec 2025) =
+* Update - Compatibility with WP 6.9
+* Fix - Remove the wp-*.php and admin path from prefetch paths in WP 6.9
+* Update - 2FA to allow each user to select the 2FA method in the profile
+* Update - 2FA to connect through passkey and fingerprint
+* Update - 2FA to trust the current browser
+
 = 5.4.07 (29 Sept 2025) =
 * Update - Compatibility with the plugin WP Social & WP Social PRO
 * Update - Compatibility with LiteSpeed Quic Cloud on IPV6
 * Update - Make REST API test work when permalinks are set to the default PHP parameter
 * Update - Minimum PHP version required is 8.0 in the Security Check section
+* Update - Added New Feature Two-factor Authentication By Passkey (2FA)
+* Update - Whitelist more known AI Chatbots in firewall rules
 
 = 5.4.06 (21 Aug 2025) =
 * Update - Firewall rules for more compatibility
@@ -799,7 +816,7 @@ Yes. The Lite features of the WP Ghost plugin will always be free.
 
 We will include all the required WordPress Security updates.
 
-To unlock all the features, please visit: <a href="https://hidemywpghost.com/hide-my-wp-pricing/">WP Ghost - Pricing Plan</a>
+To unlock all the features, please visit: <a href="https://wpghost.com/pricing/">WP Ghost - Pricing Plan</a>
 
 = How to set the plugin on the Nginx server? =
 

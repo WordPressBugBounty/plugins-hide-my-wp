@@ -329,7 +329,7 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
                     $paths[] = '/' . HMWP_Classes_Tools::getOption('hmwp_register_url');
                 }
 
-                //integrate with woocommerce only when Safe Mode or ghost Mode
+                //integrate with woocommerce only when Lite Mode
                 if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' ) {
                     if ( $post_id = get_option( 'woocommerce_myaccount_page_id' ) ) {
                         if ( $post = get_post( $post_id ) ) {

@@ -49,9 +49,9 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 		//If the option to prevent broken layout is on
 		if ( HMWP_Classes_Tools::getOption( 'prevent_slow_loading' ) ) {
 
-			//check the frontend on settings successfully saved
+			//Check the frontend on settings successfully saved
 			add_action( 'hmwp_confirmed_settings', function () {
-				//check the frontend and prevent from showing brake websites
+				//Check the frontend and prevent from showing break websites
 				$url      = _HMWP_URL_ . '/view/assets/img/logo.svg?hmwp_preview=1&test=' . mt_rand( 11111, 99999 );
 				$url      = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
 				$response = HMWP_Classes_Tools::hmwp_localcall( $url, array( 'redirection' => 0, 'cookies' => false ) );
@@ -717,8 +717,8 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 					HMWP_Classes_Tools::saveOptionsBackup();
 				}
 
-				// Force the rechck security notification
-				delete_option( HMWP_SECURITY_CHECK_TIME );
+				// Force the recheck security notification
+                HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_SecurityCheck' )->resetSecurityCheck();
 
 				HMWP_Classes_Tools::saveOptions( 'download_settings', true );
 
@@ -800,9 +800,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 
 				$rollback->run();
 
-				wp_die( '', esc_html__( "Rollback to Previous Version", 'hide-my-wp' ), [
-						'response' => 200,
-					] );
+				wp_die( '', esc_html( "Rollback to Previous Version" ), [ 'response' => 200 ] );
 			case 'hmwp_restore':
 
 				// Initialize WordPress Filesystem

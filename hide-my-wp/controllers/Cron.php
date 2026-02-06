@@ -9,22 +9,42 @@
 
 class HMWP_Controllers_Cron {
 
-	/**
-	 * HMWP_Controllers_Cron constructor.
-	 */
+
 	public function __construct() {
+		add_action( HMWP_CRON_ONCE, array ( $this, 'processCronOnce' ) );
+	}
+
+	/**
+	 * Register the cron once.
+	 */
+	public function registerOnce() {
+
+		// Clear any pending once event so you can re-schedule reliably
+		wp_clear_scheduled_hook( HMWP_CRON_ONCE );
+
+		// Give it a small delay to avoid edge cases with "time()"
+		wp_schedule_single_event( time() , HMWP_CRON_ONCE );
+
+	}
+
+	/**
+	 * Register the cron interval.
+	 */
+	public function registerInterval() {
+
 		add_filter( 'cron_schedules', array( $this, 'setInterval' ) );
 
 		//Activate the cron job if not exists.
 		if ( ! wp_next_scheduled( HMWP_CRON ) ) {
 			wp_schedule_event( time(), 'hmwp_every_minute', HMWP_CRON );
 		}
+
 	}
 
 	/**
 	 * Add a custom schedule interval to the existing schedules.
 	 *
-	 * @param  array  $schedules  An array of the existing cron schedules.
+	 * @param array $schedules An array of the existing cron schedules.
 	 *
 	 * @return array The modified array of cron schedules with the new custom interval added.
 	 */
@@ -52,5 +72,8 @@ class HMWP_Controllers_Cron {
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Compatibility' )->checkCacheFiles();
 	}
 
+	public function processCronOnce() {
+		HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_SecurityCheck' )->doSecurityCheck();
+	}
 
 }

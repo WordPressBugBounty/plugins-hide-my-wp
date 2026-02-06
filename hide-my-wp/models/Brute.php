@@ -184,7 +184,7 @@ class HMWP_Models_Brute {
 		do_action( 'hmwp_kill_login', HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_IpAddress' )->getIp() );
 
 		wp_ob_end_flush_all();
-		wp_die( HMWP_Classes_Tools::getOption( 'hmwp_brute_message' ), esc_html__( 'IP Blocked by' . ' ' . HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ), 'hide-my-wp' ), array( 'response' => 403 ) );
+		wp_die( HMWP_Classes_Tools::getOption( 'hmwp_brute_message' ), esc_html( 'IP Blocked by' . ' ' . HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ) ), array( 'response' => 403 ) );
 	}
 
 	/**

@@ -114,35 +114,70 @@ class HMWP_Models_Bruteforce_GoogleV3 extends HMWP_Models_Bruteforce_Abstract {
             <script>
                 function reCaptchaSubmit(e) {
                     var form = this;
+
+                    // allow the second submit triggered after token injection
+                    if (form.__hmwp_recaptcha_v3_ready) {
+                        form.__hmwp_recaptcha_v3_ready = false;
+                        return;
+                    }
+
+                    // If grecaptcha isn't available, do nothing (let ajax/non-ajax handlers work)
+                    if (typeof grecaptcha === 'undefined') {
+                        return;
+                    }
+
                     e.preventDefault();
-                    if (typeof grecaptcha !== 'undefined') {
-                        grecaptcha.ready(function () {
-                            grecaptcha.execute('<?php echo esc_attr( HMWP_Classes_Tools::getOption( 'brute_captcha_site_key_v3' ) ) ?>', {action: 'submit'}).then(function (token) {
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+
+                    grecaptcha.ready(function () {
+                        grecaptcha.execute('<?php echo esc_attr(HMWP_Classes_Tools::getOption('brute_captcha_site_key_v3')) ?>', {action: 'submit'})
+                            .then(function (token) {
                                 try {
-                                    var input = document.createElement("input");
-                                    input.type = "hidden";
-                                    input.name = "g-recaptcha-response";
+                                    // upsert g-recaptcha-response (avoid duplicates on repeated submits)
+                                    var input = form.querySelector('input[name="g-recaptcha-response"]');
+                                    if (!input) {
+                                        input = document.createElement("input");
+                                        input.type = "hidden";
+                                        input.name = "g-recaptcha-response";
+                                        form.appendChild(input);
+                                    }
                                     input.value = token;
-                                    form.appendChild(input);
-                                    var input = document.createElement("input");
-                                    input.type = "hidden";
-                                    input.name = "login";
-                                    form.appendChild(input);
+
+                                    // upsert login (avoid duplicates)
+                                    var login = form.querySelector('input[name="login"]');
+                                    if (!login) {
+                                        login = document.createElement("input");
+                                        login.type = "hidden";
+                                        login.name = "login";
+                                        form.appendChild(login);
+                                    }
+                                    if (login.value === "") login.value = "1";
                                 } catch (err) {
                                     console.warn("reCAPTCHA error", err);
                                 }
-                                HTMLFormElement.prototype.submit.call(form);
+
+                                // mark as ready, then re-trigger submit through the normal path (keeps AJAX handlers)
+                                form.__hmwp_recaptcha_v3_ready = true;
+
+                                if (typeof form.requestSubmit === "function") {
+                                    form.requestSubmit();
+                                } else {
+                                    // fallback: dispatch submit; if nobody cancels it, do native submit
+                                    var ev = new Event("submit", {bubbles: true, cancelable: true});
+                                    if (form.dispatchEvent(ev)) {
+                                        HTMLFormElement.prototype.submit.call(form);
+                                    }
+                                }
                             });
-                        });
-                    } else {
-                        HTMLFormElement.prototype.submit.call(form);
-                    }
+                    });
                 }
 
                 if (document.getElementsByTagName("form").length > 0) {
                     var x = document.getElementsByTagName("form");
                     for (var i = 0; i < x.length; i++) {
-                        x[i].addEventListener("submit", reCaptchaSubmit);
+                        // capture phase so token injection happens before most AJAX serializers
+                        x[i].addEventListener("submit", reCaptchaSubmit, true);
                     }
                 }
             </script>

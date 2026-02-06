@@ -215,7 +215,7 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 			}
 
 			// Hide authors and users identification from website
-			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_author_enumeration' ) ) {
 
 				// Remove users from oembed
 				add_filter('oembed_response_data', function ($data, $post, $width, $height) {

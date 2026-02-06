@@ -16,11 +16,11 @@
                         <div class="card-body">
 
                             <div class="col-sm-12 row border-bottom border-light py-3 mx-0 my-3">
-                                <div class="col-sm-4 p-1 font-weight-bold">
+                                <div class="col-sm-4 px-3 font-weight-bold">
 									<?php echo esc_html__( 'Email Address', 'hide-my-wp' ); ?>:
-                                    <div class="small text-black-50"><?php echo sprintf( esc_html__( 'Enter the email address for website security monitor on %s', 'hide-my-wp' ), '<a href="' . _HMWP_ACCOUNT_SITE_ . '/user/orders" target="_blank" style="font-weight: bold">' . _HMWP_ACCOUNT_SITE_ . '</a>' ); ?></div>
+                                    <div class="small text-black-50"><?php echo esc_html__( 'Enter your email to receive your free activation token and unlock all free features.', 'hide-my-wp' ); ?></div>
                                 </div>
-                                <div class="col-sm-8 p-0 input-group ">
+                                <div class="col-sm-7 p-0 input-group ">
 									<?php
 									$email = HMWP_Classes_Tools::getOption( 'hmwp_email_address' );
 									if ( $email == '' ) {
@@ -32,12 +32,12 @@
                                 </div>
                             </div>
 
-                            <div class="col-sm-12 row mb-1 ml-1 hmwp_howtolessons_div">
+                            <div class="col-sm-12 row mb-1 ml-3 hmwp_howtolessons_div">
                                 <div class="checker col-sm-12 row my-2 py-1">
                                     <div class="col-sm-12 p-0 switch switch-sm">
                                         <input type="hidden" name="howtolessons" value="0"/>
                                         <input type="checkbox" id="howtolessons" name="howtolessons" class="switch" checked="checked" value="1"/>
-                                        <label for="howtolessons"><?php _e( 'Receive regular emails with essential security updates and practical lessons to enhance your online safety.', 'hide-my-wp' ); ?></label>
+                                        <label for="howtolessons"><?php echo esc_html__( 'Send me security updates and practical tips', 'hide-my-wp' ); ?></label>
                                     </div>
                                 </div>
                             </div>
@@ -47,7 +47,7 @@
                     </div>
 
                     <div class="col-sm-12 my-3 p-0">
-                        <button type="submit" class="btn rounded-0 btn-success btn-lg px-5 save"><?php echo esc_html__( 'Activate', 'hide-my-wp' ); ?></button>
+                        <button type="submit" class="btn rounded-0 btn-success btn-lg px-5 save"><?php echo esc_html__( 'Get Free Token', 'hide-my-wp' ); ?></button>
                     </div>
                 </div>
             </form>
@@ -55,7 +55,7 @@
             <form method="POST">
 				<?php wp_nonce_field( 'hmwp_dont_connect', 'hmwp_nonce' ) ?>
                 <input type="hidden" name="action" value="hmwp_dont_connect"/>
-                <button type="submit" class="btn rounded-0 float-right btn-link btn-lg px-3" style="position: relative;margin-top: -65px; color: gray;"><?php _e( 'Skip Activation', 'hide-my-wp' ); ?></button>
+                <button type="submit" class="btn rounded-0 float-right btn-link px-3" style="position: relative;margin-top: -60px; color: gray;"><?php echo esc_html__( 'Activate later', 'hide-my-wp' ); ?></button>
             </form>
 
         </div>

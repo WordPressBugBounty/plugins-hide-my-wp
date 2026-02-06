@@ -27,7 +27,7 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 		// If block detectors is activated
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_detectors_block' ) ) {
 			if ( isset( $_SERVER['HTTP_USER_AGENT'] ) && $_SERVER['HTTP_USER_AGENT'] <> '' ) {
-				if ( preg_match( '/(wpthemedetector|builtwith|isitwp|wapalyzer|mShots|WhatCMS|gochyu|wpdetector|scanwp)/i', $_SERVER['HTTP_USER_AGENT'] ) ) {
+				if ( preg_match( '/(wpthemedetector|builtwith|isitwp|wappalyzer|Wappalyzer|mShots|WhatCMS|gochyu|wpdetector|scanwp)/i', $_SERVER['HTTP_USER_AGENT'] ) ) {
 					// Blocked by the firewall
 					$this->firewallBlock( 'Firewall' );
 				}
@@ -36,6 +36,12 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 
 		// If firewall is activated
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' ) ) {
+
+			if ( isset($_GET['download_file'], $_GET['order'], $_GET['uid'], $_GET['key']) ) {
+				// This is a WooCommerce secure download link, skip Firewall rules
+				return;
+			}
+
 			if ( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 1 ) {
 
 				if ( isset( $_SERVER['QUERY_STRING'] ) && $_SERVER['QUERY_STRING'] <> '' ) {
@@ -140,7 +146,7 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 				if ( isset( $_SERVER['QUERY_STRING'] ) && $_SERVER['QUERY_STRING'] <> '' ) {
 					if ( preg_match( '/([a-z0-9]{2000,})/i', $_SERVER['QUERY_STRING'] ) ||
 					     preg_match( '/(\/|%2f)(:|%3a)(\/|%2f)/i', $_SERVER['QUERY_STRING'] ) ||
-					     preg_match( '/(order(\s|%20)by(\s|%20)1--)/i', $_SERVER['QUERY_STRING'] ) ||
+					     preg_match( '/order(\s|%20)+by(\s|%20)*[0-9]+(--)?/i', $_SERVER['QUERY_STRING'] ) ||
 					     preg_match( '/(\/|%2f)(\*|%2a)(\*|%2a)(\/|%2f)/i', $_SERVER['QUERY_STRING'] ) ||
 					     preg_match( '/(ckfinder|fckeditor|fullclick)/i', $_SERVER['QUERY_STRING'] ) ||
 					     preg_match( '/(`|<|>|\^|\|\\|0x00|%00|%0d%0a)/i', $_SERVER['QUERY_STRING'] ) ||
@@ -236,7 +242,7 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 					     preg_match( '/([a-z0-9]{4000,})/i', $_SERVER['QUERY_STRING'] ) ||
 					     preg_match( '/(\/|%2f)(:|%3a)(\/|%2f)/i', $_SERVER['QUERY_STRING'] ) ||
 					     preg_match( '/(etc\/(hosts|motd|shadow))/i', $_SERVER['QUERY_STRING'] ) ||
-					     preg_match( '/(order(\s|%20)by(\s|%20)1--)/i', $_SERVER['QUERY_STRING'] ) ||
+					     preg_match( '/order(\s|%20)+by(\s|%20)*[0-9]+(--)?/i', $_SERVER['QUERY_STRING'] ) ||
 					     preg_match( '/(\/|%2f)(\*|%2a)(\*|%2a)(\/|%2f)/i', $_SERVER['QUERY_STRING'] ) ||
 					     preg_match( '/(`|<|>|\^|\|\\|0x00|%00|%0d%0a)/i', $_SERVER['QUERY_STRING'] ) ||
 					     preg_match( '/(f?ckfinder|f?ckeditor|fullclick)/i', $_SERVER['QUERY_STRING'] ) ||
@@ -848,81 +854,123 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 	 */
 	public static function isSearchEngineBot() {
 
-		if ( isset( $_SERVER['HTTP_USER_AGENT'] ) && $_SERVER['HTTP_USER_AGENT'] <> '' ) {
-			$googleUserAgent = array(
-				'@^Mozilla/5.0 (.*Google Keyword Tool.*)$@',
-				'@^Mozilla/5.0 (.*Feedfetcher-Google.*)$@',
-				'@^Feedfetcher-Google-iGoogleGadgets.*$@',
-				'@^searchbot admin\@google.com$@',
-				'@^Google-Site-Verification.*$@',
-				'@^Google OpenSocial agent.*$@',
-				'@^.*Googlebot-Mobile/2..*$@',
-				'@^AdsBot-Google-Mobile.*$@',
-				'@^google (.*Enterprise.*)$@',
-				'@^Mediapartners-Google.*$@',
-				'@^GoogleFriendConnect.*$@',
-				'@^googlebot-urlconsole$@',
-				'@^.*Google Web Preview.*$@',
-				'@^Feedfetcher-Google.*$@',
-				'@^AppEngine-Google.*$@',
-				'@^Googlebot-Video.*$@',
-				'@^Googlebot-Image.*$@',
-				'@^Google-Sitemaps.*$@',
-				'@^Googlebot/Test.*$@',
-				'@^Googlebot-News.*$@',
-				'@^.*Googlebot/2.1;.*google.com/bot.html.*$@',
-				'@^AdsBot-Google.*$@',
-				'@^Google$@',
-			);
+		if ( empty( $_SERVER['HTTP_USER_AGENT'] ) ) {
+			return false;
+		}
 
-			$yandexUserAgent = array(
-				'@^.*YandexAccessibilityBot/3.0.*yandex.com/bots.*@',
-				'@^.*YandexBot/3.0.*yandex.com/bots.*@',
-				'@^.*YandexFavicons/1.0.*yandex.com/bots.*@',
-				'@^.*YandexImages/3.0.*yandex.com/bots.*@',
-				'@^.*YandexMobileScreenShotBot/1.0.*yandex.com/bots.*@',
-				'@^.*YandexNews/4.0.*yandex.com/bots.*@',
-				'@^.*YandexSearchShop/1.0.*yandex.com/bots.*@',
-				'@^.*YandexSpravBot/1.0.*yandex.com/bots.*@',
-				'@^.*YandexVertis/3.0.*yandex.com/bots.*@',
-				'@^.*YandexVideo/3.0.*yandex.com/bots.*@',
-				'@^.*YandexVideoParser/1.0.*yandex.com/bots.*@',
-				'@^.*YandexWebmaster/2.0.*yandex.com/bots.*@',
-				'@^.*YandexMobileBot/3.0.*yandex.com/bots.*@',
-				'@^.*YandexCalendar/1.0.*yandex.com/bots.*@',
-			);
+		$userAgent = $_SERVER['HTTP_USER_AGENT'];
 
-			$moreUserAgent = array(
-				'@^.*bingbot/2.0;.*bing.com/bingbot.htm.*@',
-				'@^.*AdIdxBot.*@',
-				'@^.*DuckDuckGo/.*@',
-				'@^.*Baiduspider.*@',
-				'@^.*Yahoo! Slurp.*@',
-				'@^.*grapeshot.*@',
-				'@^.*proximic.*@',
-				'@^.*GPTBot.*@',
-			);
+		// Classic search / crawler bots
+		$googleUserAgent = array(
+			'@^Mozilla/5.0 (.*Google Keyword Tool.*)$@',
+			'@^Mozilla/5.0 (.*Feedfetcher-Google.*)$@',
+			'@^Feedfetcher-Google-iGoogleGadgets.*$@',
+			'@^searchbot admin\@google.com$@',
+			'@^Google-Site-Verification.*$@',
+			'@^Google OpenSocial agent.*$@',
+			'@^.*Googlebot-Mobile/2..*$@',
+			'@^AdsBot-Google-Mobile.*$@',
+			'@^google (.*Enterprise.*)$@',
+			'@^Mediapartners-Google.*$@',
+			'@^GoogleFriendConnect.*$@',
+			'@^googlebot-urlconsole$@',
+			'@^.*Google Web Preview.*$@',
+			'@^Feedfetcher-Google.*$@',
+			'@^AppEngine-Google.*$@',
+			'@^Googlebot-Video.*$@',
+			'@^Googlebot-Image.*$@',
+			'@^Google-Sitemaps.*$@',
+			'@^Googlebot/Test.*$@',
+			'@^Googlebot-News.*$@',
+			'@^.*Googlebot/2.1;.*google.com/bot.html.*$@',
+			'@^AdsBot-Google.*$@',
+			'@^Google$@',
+		);
 
-			$userAgent = $_SERVER['HTTP_USER_AGENT'];
+		$yandexUserAgent = array(
+			'@^.*YandexAccessibilityBot/3.0.*yandex.com/bots.*@',
+			'@^.*YandexBot/3.0.*yandex.com/bots.*@',
+			'@^.*YandexFavicons/1.0.*yandex.com/bots.*@',
+			'@^.*YandexImages/3.0.*yandex.com/bots.*@',
+			'@^.*YandexMobileScreenShotBot/1.0.*yandex.com/bots.*@',
+			'@^.*YandexNews/4.0.*yandex.com/bots.*@',
+			'@^.*YandexSearchShop/1.0.*yandex.com/bots.*@',
+			'@^.*YandexSpravBot/1.0.*yandex.com/bots.*@',
+			'@^.*YandexVertis/3.0.*yandex.com/bots.*@',
+			'@^.*YandexVideo/3.0.*yandex.com/bots.*@',
+			'@^.*YandexVideoParser/1.0.*yandex.com/bots.*@',
+			'@^.*YandexWebmaster/2.0.*yandex.com/bots.*@',
+			'@^.*YandexMobileBot/3.0.*yandex.com/bots.*@',
+			'@^.*YandexCalendar/1.0.*yandex.com/bots.*@',
+		);
 
-			foreach ( $googleUserAgent as $pat ) {
-				if ( preg_match( $pat . 'i', $userAgent ) ) {
-					return true;
-				}
+		// Other search engines + AI / Chat / LLM crawlers
+		$otherBots = array(
+			// classic
+			'@^.*bingbot.*@',
+			'@^.*AdIdxBot.*@',
+			'@^.*DuckDuckGo/.*@',
+			'@^.*Baiduspider.*@',
+			'@^.*Yahoo! Slurp.*@',
+			'@^.*grapeshot.*@',
+			'@^.*proximic.*@',
+
+			// OpenAI / ChatGPT
+			'@^.*GPTBot.*@',
+			'@^.*ChatGPT-User.*@',
+			'@^.*OAI-SearchBot.*@',
+
+			// Anthropic / Claude
+			'@^.*ClaudeBot.*@',
+			'@^.*Claude-User.*@',
+			'@^.*Claude-Web.*@',
+			'@^.*anthropic-ai.*@',
+
+			// Perplexity
+			'@^.*PerplexityBot.*@',
+			'@^.*Perplexity-User.*@',
+
+			// Common Crawl
+			'@^.*CCBot.*@',
+
+			// Google AI-related
+			'@^.*GoogleOther.*@',
+			'@^.*GoogleOther-Image.*@',
+			'@^.*GoogleOther-Video.*@',
+			'@^.*Google-CloudVertexBot.*@',
+			'@^.*Google-Extended.*@',
+
+			// Apple / Siri / Apple Intelligence
+			'@^.*Applebot-Extended.*@',
+			'@^.*Applebot.*@',
+
+			// Amazon / Meta / TikTok etc. (used by AI answer engines)
+			'@^.*Amazonbot.*@',
+			'@^.*FacebookBot.*@',
+			'@^.*Meta-ExternalAgent.*@',
+			'@^.*TikTokSpider.*@',
+			'@^.*YouBot.*@',
+
+			// Other AI data
+			'@^.*AI2Bot.*@',
+			'@^.*Ai2Bot-Dolma.*@',
+			'@^.*aiHitBot.*@',
+			'@^.*Bytespider.*@',
+			'@^.*cohere-ai.*@',
+			'@^.*cohere-training-data-crawler.*@',
+			'@^.*DuckAssistBot.*@',
+			'@^.*img2dataset.*@',
+			'@^.*omgili.*@',
+			'@^.*omgilibot.*@',
+			'@^.*Quora-Bot.*@',
+		);
+
+		$allBots = array_merge( $googleUserAgent, $yandexUserAgent, $otherBots );
+
+		foreach ( $allBots as $pat ) {
+			if ( preg_match( $pat . 'i', $userAgent ) ) {
+				return true;
 			}
-
-			foreach ( $yandexUserAgent as $pat ) {
-				if ( preg_match( $pat . 'i', $userAgent ) ) {
-					return true;
-				}
-			}
-
-			foreach ( $moreUserAgent as $pat ) {
-				if ( preg_match( $pat . 'i', $userAgent ) ) {
-					return true;
-				}
-			}
-
 		}
 
 		return false;
@@ -942,7 +990,7 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 
 		if ( function_exists( 'wp_ob_end_flush_all' ) && function_exists( 'wp_die' ) ) {
 			wp_ob_end_flush_all();
-			wp_die( esc_html__( "The process was blocked by the website’s firewall.", 'hide-my-wp' ), esc_html__( 'Blocked by' . ' ' . $name, 'hide-my-wp' ), array( 'response' => 403 ) );
+			wp_die( esc_html( "The process was blocked by the website’s firewall." ), esc_html( 'Blocked by' . ' ' . $name ), array( 'response' => 403 ) );
 		}
 
 		header( 'HTTP/1.1 403 Forbidden' );

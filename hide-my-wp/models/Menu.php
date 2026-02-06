@@ -64,20 +64,20 @@ class HMWP_Models_Menu {
 				'parent'     => 'hmwp_settings',
 				'function'   => array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Settings' ), 'init' ),
 			),
-			'hmwp_templogin'     => array(
-				'name'       => esc_html__( "Temporary Login", 'hide-my-wp' ),
-				'title'      => esc_html__( "Temporary Login", 'hide-my-wp' ),
-				'capability' => HMWP_CAPABILITY,
-				'parent'     => 'hmwp_settings',
-				'show'       => HMWP_Classes_Tools::getOption( 'hmwp_templogin' ),
-				'function'   => array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Settings' ), 'init' ),
-			),
 			'hmwp_twofactor'     => array(
 				'name'       => esc_html__( "2FA Login", 'hide-my-wp' ),
 				'title'      => esc_html__( "Two-factor authentication", 'hide-my-wp' ),
 				'capability' => HMWP_CAPABILITY,
 				'parent'     => 'hmwp_settings',
 				//'show'       => HMWP_Classes_Tools::getOption( 'hmwp_2falogin' ),
+				'function'   => array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Settings' ), 'init' ),
+			),
+			'hmwp_templogin'     => array(
+				'name'       => esc_html__( "Temporary Login", 'hide-my-wp' ),
+				'title'      => esc_html__( "Temporary Login", 'hide-my-wp' ),
+				'capability' => HMWP_CAPABILITY,
+				'parent'     => 'hmwp_settings',
+				'show'       => HMWP_Classes_Tools::getOption( 'hmwp_templogin' ),
 				'function'   => array( HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_Settings' ), 'init' ),
 			),
 			'hmwp_log'           => array(

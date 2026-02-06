@@ -61,6 +61,17 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
         outline-offset: 0;
     }
 
+    .hmwp_widget_content {
+        container-type: inline-size;
+        container-name: hmwpwrap;
+    }
+
+    @container hmwpwrap (max-width: 599px) {
+        td.hmwp_widget_log {
+            display: none !important;
+        }
+    }
+
     @keyframes spin {
         0% {
             transform: rotate(0deg);
@@ -77,7 +88,7 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
 
             <table style="margin:auto">
                 <tr>
-                    <td>
+                    <td class="hmwp_widget_security">
 						<?php if ( ( ( count( $view->riskreport ) * 100 ) / count( $view->risktasks ) ) > 90 ) { ?>
                             <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_securitycheck' ) ?>"><img src="<?php echo _HMWP_ASSETS_URL_ . 'img/speedometer_danger.png' ?>" alt="" style="max-width: 75%; height: auto; margin: 10px auto;"/></a>
                             <div style="font-size: 1rem; font-style: italic; text-align: center; color: red;"><?php echo sprintf( esc_html__( "Your website security %sis extremely weak%s. %sMany hacking doors are available.", 'hide-my-wp' ), '<strong>', '</strong>', '<br />' ) ?></div>
@@ -92,57 +103,52 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
                             <div style="font-size: 1rem; font-style: italic; text-align: center; color: orangered;"><?php echo sprintf( esc_html__( "Your website security is getting better. %sJust make sure you complete all the security tasks.", 'hide-my-wp' ), '<br />' ) ?></div>
 						<?php } else { ?>
                             <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_securitycheck' ) ?>"><img src="<?php echo _HMWP_ASSETS_URL_ . 'img/speedometer_high.png' ?>" alt="" style="max-width: 75%; height: auto; margin: 10px auto;"/></a>
-                            <div style="font-size: 1rem; font-style: italic; text-align: center; color: green;"><?php echo sprintf( esc_html__( "Your website security is strong. %sKeep checking the security every week.", 'hide-my-wp' ), '<br />' ) ?></div>
+                            <div style="font-size: 1rem; font-style: italic; text-align: center; color: green;"><?php echo sprintf( esc_html__( "Lite Mode is fully set up. If you want even fewer bot scans, Premium adds advanced hack protection and can block up to %s 99%% of automated attacks %s.", 'hide-my-wp' ), '<strong>', '</strong>' ) ?></div>
 						<?php } ?>
+
+
                     </td>
-					<?php if ( $view->stats ) {
-						if ( ! HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ) ) {
-							if ( ! $view->stats['block_ip'] ) {
-								$view->stats['block_ip'] = '-';
-							}
-							if ( ! $view->stats['alerts'] ) {
-								$view->stats['alerts'] = '-';
-							}
-						} else {
-							if ( ! $view->stats['block_ip'] ) {
-								$view->stats['block_ip'] = 0;
-							}
-							if ( ! $view->stats['alerts'] ) {
-								$view->stats['alerts'] = 0;
-							}
-						}
-						?>
-                        <td style="width: 40%">
-                            <table>
+					<?php
+
+                    $stats = array();
+
+                    if ( ! $stats['block_ip'] ) {
+                        $stats['block_ip'] = '-';
+                    }
+                    if ( ! $stats['alerts'] ) {
+                        $stats['alerts'] = '-';
+                    }
+                    ?>
+                    <td class="hmwp_widget_log" style="width: 40%">
+                        <table>
+                            <tr>
+                                <td colspan="2" style="padding: 15px 0;">
+                                    <h6><?php echo esc_html__( 'Last 30 days Security Stats', 'hide-my-wp' ); ?></h6>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="vertical-align:top; text-align: center; margin: 0;padding: 0; width: 220px;">
+                                    <div style="font-size: 1.2rem; border: 2px solid #34B262; padding: 5px; margin: 5px 15px;">
+                                        <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_brute#tab=blocked', true ) ?>" style="text-decoration: none"><?php echo esc_html( $stats['block_ip'] ) ?></a>
+                                    </div>
+                                    <div style="font-size: 1rem;"><?php echo esc_html__( 'Brute Force IPs Blocked', 'hide-my-wp' ); ?></div>
+                                </td>
+                                <td style="vertical-align:top; text-align: center; margin: 0;padding: 0; width: 220px;">
+                                    <div style="font-size: 1.2rem; border: 2px solid #C18032; padding: 5px; margin: 5px 15px;">
+                                        <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_log#tab=report', true ) ?>" style="text-decoration: none"><?php echo esc_html( $stats['alerts'] ) ?></a>
+                                    </div>
+                                    <div style="font-size: 1rem;"><?php echo esc_html__( 'Alert Emails Sent', 'hide-my-wp' ); ?></div>
+                                </td>
+                            </tr>
+                            <?php if ( ! HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ) ) { ?>
                                 <tr>
-                                    <td colspan="2" style="padding: 15px 0;">
-                                        <h6><?php echo esc_html__( 'Last 30 days Security Stats', 'hide-my-wp' ); ?></h6>
+                                    <td colspan="2" style="padding: 20px 0;">
+                                        <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_log#tab=log', true ) ?>" class="wp_button"><?php echo esc_html__( 'Activate Events Log', 'hide-my-wp' ); ?></a>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td style="vertical-align:top; text-align: center; margin: 0;padding: 0; width: 220px;">
-                                        <div style="font-size: 1.2rem; border: 2px solid #34B262; padding: 5px; margin: 5px 15px;">
-                                            <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_brute#tab=blocked', true ) ?>" style="text-decoration: none"><?php echo esc_html( $view->stats['block_ip'] ) ?></a>
-                                        </div>
-                                        <div style="font-size: 1rem;"><?php echo esc_html__( 'Brute Force IPs Blocked', 'hide-my-wp' ); ?></div>
-                                    </td>
-                                    <td style="vertical-align:top; text-align: center; margin: 0;padding: 0; width: 220px;">
-                                        <div style="font-size: 1.2rem; border: 2px solid #C18032; padding: 5px; margin: 5px 15px;">
-                                            <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_log#tab=report', true ) ?>" style="text-decoration: none"><?php echo esc_html( $view->stats['alerts'] ) ?></a>
-                                        </div>
-                                        <div style="font-size: 1rem;"><?php echo esc_html__( 'Alert Emails Sent', 'hide-my-wp' ); ?></div>
-                                    </td>
-                                </tr>
-								<?php if ( ! HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ) ) { ?>
-                                    <tr>
-                                        <td colspan="2" style="padding: 20px 0;">
-                                            <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_log#tab=log', true ) ?>" class="wp_button"><?php echo esc_html__( 'Activate Events Log', 'hide-my-wp' ); ?></a>
-                                        </td>
-                                    </tr>
-								<?php } ?>
-                            </table>
-                        </td>
-					<?php } ?>
+                            <?php } ?>
+                        </table>
+                    </td>
                 </tr>
             </table>
         </div>
@@ -160,13 +166,20 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
 		<?php } ?>
 	<?php } ?>
 
-    <div style="text-align: center">
+    <div style="text-align: center; margin-top: 30px">
         <form id="hmwp_securitycheck" method="POST">
 			<?php wp_nonce_field( 'hmwp_widget_securitycheck', 'hmwp_nonce' ) ?>
             <input type="hidden" name="action" value="hmwp_widget_securitycheck"/>
         </form>
         <a href="<?php echo HMWP_Classes_Tools::getSettingsUrl( 'hmwp_securitycheck', true ) ?>" class="wp_button"><?php echo esc_html__( 'Run Full Security Check', 'hide-my-wp' ); ?></a>
     </div>
+
+    <?php if (count( $view->risktasks )) { ?>
+        <div style="font-size: 0.95rem; text-align: center; margin: 40px auto 20px auto; max-width: 600px;">
+            <?php echo sprintf( esc_html__( "If WP Ghost helped you, please consider leaving a 5-star review. It supports updates and keeps the Lite version strong. %s", 'hide-my-wp' ), '<a href="https://wordpress.org/support/plugin/hide-my-wp/reviews/?filter=5#new-post" target="_blank"><span class="hmwp-stars" aria-hidden="true"><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span></span></a>'); ?>
+        </div>
+    <?php } ?>
+
 </div>
 
 <script>

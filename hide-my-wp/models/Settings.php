@@ -266,6 +266,10 @@ class HMWP_Models_Settings {
 			//For Nginx and Apache the rules can be inserted separately
 			$rules = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getInjectionRewrite();
 
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths' ) || HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ) ) {
+				$rules .= HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getHideOldPathRewrite();
+			}
+
 			if ( strlen( $rules ) > 1 ) {
 				if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->writeToFile( $rules, 'HMWP_VULNERABILITY' ) ) {
 					$config_file = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getConfFile();
@@ -577,7 +581,7 @@ class HMWP_Models_Settings {
 		}
 
 		// Force the recheck security notification
-		delete_option( HMWP_SECURITY_CHECK_TIME );
+		HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_SecurityCheck' )->resetSecurityCheck();
 
 		// Clear the cache and remove the redirects
 		HMWP_Classes_Tools::emptyCache();

@@ -214,6 +214,7 @@ class HMWP_Classes_Tools {
 			'hmwp_hide_generator'            => 1,
 			'hmwp_hide_prefetch'             => 1,
 			'hmwp_hide_comments'             => 1,
+			'hmwp_hide_source_map'           => 0,
 			'hmwp_hide_wp_text'              => 0,
 
 			'hmwp_hide_feed'              => 0,
@@ -312,6 +313,7 @@ class HMWP_Classes_Tools {
 			'hmwp_wp-includes_url'           => 'wp-includes',
 			'hmwp_author_url'                => 'author',
 			'hmwp_hide_authors'              => 0,
+			'hmwp_hide_author_enumeration'   => 0,
 			'hmwp_wp-comments-post'          => 'wp-comments-post.php',
 			'hmwp_themes_style'              => 'style.css',
 			'hmwp_hide_img_classes'          => 0,
@@ -354,18 +356,8 @@ class HMWP_Classes_Tools {
 			'hmwp_hide_oldpaths'             => 0,
 			'hmwp_hide_oldpaths_plugins'     => 0,
 			'hmwp_hide_oldpaths_themes'      => 0,
-			'hmwp_hide_oldpaths_types'       => array( 'css', 'js', 'php', 'txt', 'html' ),
-			'hmwp_hide_commonfiles_files'    => array(
-				'wp-config-sample.php',
-				'readme.html',
-				'readme.txt',
-				'install.php',
-				'license.txt',
-				'php.ini',
-				'upgrade.php',
-				'bb-config.php',
-				'error_log'
-			),
+			'hmwp_hide_oldpaths_types'       => array( ),
+			'hmwp_hide_commonfiles_files'    => array( ),
 		);
 
 		// Set options for "Lite Mode".
@@ -386,6 +378,7 @@ class HMWP_Classes_Tools {
 			'hmwp_wp-includes_url'           => 'lib',
 			'hmwp_author_url'                => 'writer',
 			'hmwp_hide_authors'              => 1,
+			'hmwp_hide_author_enumeration'   => 1,
 			'hmwp_wp-comments-post'          => 'comments',
 			'hmwp_themes_style'              => 'design.css',
 			'hmwp_wp-json'                   => 'wp-json',
@@ -410,17 +403,17 @@ class HMWP_Classes_Tools {
 			'hmwp_hide_rsd'                  => 1,
 			//
 			'hmwp_sqlinjection'              => 1,
-			'hmwp_security_header'           => 1,
+			'hmwp_security_header'           => 0,
 			'hmwp_hide_unsafe_headers'       => 1,
 			'hmwp_detectors_block'           => 1,
 
 			//PRO
 			'hmwp_hide_styleids'             => 0,
 			'hmwp_disable_browsing'          => 0,
-			'hmwp_hide_commonfiles'          => 0,
-			'hmwp_hide_oldpaths'             => 0,
-			'hmwp_hide_oldpaths_plugins'     => 0,
-			'hmwp_hide_oldpaths_themes'      => 0,
+			'hmwp_hide_commonfiles'          => 1,
+			'hmwp_hide_oldpaths'             => 1,
+			'hmwp_hide_oldpaths_plugins'     => 1,
+			'hmwp_hide_oldpaths_themes'      => 1,
 		);
 
 		// Fetch the options based on whether it's a multisite and merge with defaults.
@@ -479,6 +472,7 @@ class HMWP_Classes_Tools {
 	 * @return void
 	 */
 	private static function updateDatabase() {
+
 		// Check if the plugin version is updated
 		if ( self::$options['hmwp_ver'] < HMWP_VERSION_ID ) {
 
@@ -1988,6 +1982,10 @@ class HMWP_Classes_Tools {
 					//For Nginx and Apache the rules can be inserted separately
 					$rules = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getInjectionRewrite();
 
+					if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths' ) || HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ) ) {
+						$rules .= HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getHideOldPathRewrite();
+					}
+
 					HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->writeToFile( $rules, 'HMWP_VULNERABILITY' );
 
 				}
@@ -2117,7 +2115,7 @@ class HMWP_Classes_Tools {
 				HMWP_Classes_Error::setNotification( $response['message'], 'notice', false );
 			}
 		} else {
-			HMWP_Classes_Error::setNotification( sprintf( __( 'CONNECTION ERROR! Make sure your website can access: %s', 'hide-my-wp' ), '<a href="' . _HMWP_ACCOUNT_SITE_ . '" target="_blank">' . _HMWP_ACCOUNT_SITE_ . '</a>' ), 'notice', false );
+			HMWP_Classes_Error::setNotification( sprintf( esc_html__( 'CONNECTION ERROR! Make sure your website can access: %s', 'hide-my-wp' ) . '<br />' . sprintf( esc_html__('Ask your host to check outbound blocks and whitelist WP Ghost IP %s 116.203.193.175 %s for remote access! %s Read More %s'), '<strong>', '</strong>',  '<a href="' . esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/connection-error-make-sure-your-website-can-access-https-account-wpghost-com/' ) . '" target="_blank">', '</a>'), '<a href="' . _HMWP_ACCOUNT_SITE_ . '" target="_blank">' . _HMWP_ACCOUNT_SITE_ . '</a>' ), 'notice', false );
 		}
 
 		return $response;

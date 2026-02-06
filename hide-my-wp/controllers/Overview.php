@@ -80,7 +80,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 			array(
 				'title'       => esc_html__( "Hide WP Common Paths", 'hide-my-wp' ),
 				'description' => esc_html__( "Hide the old /wp-content, /wp-include paths once they are changed with the new ones.", 'hide-my-wp' ),
-				'free'        => false,
+				'free'        => true,
 				'option'      => 'hmwp_hide_oldpaths',
 				'active'      => HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths' ),
 				'optional'    => ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' ),
@@ -93,7 +93,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 			array(
 				'title'       => esc_html__( "Hide WP Common Files", 'hide-my-wp' ),
 				'description' => esc_html__( "Hide wp-config.php, wp-config-sample.php, readme.html, license.txt, upgrade.php and install.php files..", 'hide-my-wp' ),
-				'free'        => false,
+				'free'        => true,
 				'option'      => 'hmwp_hide_commonfiles',
 				'active'      => HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ),
 				'optional'    => ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' ),

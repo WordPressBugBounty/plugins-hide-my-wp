@@ -394,6 +394,18 @@ if (function_exists('wp_roles') ) {
                             <div class="col-sm-12 row mb-1 ml-1 p-2">
                                 <div class="checker col-sm-12 row my-2 py-1">
                                     <div class="col-sm-12 p-0 switch switch-sm">
+                                        <input type="hidden" name="hmwp_hide_source_map" value="0"/>
+                                        <input type="checkbox" id="hmwp_hide_source_map" name="hmwp_hide_source_map" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_hide_source_map' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                        <label for="hmwp_hide_source_map"><?php echo esc_html__( 'Hide Source Map References', 'hide-my-wp' ); ?>
+                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/hide-source-map-references/' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        </label>
+                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Removes sourceMappingURL/sourceURL hints from CSS/JS output", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-12 row mb-1 ml-1 p-2">
+                                <div class="checker col-sm-12 row my-2 py-1">
+                                    <div class="col-sm-12 p-0 switch switch-sm">
                                         <input type="hidden" name="hmwp_disable_emojicons" value="0"/>
                                         <input type="checkbox" id="hmwp_disable_emojicons" name="hmwp_disable_emojicons" class="switch"<?php echo(HMWP_Classes_Tools::getOption('hmwp_disable_emojicons') ? 'checked="checked"' : '') ?> value="1"/>
                                         <label for="hmwp_disable_emojicons"><?php echo esc_html__('Hide Emojicons', 'hide-my-wp'); ?>
