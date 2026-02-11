@@ -621,7 +621,7 @@ class HMWP_Models_Rewrite {
 			foreach ( $rewrites as $rewrite ) {
 				if ( strpos( $rewrite['to'], 'index.php' ) === false ) {
 					$rules .= '
-                <rule name="WPGhost: ' . md5( $rewrite['from'] ) . '" stopProcessing="false">
+                <rule name="WpGhost: ' . md5( $rewrite['from'] ) . '" stopProcessing="false">
                     <match url="^' . $rewrite['from'] . '" ignoreCase="false" />
                     <action type="Redirect" url="' . $rewrite['to'] . '" />
                 </rule>';
@@ -647,7 +647,7 @@ class HMWP_Models_Rewrite {
 			foreach ( $rewrites as $rewrite ) {
 				if ( strpos( $rewrite['to'], 'index.php' ) === false ) {
 					$rules .= '
-                <rule name="WPGhost: ' . md5( $rewrite['from'] ) . '" stopProcessing="true">
+                <rule name="WpGhost: ' . md5( $rewrite['from'] ) . '" stopProcessing="true">
                     <match url="^' . $rewrite['from'] . '" ignoreCase="false" />
                     <action type="Rewrite" url="' . $rewrite['to'] . '" />
                 </rule>';
@@ -725,6 +725,17 @@ class HMWP_Models_Rewrite {
 			}
 		}
 
+		$rules = $xpath->query( '/configuration/system.webServer/rewrite/rules/rule[starts-with(@name,\'WpGhost\')]' );
+
+		if ( $rules->length > 0 ) {
+			foreach ( $rules as $item ) {
+				$parent = $item->parentNode;
+				if ( method_exists( $parent, 'removeChild' ) ) {
+					$parent->removeChild( $item );
+				}
+			}
+		}
+
 		if ( ! HMWP_Classes_Tools::isMultisites() ) {
 			$rules = $xpath->query( '/configuration/system.webServer/rewrite/rules/rule[starts-with(@name,\'wordpress\')] | /configuration/system.webServer/rewrite/rules/rule[starts-with(@name,\'WordPress\')]' );
 
@@ -742,7 +753,6 @@ class HMWP_Models_Rewrite {
 		$doc->formatOutput = true;
 		saveDomDocument( $doc, $config_file );
 
-		return;
 	}
 	/***************************/
 
