@@ -4,7 +4,7 @@ Tags: hide,security,firewall,login,wp admin
 Requires at least: 5.3
 Tested up to: 6.9
 Requires PHP: 7.0
-Stable tag: 5.5.01
+Stable tag: 5.5.02
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -207,8 +207,9 @@ WP Ghost is packed with over 65 security-free features:
 > *   WordPress Hardening
 > *   Hide WordPress Common Paths by Extension
 > *   Hide WordPress Files like wp-config.php, wp-config-sample.php, wp-load.php, wp-settings.php, wp-blog-header.php, readme.html, readme.txt, install.php, license.txt, php.ini, hidemywp.conf, bb-config.php, error_log, debug.log
-> *   Events/Actions Monitoring (Cloud Backup)
-> *   Brute Force Monitoring (Cloud Backup)
+> *   Security Threats Monitoring
+> *   Events/Actions Monitoring
+> *   Brute Force Monitoring
 > *   Geo Security
 > *   Country Blocking
 > *   Vulnerability Management
@@ -329,6 +330,10 @@ Enjoy!
 17. New custom core paths changed with Hide My WP Ghost
 
 == Changelog ==
+= 5.5.02 (10 Feb 2026) =
+* Fix - Compatibility with IIS Server
+* Fix - Compatibility with LiteSpeed Quic Cloud
+
 = 5.5.01 (22 Dec 2025) =
 * Update - Added the option to hide WordPress Common Paths with extension html, txt, lock
 * Update - Added the option to hide WordPress Common Files like wp-config, readme.html, license.html, php.ini
