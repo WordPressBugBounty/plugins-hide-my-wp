@@ -231,6 +231,16 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 		if ( HMWP_Classes_Tools::isPluginActive( 'debloat/debloat.php' ) ) {
 			add_filter( 'hmwp_priority_hook', function( $priority ) { return -1000; } );
 		}
+
+		// Add compatibility with Photo Gallery
+		if ( HMWP_Classes_Tools::isPluginActive( 'photo-gallery/photo-gallery.php' ) ) {
+			add_action('wp_enqueue_scripts', function () {
+				// main script that generates twbbwg-global-js-extra
+				wp_dequeue_script('twbbwg-global');
+				wp_deregister_script('twbbwg-global');
+
+			}, 999);
+		}
 	}
 
 

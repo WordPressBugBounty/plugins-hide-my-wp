@@ -560,12 +560,13 @@ class HMWP_Models_Settings {
 	 * It sends an email notification about the path changed, sets the cookies for the current path, activates frontend test, and triggers an action after applying the permalink changes.
 	 *
 	 * @param  bool  $force  If true, the function will always apply the permalink changes.
+	 * @param bool $redirect If true, the function will redirect to the new permalinks after applying the changes.
 	 *
 	 * @return bool Returns true if the changes are applied successfully; otherwise, returns false.
 	 *
 	 * @throws Exception
 	 */
-	public function applyPermalinksChanged( $force = false ) {
+	public function applyPermalinksChanged( $force = false, $redirect = true ) {
 
 		// Delete the restore transient
 		delete_transient( 'hmwp_restore' );
@@ -634,9 +635,10 @@ class HMWP_Models_Settings {
 					// Trigger action after apply the permalink changes
 					do_action( 'hmwp_apply_permalink_changes' );
 
-					if ( ! HMWP_Classes_Tools::isNginx() && ! HMWP_Classes_Tools::isCloudPanel() ) {
-						wp_redirect( HMWP_Classes_Tools::getSettingsUrl( HMWP_Classes_Tools::getValue( 'page' ) ) );
-						exit();
+					if ( $redirect && ! HMWP_Classes_Tools::isNginx() && ! HMWP_Classes_Tools::isCloudPanel() ) {
+						if ( wp_safe_redirect( esc_url_raw( HMWP_Classes_Tools::getSettingsUrl( HMWP_Classes_Tools::getValue( 'page' ) . '&tab=' . HMWP_Classes_Tools::getValue( 'tab' ) ) ) ) ) {
+							exit;
+						}
 					}
 				}
 

@@ -593,11 +593,10 @@ class HMWP_Models_Rules {
 				if ( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 3 ) {
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} ([a-z0-9]{2000,}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (&lt;|%0a|%0d|%27|%3c|%3e|%00|0x00) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_USER_AGENT} (ahrefs|alexibot|majestic|mj12bot|rogerbot) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} ((c99|php|web)shell|remoteview|site((.){0,2})copier) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (econtext|eolasbot|eventures|liebaofast|nominet|oppo\sa33) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (base64_decode|bin/bash|disconnect|eval|lwp-download|unserialize) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_USER_AGENT} (acapbot|acoonbot|asterias|attackbot|backdorbot|becomebot|binlar|blackwidow|blekkobot|blexbot|blowfish|bullseye|bunnys|butterfly|careerbot|casper|checkpriv|cheesebot|cherrypick|chinaclaw|choppy|clshttp|cmsworld|copernic|copyrightcheck|cosmos|crescent|cy_cho|datacha|demon|diavol|discobot|dittospyder|dotbot|dotnetdotcom|dumbot|emailcollector|emailsiphon|emailwolf|extract|eyenetie|feedfinder|flaming|flashget|flicky|foobot|g00g1e|getright|gigabot|go-ahead-got|gozilla|grabnet|grafula|harvest|heritrix|httrack|icarus6j|jetbot|jetcar|jikespider|kmccrew|leechftp|libweb|linkextractor|linkscan|linkwalker|loader|masscan|miner|mechanize|morfeus|moveoverbot|netmechanic|netspider|nicerspro|nikto|ninja|nutch|octopus|pagegrabber|petalbot|planetwork|postrank|proximic|purebot|pycurl|python|queryn|queryseeker|radian6|radiation|realdownload|scooter|seekerspider|semalt|siclab|sindice|sistrix|sitebot|siteexplorer|sitesnagger|skygrid|smartdownload|snoopy|sosospider|spankbot|spbot|sqlmap|stackrambler|stripper|sucker|surftbot|sux0r|suzukacz|suzuran|takeout|teleport|telesoft|true_robots|turingos|turnit|vampire|vikspider|voideye|webleacher|webreaper|webstripper|webvac|webviewer|webwhacker|winhttp|wwwoffle|woxbot|xaldon|xxxyy|yamanalab|yioopbot|youda|zeus|zmeu|zune|zyborg) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (acapbot|acoonbot|asterias|attackbot|backdorbot|becomebot|binlar|blackwidow|blekkobot|blexbot|blowfish|bullseye|bunnys|butterfly|careerbot|casper|checkpriv|cheesebot|cherrypick|chinaclaw|choppy|clshttp|cmsworld|copernic|copyrightcheck|cosmos|crescent|cy_cho|datacha|demon|diavol|discobot|dittospyder|dotnetdotcom|dumbot|emailcollector|emailsiphon|emailwolf|extract|eyenetie|feedfinder|flaming|flashget|flicky|foobot|g00g1e|getright|go-ahead-got|gozilla|grabnet|grafula|harvest|httrack|icarus6j|jetbot|jetcar|kmccrew|leechftp|libweb|linkextractor|linkscan|linkwalker|loader|masscan|miner|mechanize|morfeus|moveoverbot|netmechanic|netspider|nicerspro|nikto|ninja|octopus|pagegrabber|planetwork|postrank|proximic|purebot|pycurl|python|queryn|queryseeker|radian6|radiation|realdownload|seekerspider|semalt|siclab|sindice|sitebot|sitesnagger|skygrid|smartdownload|snoopy|sosospider|spankbot|spbot|sqlmap|stackrambler|stripper|sucker|surftbot|sux0r|suzukacz|suzuran|takeout|teleport|telesoft|true_robots|turingos|turnit|vampire|vikspider|voideye|webleacher|webreaper|webstripper|webvac|webviewer|webwhacker|winhttp|wwwoffle|woxbot|xaldon|xxxyy|youda|zeus|zmeu|zune|zyborg) [NC,OR]" . PHP_EOL;
 
 					$rules .= "RewriteCond %{QUERY_STRING} ([a-z0-9]{2000,}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)(:|%3a)(/|%2f) [NC,OR]" . PHP_EOL;
@@ -681,18 +680,17 @@ class HMWP_Models_Rules {
 				if ( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 4 ) {
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} ([a-z0-9]{2000,}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (&lt;|%0a|%0d|%27|%3c|%3e|%00|0x00) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_USER_AGENT} (ahrefs|alexibot|majestic|mj12bot|rogerbot) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (oppo\sa33|(c99|php|web)shell|site((.){0,2})copier) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (base64_decode|bin/bash|disconnect|eval|unserializ) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (acapbot|acoonbot|alexibot|asterias|attackbot|awario|backdor|becomebot|binlar|blackwidow|blekkobot|blex|blowfish|bullseye|bunnys|butterfly|careerbot|casper) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (checkpriv|cheesebot|cherrypick|chinaclaw|choppy|clshttp|cmsworld|copernic|copyrightcheck|cosmos|crescent|datacha|diavol|discobot|dittospyder) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_USER_AGENT} (dotbot|dotnetdotcom|dumbot|econtext|emailcollector|emailsiphon|emailwolf|eolasbot|eventures|extract|eyenetie|feedfinder|flaming|flashget|flicky|foobot|fuck) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_USER_AGENT} (g00g1e|getright|gigabot|go-ahead-got|gozilla|grabnet|grafula|harvest|heritrix|httracks?|icarus6j|jetbot|jetcar|jikespider|kmccrew|leechftp|libweb|liebaofast) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_USER_AGENT} (linkscan|linkwalker|loader|lwp-download|majestic|masscan|miner|mechanize|mj12bot|morfeus|moveoverbot|netmechanic|netspider|nicerspro|nikto|ninja|nominet|nutch) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_USER_AGENT} (pagegrabber|petalbot|planetwork|postrank|proximic|purebot|queryn|queryseeker|radian6|radiation|realdownload|remoteview|rogerbot|scan|scooter|seekerspid) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_USER_AGENT} (semalt|siclab|sindice|sistrix|sitebot|siteexplorer|sitesnagger|skygrid|smartdownload|snoopy|sosospider|spankbot|spbot|sqlmap|stackrambler|stripper|sucker|surftbot) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (dotnetdotcom|dumbot|econtext|emailcollector|emailsiphon|emailwolf|eolasbot|eventures|extract|eyenetie|feedfinder|flaming|flashget|flicky|foobot|fuck) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (g00g1e|getright|go-ahead-got|gozilla|grabnet|grafula|harvest|httracks?|icarus6j|jetbot|jetcar|kmccrew|leechftp|libweb|liebaofast) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (linkscan|linkwalker|loader|lwp-download|masscan|miner|mechanize|morfeus|moveoverbot|netmechanic|netspider|nicerspro|nikto|ninja|nominet) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (pagegrabber|planetwork|postrank|proximic|purebot|queryn|queryseeker|radian6|radiation|realdownload|remoteview|scan|seekerspid) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (semalt|siclab|sindice|sitebot|sitesnagger|skygrid|smartdownload|snoopy|sosospider|spankbot|spbot|sqlmap|stackrambler|stripper|sucker|surftbot) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (sux0r|suzukacz|suzuran|takeout|teleport|telesoft|true_robots|turingos|turnit|vampire|vikspider|voideye|webleacher|webreaper|webstripper|webvac|webviewer|webwhacker) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_USER_AGENT} (winhttp|wwwoffle|woxbot|xaldon|xxxyy|yamanalab|yioopbot|youda|zeus|zmeu|zune|zyborg) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_USER_AGENT} (winhttp|wwwoffle|woxbot|xaldon|xxxyy|youda|zeus|zmeu|zune|zyborg) [NC,OR]" . PHP_EOL;
 
 					$rules .= "RewriteCond %{QUERY_STRING} ([a-z0-9]{4000,}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)(:|%3a)(/|%2f) [NC,OR]" . PHP_EOL;

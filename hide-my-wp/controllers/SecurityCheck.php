@@ -437,7 +437,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 				'warning'    => false,
 				'message'    => __( "The most common way to hack a website is by accessing the domain and adding harmful queries in order to reveal information from files and database.<br /> These attacks are made on any website, WordPress or not, and if a call succeeds … it will probably be too late to save the website.", 'hide-my-wp' ),
 				'solution'   => sprintf( esc_html__( "Activate the firewall and select the firewall strength that works for your website %s %s > Change Paths > Firewall & Headers %s", 'hide-my-wp' ), '<a href="' . HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks#tab=firewall' ) . '" >', HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ), '</a>' ),
-				'javascript' => "jQuery(this).hmwp_fixSettings('hmwp_sqlinjection',1);",
+				'javascript' => "jQuery(this).hmwp_fixSettings('hmwp_sqlinjection,hmwp_sqlinjection_level','1,4');",
 			),
 			'checkVersionDisplayed' => array(
 				'name'       => esc_html__( "Versions in Source Code", 'hide-my-wp' ),
@@ -743,35 +743,53 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 			case 'hmwp_fixsettings':
 
-				$name  = HMWP_Classes_Tools::getValue( 'name' );
-				$value = HMWP_Classes_Tools::getValue( 'value' );
-
 				if ( HMWP_Classes_Tools::getIsset( 'name' ) && HMWP_Classes_Tools::getIsset( 'value' ) ) {
+					//Initialize WordPress Filesystem
+					$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
 
-					if ( in_array( $name, array_keys( HMWP_Classes_Tools::$options ) ) ) {
-						HMWP_Classes_Tools::saveOptions( $name, $value );
-						//call it in case of rule change
-						HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveRules();
+					$name  = HMWP_Classes_Tools::getValue( 'name', false, true );
+					$value = HMWP_Classes_Tools::getValue( 'value', false, true );
+					$options = HMWP_Classes_Tools::getOptions();
 
-						if ( HMWP_Classes_Tools::isIIS() && HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->isConfigWritable() ) {
-							//Flush the changes for IIS server
-							HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->flushChanges();
-						}
-
-						$message = esc_html__( 'Saved! You can run the test again.', 'hide-my-wp' );
-						if ( HMWP_Classes_Tools::isNginx() || HMWP_Classes_Tools::isCloudPanel() ) {
-							$message .= '<br />' . esc_html__( "Don't forget to reload the Nginx service.", 'hide-my-wp' ) . ' ' . '<strong><a href="' . esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/how-to-setup-hide-my-wp-on-nginx-server/' ) . '" target="_blank" style="color: red">' . esc_html__( "Learn How", 'hide-my-wp' ) . '</a></strong>';
-						}
-
-						if ( HMWP_Classes_Tools::isAjax() ) {
-							wp_send_json_success( $message );
-						}
-
-						break;
+					if ( strpos( $name, ',' ) !== false && strpos( $value, ',' ) !== false ) {
+						$names = explode( ',', $name );
+						$values = explode( ',', $value );
+					} else {
+						$names = array( $name );
+						$values = array( $value );
 					}
+
+					foreach ( $names as $index => $name ) {
+						if ( isset($values[$index] ) && in_array( $name, array_keys( $options ) ) ) {
+							HMWP_Classes_Tools::saveOptions( $name, $values[$index] );
+
+							// Call it in case of rule change
+							HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveRules();
+
+							// Apply the changes as permalinks
+							HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->applyPermalinksChanged( false, false );
+
+							// Hide the common WP Files that migth be visible to detectors
+							if ( $name == 'hmwp_hide_commonfiles' ) {
+								$wp_filesystem->delete( HMWP_Classes_Tools::getRootPath() . 'readme.html' );
+								$wp_filesystem->delete( HMWP_Classes_Tools::getRootPath() . 'license.txt' );
+								$wp_filesystem->delete( HMWP_Classes_Tools::getRootPath() . 'wp-config-sample.php' );
+							}
+
+							$message = esc_html__( 'Saved! You can run the test again.', 'hide-my-wp' );
+							if ( HMWP_Classes_Tools::isNginx() || HMWP_Classes_Tools::isCloudPanel() ) {
+								$message .= '<br />' . esc_html__( "Don't forget to reload the Nginx service.", 'hide-my-wp' ) . ' ' . '<strong><a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/how-to-setup-hide-my-wp-on-nginx-server/' ) . '" target="_blank" style="color: red">' . esc_html__( "Learn How", 'hide-my-wp' ) . '</a></strong>';
+							}
+
+						}
+					}
+
+					if ( HMWP_Classes_Tools::isAjax() ) {
+						wp_send_json_success( $message );
+					}
+
+					break;
 				}
-				//refresh the security scan
-				$this->doSecurityCheck();
 
 				if ( HMWP_Classes_Tools::isAjax() ) {
 					wp_send_json_error( esc_html__( 'Could not fix it. You need to change it manually.', 'hide-my-wp' ) );
@@ -1897,7 +1915,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 			return array(
 				'value'      => ( $found ? esc_html__( 'Yes' ) : esc_html__( 'No' ) ),
 				'valid'      => ( ! $found ),
-				'javascript' => "jQuery(this).hmwp_fixSettings('hmwp_hideajax_admin',1);jQuery(this).hmwp_fixSettings('hmwp_admin-ajax_url','ajax');",
+				'javascript' => "jQuery(this).hmwp_fixSettings('hmwp_hideajax_admin,hmwp_admin-ajax_url','1,ajax');",
 			);
 		}
 

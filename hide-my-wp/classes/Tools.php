@@ -184,7 +184,7 @@ class HMWP_Classes_Tools {
 			'brute_max_attempts'             => 5,
 			'brute_max_timeout'              => 3600,
 			//reCaptcha Google
-			'brute_use_google_enterprise'    => 0,
+			'brute_use_google_enterprise'    => 1,
 			'brute_use_google'               => 0,
 			'brute_google_checkbox'          => 0,
 			'brute_google_project_id'        => '',

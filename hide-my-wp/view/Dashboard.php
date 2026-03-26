@@ -111,13 +111,8 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
 					<?php
 
                     $stats = array();
-
-                    if ( ! $stats['block_ip'] ) {
-                        $stats['block_ip'] = '-';
-                    }
-                    if ( ! $stats['alerts'] ) {
-                        $stats['alerts'] = '-';
-                    }
+                    $stats['block_ip'] = $stats['block_ip'] ?? '-';
+                    $stats['alerts']   = $stats['alerts'] ?? '-';
                     ?>
                     <td class="hmwp_widget_log" style="width: 40%">
                         <table>
