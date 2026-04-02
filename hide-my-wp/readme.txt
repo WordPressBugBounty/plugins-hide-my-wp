@@ -2,9 +2,9 @@
 Contributors: johndarrel
 Tags: security,firewall,hide my wp,brute force,login
 Requires at least: 5.8
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 7.0
-Stable tag: 5.5.04
+Stable tag: 7.0.00
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,55 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 17. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+= 7.0.00 (31 March 2026) =
+⚡ Major Release: Security Score, Login Page Designer, Passkey 2FA, Security Threats Log, User Events Log, GEO Threats Map, and expanded Firewall rules.
+
+* New - Security Optimization Score (0-100) with dynamic gauge on the Overview dashboard and Security Check page
+* New - Security Threats Log to track blocked attacks and malicious requests (limited view)
+* New - User Events Log to track login activity and user changes (limited view)
+* New - GEO Threats Map with top 5 threat countries on the Overview dashboard
+* New - Country filter in Security Threats Log and User Events Log
+* New - Login Page Designer with custom logo, background image, colors, and color scheme presets
+* New - Security Presets for one-click activation: Minimal, Lite Mode + Firewall + Compatibility, and Lite Mode + Firewall + Brute Force + Logs + Two Factor
+* New - Contextual upgrade suggestions based on your site's actual threat data
+* New - Two-Factor Authentication by Passkey (Face ID, Touch ID, Windows Hello)
+* New - Each user can select their preferred 2FA method from their profile
+* New - Trust current browser option for 2FA, skip verification on trusted devices
+* New - Hide WordPress Common Files (wp-config.php, readme.html, license.txt, php.ini)
+* New - Hide WordPress Common Paths with file extension filtering (html, txt, lock)
+* New - Hide User Enumeration to block author discovery scans
+* New - Dark mode support (browser-based)
+* New - Translation in Indonesian (id_ID) language
+* New - Translation in Turkish (tr_TR) language
+
+Firewall & Security Updates:
+
+* Update - Expanded 7G & 8G Firewall rules to block SQL injection, XSS, file inclusion, directory traversal, and automated vulnerability scans
+* Update - Firewall rules optimized for reduced overhead under high attack traffic
+* Update - Improved threat detection to stop malicious requests before WordPress core execution
+* Update - Security Headers updated with latest best practices
+* Update - Notification on Overview to activate 7G/8G Firewall when unblocked threats are detected
+
+Compatibility:
+
+* Update - Compatibility with WordPress 7.0 and PHP 8.5
+* Update - Compatibility with WooCommerce 10.6
+* Update - Compatibility with Elementor, Bricks Builder, Blocksy, Nicepage, Avada, and Riode themes
+* Update - Compatibility with WP Rocket, LiteSpeed, Nitropack, SiteGround Optimizer, and Cloudflare
+* Update - Compatibility with Wordfence, Sucuri, and Solid Security
+* Update - Compatibility with WP Engine, Kinsta, CloudPanel, Ploi.io, and IIS servers
+* Update - Compatibility with WPML and Polylang for multilingual Brute Force, 2FA, and Magic Login texts
+* Update - Translations updated in all 14 supported languages
+
+UI & Experience:
+
+* Update - Redesigned Overview dashboard with Security Optimization Score, threat chart, and GEO map
+* Update - Improved Security Check page with numeric score and actionable task list
+* Update - Reorganized Logs section into Security Threats and User Events
+* Update - Improved activation flow with clearer setup wizard
+* Update - Translations updated in all 16 supported languages: Arabic, Brazilian Portuguese, Chinese (Simplified), Dutch, Finnish, French, German, Indonesian, Italian, Japanese, Portuguese, Romanian, Russian, Spanish, Turkish, and English (default).
+* Fix - Dropdown and Help icon in the RTL languages
+
 = 5.5.04 (26 Mar 2026) =
 * Update - Firewall rules on WP core init
 * Update - Added compatibility with Photo Gallery from 10Web
