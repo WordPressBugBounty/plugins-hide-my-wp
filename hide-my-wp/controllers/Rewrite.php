@@ -38,21 +38,20 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		// Start HMWP path process
 		$this->initHooks();
 
+		// Start Tweaks Hooks
+		$this->initTweaks();
 	}
 
 	/**
-	 * Init the plugin hooks
+	 * Initializes the main hooks for the plugin.
+	 *
+	 * This method sets up various filters and actions to handle plugin functionality,
+	 * including URL management, compatibility checks, security filters, and buffer initialization.
 	 *
 	 * @return void
 	 * @throws Exception
 	 */
 	public function initHooks() {
-
-		// Stop here is the option is default.
-		// The previous code is needed for settings change and validation
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' ) {
-			return;
-		}
 
 		// If the mod_rewrite is not set in Apache, return
 		if ( HMWP_Classes_Tools::isApache() && ! HMWP_Classes_Tools::isModeRewrite() ) {
@@ -95,6 +94,12 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		// Check boot compatibility for some plugins and functionalities
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Compatibility' )->checkCompatibility();
 
+		// Stop here if the option is default.
+		// The previous code is needed for settings change and validation
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' ) {
+			return;
+		}
+
 		// Don't let to rename and hide the current paths if logout is required
 		if ( HMWP_Classes_Tools::getOption( 'error' ) || HMWP_Classes_Tools::getOption( 'logout' ) ) {
 			return;
@@ -112,7 +117,7 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		add_filter( 'query_vars', array( $this->model, 'addParams' ), 1, 1 );
 		add_filter( 'login_redirect', array( $this->model, 'sanitize_login_redirect' ), 9, 3 );
 		add_filter( 'wp_redirect', array( $this->model, 'sanitize_redirect' ), PHP_INT_MAX, 2 );
-        add_filter( 'x_redirect_by', '__return_false', PHP_INT_MAX, 1 );
+		add_filter( 'x_redirect_by', '__return_false', PHP_INT_MAX, 1 );
 
 		// Redirect based on the current user role
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_do_redirects' ) ) {
@@ -158,7 +163,7 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cookies' );
 
 		// Start the buffer sooner if one of these conditions
-		// If is ajax call... start the buffer right away
+		// If is an ajax call... start the buffer right away
 		// Ts always change the paths
 		if ( HMWP_Classes_Tools::isAjax() || HMW_ALWAYS_CHANGE_PATHS ) {
 
@@ -174,34 +179,6 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 			if ( apply_filters( 'hmwp_priority_buffer', HMWP_Classes_Tools::getOption( 'hmwp_priorityload' ) ) ) {
 				// Starts the buffer
 				$this->model->startBuffer();
-			}
-
-			// Apply login page customization styles
-			if ( HMWP_Classes_Tools::getOption('hmwp_login_page') ) {
-
-				// Remove the third hooks and load the styles from the login page
-				add_filter( 'hmwp_option_hmwp_remove_third_hooks', '__return_true' );
-
-				/** HMWP_Models_Login $login  */
-				$login = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Login' );
-				add_action( 'login_enqueue_scripts', array( $login, 'hookLoginPageStyles' ) );
-				add_action( 'login_footer', array( $login, 'hookLoginSpinner' ) );
-
-				// Remove WordPress link + text
-				add_filter('login_headerurl', function () {
-					return home_url();
-				});
-
-				add_filter('login_headertext', function () {
-					return get_bloginfo('name');
-				});
-
-				// Apply login page logo url
-				if ( HMWP_Classes_Tools::getOption( 'hmwp_login_page_logo_url' ) ) {
-					/** HMWP_Models_Login $login  */
-					$login = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Login' );
-					add_filter( 'login_headerurl', array( $login, 'hookLoginLogoUrl' ) );
-				}
 			}
 
 			// Hook the rss & feed
@@ -280,14 +257,55 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 			// Hook the change paths on init
 			add_action( 'init', array( $this, 'hookChangePaths' ) );
 
-			// Load the PluginLoaded Hook to hide URLs and Disable stuff
-			add_action( 'init', array( $this, 'hookHideDisable' ) );
-
 		}
 
 		// Hide the URLs from admin and login
 		// Load the hook on plugins_loaded to prevent any wp redirect
 		add_action( 'plugins_loaded', array( $this->model, 'hideUrls' ) );
+
+	}
+
+	/**
+	 * Initializes tweak hooks for modifying behavior based on specific conditions.
+	 *
+	 * @return void
+	 */
+	public function initTweaks() {
+
+		// If not dashboard
+		if ( ! is_admin() && ! is_network_admin() ) {
+			// Load the PluginLoaded Hook to hide URLs and Disable stuff
+			add_action( 'init', array( $this, 'hookHideDisable' ) );
+
+
+			// Apply login page customization styles
+			if ( HMWP_Classes_Tools::getOption('hmwp_login_page') ) {
+
+				// Remove the third hooks and load the styles from the login page
+				add_filter( 'hmwp_option_hmwp_remove_third_hooks', '__return_true' );
+
+				/** HMWP_Models_Login $login  */
+				$login = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Login' );
+				add_action( 'login_enqueue_scripts', array( $login, 'hookLoginPageStyles' ) );
+				add_action( 'login_footer', array( $login, 'hookLoginSpinner' ) );
+
+				// Remove WordPress link + text
+				add_filter('login_headerurl', function () {
+					return home_url();
+				});
+
+				add_filter('login_headertext', function () {
+					return get_bloginfo('name');
+				});
+
+				// Apply login page logo url
+				if ( HMWP_Classes_Tools::getOption( 'hmwp_login_page_logo_url' ) ) {
+					/** HMWP_Models_Login $login  */
+					$login = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Login' );
+					add_filter( 'login_headerurl', array( $login, 'hookLoginLogoUrl' ) );
+				}
+			}
+		}
 
 	}
 

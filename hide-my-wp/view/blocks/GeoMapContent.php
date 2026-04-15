@@ -40,13 +40,6 @@ $mapColClass = ! empty( $topPoints ) ? 'col-sm-8 p-0 pr-2' : 'col-sm-12 p-0';
                     $svg = file_get_contents( $mapFile );
 
                     if ( $svg ) {
-                        $svg = preg_replace( '/<\?xml.*?\?>/i', '', $svg );
-                        $svg = preg_replace( '/<!DOCTYPE.*?>/i', '', $svg );
-                        $svg = preg_replace( '/<script\b[^>]*>(.*?)<\/script>/is', '', $svg );
-
-                        $svg = str_replace( 'data-cc=', 'cc=', $svg );
-                        $svg = str_replace( '[data-cc]', '[cc]', $svg );
-
                         echo $svg; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                     } else {
                         echo '<div class="p-3 text-black-50 small">' . esc_html__( 'Could not load the map SVG.', 'hide-my-wp' ) . '</div>';

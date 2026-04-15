@@ -2,7 +2,7 @@
 <?php if(!isset($view)) return;?>
 <div id="hmwp_wrap" class="d-flex flex-row p-0 my-3">
     <?php
-    echo wp_kses_post( $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) ) );
+    $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) );
 
     $current_tab = HMWP_Classes_Tools::getValue( 'tab' );
     $subtabs = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Menu' )->getSubMenu( HMWP_Classes_Tools::getValue( 'page' ) );

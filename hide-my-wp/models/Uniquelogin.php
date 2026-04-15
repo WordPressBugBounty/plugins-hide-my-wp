@@ -493,7 +493,7 @@ class HMWP_Models_Uniquelogin {
                 <input type="hidden" name="action" value="validate_magic_link"/>
 				<?php wp_nonce_field( 'validate_magic_link', self::USER_NONCE ); ?>
                 <label for="user_email"><?php echo esc_html__( 'Email Address', 'hide-my-wp' ); ?></label>
-                <input type="text" name="user_email" id="user_email" class="input" value="<?php echo esc_attr( HMWP_Classes_Tools::getValue( 'log' ) ); ?>" size="20" autocapitalize="off" autocomplete="username" required="required"/>
+                <input type="text" name="user_email" id="user_email" class="input" value="<?php echo esc_attr( HMWP_Classes_Tools::getValue( 'log' ) ); ?>" size="20" autocapitalize="off" autocomplete="username"/>
                 <input type="hidden" name="redirect_to" value="<?php echo esc_attr( $redirect_to ); ?>"/>
             </p>
             <p class="submit">

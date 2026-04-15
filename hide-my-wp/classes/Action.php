@@ -96,6 +96,7 @@ class HMWP_Classes_Action extends HMWP_Classes_FrontController {
 						"hmwp_backup",
 						"hmwp_restore",
 						"hmwp_rollback",
+						"hmwp_rollback_stable",
 						"hmwp_advanced_install",
 						"hmwp_pause_enable",
 						"hmwp_pause_disable",

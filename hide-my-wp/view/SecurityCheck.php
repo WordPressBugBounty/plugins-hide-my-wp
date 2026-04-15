@@ -220,7 +220,7 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
             </div>
             <div class="modal-body">
 
-                <?php echo sprintf( /* translators: 1: Opening link + strong tag. 2: Closing strong + link tag. 3: Opening link + strong tag. 4: Closing strong + link tag. 5: Plugin name in strong tags. */ esc_html__( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s in %5$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '"><strong>', '</strong></a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '"><strong>', '</strong></a>', '<strong>' . esc_html( HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ) ) . '</strong>' ); ?>
+                <?php echo wp_kses_post( sprintf( /* translators: 1: Opening anchor tag. 2: Closing anchor tag. 3: Opening anchor tag. 4: Closing anchor tag. */ __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ) ?>
 
             </div>
             <div class="modal-footer">

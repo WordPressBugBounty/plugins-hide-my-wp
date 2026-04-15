@@ -80,6 +80,7 @@ class HMWP_Models_Rollback {
 	 * the version package.
 	 */
 	protected function apply_package() {
+
 		$update_plugins = get_site_transient( 'update_plugins' );
 		if ( ! is_object( $update_plugins ) ) {
 			$update_plugins = new \stdClass();
@@ -91,7 +92,7 @@ class HMWP_Models_Rollback {
 		$plugin_info->package     = $this->package_url;
 		$plugin_info->url         = _HMWP_ACCOUNT_SITE_;
 
-		$update_plugins->response[ $this->plugin_name ] = $plugin_info;
+        $update_plugins->response[ $this->plugin_name ] = $plugin_info;
 
 		set_site_transient( 'update_plugins', $update_plugins );
 	}
@@ -106,7 +107,7 @@ class HMWP_Models_Rollback {
 		include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 
 		$this->print_inline_style();
-		$upgrader = new \Plugin_Upgrader( new \WP_Ajax_Upgrader_Skin() );
+		$upgrader = new \Plugin_Upgrader( );
 		$upgrader->upgrade( $this->plugin_name );
 	}
 

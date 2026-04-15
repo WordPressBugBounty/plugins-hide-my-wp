@@ -3,7 +3,7 @@
 <div id="hmwp_ghost_mode_modal" class="modal" tabindex="-1" role="dialog" style="margin-top: 1%;">
     <div class="modal-dialog" role="document">
         <div class="modal-content" style="background-color: #f5f5f7;min-width: 550px;">
-            <div class="modal-body m-0 p-0">
+            <div class="modal-body m-0 p-0" style="background-color: #f5f5f7 !important;">
 
                 <div style="border-radius: 16px; width: 100%; position: relative; overflow: hidden;transform: scale(0.92) translateY(12px); transition: opacity 0.5s cubic-bezier(.16,1,.3,1), transform 0.5s cubic-bezier(.16,1,.3,1);">
 
@@ -36,7 +36,7 @@
                                 <span style="font-family: 'Georgia', serif; font-size: 42px; font-weight: 700; color: #1a1a1a; line-height: 1;">$52<span style="font-size: 18px; color: #555;">/yr</span></span>
                             </div>
 
-                            <div style="background: linear-gradient(135deg, #e84118 0%, #f97316 100%); color: white; border-radius: 8px; padding: 3px 12px; display: inline-block; font-size: 13px; font-weight: 600; margin-bottom: 20px; letter-spacing: 0.3px;">SAVE 65% on Chost 5</div>
+                            <div style="background: linear-gradient(135deg, #e84118 0%, #f97316 100%); color: white; border-radius: 8px; padding: 3px 12px; display: inline-block; font-size: 13px; font-weight: 600; margin-bottom: 20px; letter-spacing: 0.3px;">SAVE 65% on Ghost 5</div>
 
                         </div>
                     </div>

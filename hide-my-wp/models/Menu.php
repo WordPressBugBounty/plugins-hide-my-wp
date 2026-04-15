@@ -80,7 +80,7 @@ class HMWP_Models_Menu {
 	            'title' => esc_html__("Temporary Login", 'hide-my-wp'),
 	            'capability' => HMWP_CAPABILITY,
 	            'parent' => 'hmwp_settings',
-	            'show' => HMWP_Classes_Tools::getOption('hmwp_templogin'),
+	            //'show' => HMWP_Classes_Tools::getOption('hmwp_templogin'),
 	            'function' => array(HMWP_Classes_ObjController::getClass('HMWP_Controllers_Settings'), 'init'),
             ),
             'hmwp_log' => array(

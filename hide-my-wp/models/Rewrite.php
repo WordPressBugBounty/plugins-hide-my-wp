@@ -804,7 +804,7 @@ class HMWP_Models_Rewrite {
 			if ( $rewritecode <> '' ) {
 				$form .= '<button id="copyBulkRules" class="btn rounded-0 btn-default hmwp_clipboard_copy ml-2" data-clipboard-text="' . $bulkrules . '">' . esc_html__('Copy Bulk Rules', 'hide-my-wp') . '</button>';
 				/* translators: 1: Opening <strong><a> tag with tutorial link and label, 2: Closing </a></strong> tag, 3: Rewrite rules block and form HTML. */
-				HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'WPEngine detected. Add the redirects in the Web Rules Engine %1$s', 'hide-my-wp' ), '<strong><a href="' . esc_url( 'https://wpengine.com/support/web-rules-engine/' ) . '" target="_blank" style="color: red">' . esc_html__( 'Learn How To Add the Rules', 'hide-my-wp' ) . '</a></strong> <br /><br /><pre>' . esc_html( $rewritecode ) . '</pre>' . $form ) ), 'notice', false );
+				HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'WPEngine detected. Add the redirects in the Web Rules Engine %1$s', 'hide-my-wp' ), '<strong><a href="' . esc_url( 'https://wpengine.com/support/web-rules-engine/' ) . '" target="_blank" style="color: red">' . esc_html__( 'Learn How To Add the Rules', 'hide-my-wp' ) . '</a></strong> <br /><br /><pre>' . $rewritecode . '</pre>' . $form ) ), 'notice', false ); //phpcs:ignore
 				$success = false; //always show the WPEngine Rules as manual action
 			}
 
@@ -830,7 +830,7 @@ class HMWP_Models_Rewrite {
 
 			if ( $rewritecode <> '' ) {
 				/* translators: 1: Opening <strong><a> tag with tutorial link and label, 2: Closing </a></strong> tag, 3: Rewrite rules block and form HTML. */
-				HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Flywheel detected. Add the redirects in the Flywheel Redirect rules panel %1$s.', 'hide-my-wp' ), '<strong><a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/how-to-setup-hide-my-wp-on-flywheel-server/' ) ) . '" target="_blank" style="color: red">' . esc_html__( 'Learn How To Add the Code', 'hide-my-wp' ) . '</a></strong> <br /><br /><pre>' . esc_html( $rewritecode ) . '</pre>' . $form ) , 'notice', false );
+				HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Flywheel detected. Add the redirects in the Flywheel Redirect rules panel %1$s.', 'hide-my-wp' ), '<strong><a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/how-to-setup-hide-my-wp-on-flywheel-server/' ) ) . '" target="_blank" style="color: red">' . esc_html__( 'Learn How To Add the Code', 'hide-my-wp' ) . '</a></strong> <br /><br /><pre>' . $rewritecode . '</pre>' . $form ) , 'notice', false ); //phpcs:ignore
 				$success = false; //always show the Flywheel Rules as manually action
 			}
 
@@ -904,7 +904,7 @@ class HMWP_Models_Rewrite {
 			if ( $rewritecode <> '' ) {
 				if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->writeInHtaccess( $rewritecode, 'HMWP_RULES' ) ) {
 					/* translators: 1: Config file path wrapped in <strong> tags, 2: Preformatted rewrite rules block followed by form HTML. */
-					HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Config file is not writable. Create the file if not exists or copy to %1$s file the following lines: %2$s', 'hide-my-wp' ), '<strong>' . esc_html( $config_file ) . '</strong>', '<br /><br /><pre># BEGIN HMWP_RULES<br />' . esc_html( str_replace( '    ', ' ', $rewritecode ) ) . '# END HMWP_RULES</pre>' . $form ) ), 'notice', false );
+					HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Config file is not writable. Create the file if not exists or copy to %1$s file the following lines: %2$s', 'hide-my-wp' ), '<strong>' . esc_html( $config_file ) . '</strong>', '<br /><br /><pre># BEGIN HMWP_RULES<br />' . str_replace( '    ', ' ', $rewritecode ) . '# END HMWP_RULES</pre>' . $form ) ), 'notice', false ); //phpcs:ignore
 					return false;
 				}
 			} else {
@@ -967,7 +967,7 @@ class HMWP_Models_Rewrite {
 
 				if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->writeInNginx( $rewritecode, 'HMWP_RULES' ) ) {
 					/* translators: 1: Config file path wrapped in <strong> tags, 2: Preformatted rewrite rules block. */
-					HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Config file is not writable. You have to added it manually at the beginning of the %1$s file: %2$s', 'hide-my-wp' ), '<strong>' . esc_html( $config_file ) . '</strong>', '<br /><br /><pre># BEGIN HMWP_RULES<br />' . esc_html( str_replace( '    ', ' ', $rewritecode ) ) . '# END HMWP_RULES</pre>' ) ), 'notice', false );
+					HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Config file is not writable. You have to added it manually at the beginning of the %1$s file: %2$s', 'hide-my-wp' ), '<strong>' . esc_html( $config_file ) . '</strong>', '<br /><br /><pre># BEGIN HMWP_RULES<br />' . str_replace( '    ', ' ', $rewritecode ) . '# END HMWP_RULES</pre>' ) ), 'notice', false ); //phpcs:ignore
 					return false;
 				}
 

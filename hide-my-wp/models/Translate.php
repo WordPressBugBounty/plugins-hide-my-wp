@@ -164,9 +164,9 @@ class HMWP_Models_Translate {
 		$value = ( $rawStrings[ $key ] ?? '' );
 
 		// if we are in wp-admin,
-		// return the default value if the option is not set
+		// return the default value if the option is not set (even as empty)
 		if ( is_admin() ){
-			return ( $option_value ?: $value );
+			return ( $option_value !== false ? $option_value : $value );
 		}
 
 		// WPML

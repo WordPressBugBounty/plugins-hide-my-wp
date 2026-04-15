@@ -344,11 +344,20 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
         // Build menu
         $content  = '<div class="hmwp_nav d-flex flex-column bd-highlight mb-3">';
 
-        $content .= '<div class="m-0 px-3 pt-2 pb-3 font-dark font-weight-bold text-logo">
-                        <a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) ) . '" target="_blank">
-                            <img src="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_logo' )  ? HMWP_Classes_Tools::getOption( 'hmwp_plugin_logo' ) : _HMWP_ASSETS_URL_ . 'img/logo.svg' ) . '" class="ml-0 mr-2" style="height:35px; max-width: 140px;" alt="">
-                        </a>
-                    </div>';
+
+        $svg =  '<img src="' . esc_url( _HMWP_ASSETS_URL_ . 'img/logo.svg' ) . '" class="ml-0 mr-2" alt="">';
+
+        if ( ! HMWP_Classes_Tools::getOption( 'hmwp_plugin_logo' ) ){
+            $logoFile = _HMWP_ASSETS_DIR_ . 'img/logo.svg';
+
+            if ( file_exists( $logoFile ) && is_readable( $logoFile ) ) {
+                $svg = file_get_contents( $logoFile );
+            }
+        } else {
+            $svg =  '<img src="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_logo' ) ) . '" class="ml-0 mr-2" alt="">';
+        }
+
+        $content .= '<div class="m-0 px-3 pt-2 pb-3 font-dark font-weight-bold text-logo">' . $svg . '</div>';
 
         foreach ( $subtabs as $tab ) {
 
@@ -364,7 +373,61 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 
         $content .= '</div>';
 
-        return $content;
+        $allowed = wp_kses_allowed_html( 'post' );
+
+        $allowed['svg'] = array(
+                'width'   => true,
+                'height'  => true,
+                'viewBox' => true,
+                'fill'    => true,
+                'xmlns'   => true,
+        );
+
+        $allowed['style'] = array(
+                'type' => true,
+        );
+
+        $allowed['g'] = array(
+                'clip-path' => true,
+        );
+
+        $allowed = wp_kses_allowed_html( 'post' );
+
+        $allowed['svg'] = array(
+                'xmlns'   => true,
+                'viewbox' => true,
+                'fill'    => true,
+        );
+
+        $allowed['style'] = array(
+                'type' => true,
+        );
+
+        $allowed['g'] = array(
+                'clip-path' => true,
+        );
+
+        $allowed['path'] = array(
+                'd'       => true,
+                'fill'    => true,
+                'opacity' => true,
+                'id'      => true,
+                'stroke'  => true,
+        );
+
+        $allowed['defs'] = array();
+
+        $allowed['clippath'] = array(
+                'id' => true,
+        );
+
+        $allowed['rect'] = array(
+                'width'  => true,
+                'height' => true,
+                'fill'   => true,
+        );
+
+        echo wp_kses( $content, $allowed );
     }
 
 	/**
@@ -857,6 +920,25 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				HMWP_Classes_Error::setNotification( esc_html__( 'Great! The initial values are restored.', 'hide-my-wp' ), 'success' );
 
 				break;
+
+            case 'hmwp_rollback_stable':
+
+                HMWP_Classes_Tools::setHeader( 'html' );
+                $plugin_slug = 'hide-my-wp';
+
+                /** @var HMWP_Models_Rollback $rollback */
+                $rollback    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rollback' );
+
+                $rollback->set_plugin( array(
+                        'version'     => HMWP_STABLE_VERSION,
+                        'plugin_name' => _HMWP_ROOT_DIR_,
+                        'plugin_slug' => $plugin_slug,
+                        'package_url' => sprintf( 'https://downloads.wordpress.org/plugin/%s.%s.zip', $plugin_slug, HMWP_STABLE_VERSION ),
+                ) );
+
+                $rollback->run();
+
+                wp_die( '', esc_html( "Rollback to Previous Version" ), [ 'response' => 200 ] );
 			case 'hmwp_restore':
 
 				$tmp_options = array(

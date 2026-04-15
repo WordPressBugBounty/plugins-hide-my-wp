@@ -15,7 +15,7 @@ global $wp_roles;
 </noscript>
 <div id="hmwp_wrap" class="d-flex flex-row p-0 my-3">
     <?php
-    echo wp_kses_post( $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) ) );
+    $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) );
 
     $current_tab = HMWP_Classes_Tools::getValue( 'tab' );
     $subtabs = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Menu' )->getSubMenu( HMWP_Classes_Tools::getValue( 'page' ) );
@@ -40,6 +40,7 @@ global $wp_roles;
                         $view->show( 'blocks/TempLoginUsers' );
 					} else { ?>
                         <div class="col-sm-12 p-1 text-center">
+                            <div class="text-black-50 mb-2"><?php echo esc_html__( 'Activate the "Temporary Logins" option to view the Temporary login report.', 'hide-my-wp' ); ?></div>
                             <a href="<?php echo esc_url(HMWP_Classes_Tools::getSettingsUrl( 'hmwp_templogin&tab=settings', true )) ?>" class="btn btn-default hmwp_nav_item" data-tab="settings"><?php echo esc_html__( 'Activate Temporary Logins', 'hide-my-wp' ); ?></a>
                         </div>
 					<?php } ?>

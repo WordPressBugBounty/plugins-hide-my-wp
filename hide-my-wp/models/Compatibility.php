@@ -643,7 +643,7 @@ class HMWP_Models_Compatibility {
 
 		// First thing you need to do
 		$page = HMWP_Classes_Tools::getValue( 'page' );
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' && $page <> 'hmwp_permalinks' ) {
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' && $page == 'hmwp_settings' ) {
 			/* translators: 1: Opening <a><strong> tag to settings page, 2: Closing </strong></a> tag, 3: Opening <a><strong> tag to settings page, 4: Closing </strong></a> tag, 5: Plugin name wrapped in <strong> tags. */
 			HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s in %5$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '"><strong>', '</strong></a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '"><strong>', '</strong></a>', '<strong>' . esc_html( HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ) ) . '</strong>' ) ) );
 		}

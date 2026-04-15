@@ -4,7 +4,7 @@ if ( ! isset( $view ) ) {
 } ?>
 <div id="hmwp_wrap" class="d-flex flex-row p-0 my-3">
     <?php
-    echo wp_kses_post( $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) ) );
+    $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) );
 
     $current_tab = HMWP_Classes_Tools::getValue( 'tab' );
     $subtabs = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Menu' )->getSubMenu( HMWP_Classes_Tools::getValue( 'page' ) );
@@ -28,7 +28,7 @@ if ( ! isset( $view ) ) {
                                 <?php $view->show( 'blocks/BlockedIps' ); ?>
                             </div>
                         <?php } else { ?>
-                            <div class="col-sm-12 p-1 text-center">
+                            <div class="col-sm-12 p-1 my-2 text-center">
                                 <div class="text-black-50 mb-2"><?php echo esc_html__( 'Activate the "Brute Force" option to see the user IP blocked report', 'hide-my-wp' ); ?></div>
                                 <a href="<?php echo esc_url(HMWP_Classes_Tools::getSettingsUrl( 'hmwp_brute&tab=brute', true )) ?>" class="btn btn-default hmwp_nav_item" data-tab="brute"><?php echo esc_html__( 'Activate Brute Force Protection', 'hide-my-wp' ); ?></a>
                             </div>
@@ -482,7 +482,7 @@ if ( ! isset( $view ) ) {
                             </div>
 
                             <div class="col-sm-12 text-center border-top pt-4 my-4">
-                                <h5><?php echo wp_kses_post( sprintf( /* translators: %s: Shortcode rendered in a <span> tag. */ __( 'Use the %s shortcode to integrate it with other login forms.', 'hide-my-wp' ), '<span style="color:darkred">[hmwp_bruteforce]</span>' ) ); ?></h5>
+                                <h5><?php echo wp_kses_post( sprintf( /* translators: %s: Shortcode rendered in a <span> tag. */ __( 'Use the %s shortcode to integrate it with other login forms.', 'hide-my-wp' ), '<span class="text-danger">[hmwp_bruteforce]</span>' ) ); ?></h5>
 
                                 <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/integrating-brute-force-protection-in-elementor-login-forms/' ) ?>" target="_blank">
                                     <?php echo esc_html__( 'Learn how to use the shortcode', 'hide-my-wp' ); ?>

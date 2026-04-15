@@ -139,11 +139,14 @@ class HMWP_Controllers_Cron {
 		// Record last run first to avoid multiple processes doing the same work
 		update_option( HMWP_THREATS_PURGE, $now, false );
 
-		// Log threats for the last 7 days
-		/** @var HMWP_Models_ThreatsLog $threatsLog */
-		$threatsLog = HMWP_Classes_ObjController::getClass( 'HMWP_Models_ThreatsLog' );
-		$data       = $threatsLog->getThreatStatsByDay( 7 );
-		HMWP_Classes_Tools::hmwp_remote_post( _HMWP_ACCOUNT_SITE_ . '/api/settings', array( 'threats' => $data ), array( 'timeout' => 5 ) );
+		// If connected to the API
+		if ( HMWP_Classes_Tools::getOption( 'api_token' ) ) {
+			// Log threats for the last 7 days
+			/** @var HMWP_Models_ThreatsLog $threatsLog */
+			$threatsLog = HMWP_Classes_ObjController::getClass( 'HMWP_Models_ThreatsLog' );
+			$data       = $threatsLog->getThreatStatsByDay( 7 );
+			HMWP_Classes_Tools::hmwp_remote_post( _HMWP_ACCOUNT_SITE_ . '/api/settings', array( 'threats' => $data ), array( 'timeout' => 5 ) );
+		}
 
 		// Save the total threats for each day
 		if ( ! empty( $data ) && isset( $data['date'] ) && isset( $data['blocked'] ) ) {

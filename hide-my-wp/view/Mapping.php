@@ -9,7 +9,7 @@ if ( ! isset( $view ) ) {
 </noscript>
 <div id="hmwp_wrap" class="d-flex flex-row p-0 my-3">
     <?php
-    echo wp_kses_post( $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) ) );
+    $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) );
 
     $current_tab = HMWP_Classes_Tools::getValue( 'tab' );
     $subtabs = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Menu' )->getSubMenu( HMWP_Classes_Tools::getValue( 'page' ) );
@@ -29,7 +29,7 @@ if ( ! isset( $view ) ) {
 
                 <?php do_action( 'hmwp_mapping_form_beginning' ); ?>
 
-                <div id="text" style="<?php echo ( $current_tab === 'text' ? '' : 'display:none;' ); ?>" class="col-sm-12 p-0 m-0 tab-panel tab-panel-first">
+                <div id="text" style="<?php echo ( $current_tab === 'text' ? '' : 'display:none;' ); ?>" class="col-sm-12 p-0 m-0 tab-panel <?php echo ( $current_tab === 'cdn' ? 'tab-panel-first' : '' ); ?>">
                     <div class="card col-sm-12 p-0 m-0">
                         <h3 class="card-title hmwp_header p-2 m-0">
                             <?php echo esc_html__( 'Text Mapping', 'hide-my-wp' ); ?>
@@ -38,8 +38,8 @@ if ( ! isset( $view ) ) {
                         <?php if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' ) { ?>
                             <div class="card-body">
                                 <div class="col-sm-12 border-0 py-3 mx-0 my-3 text-black-50 text-center">
-                                    <?php /* translators: 1: <a> opening tag, 2: </a> closing tag, 3: <a> opening tag, 4: </a> closing tag. */ ?>
-                                    <?php echo sprintf( wp_kses_post( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ) ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ); ?>
+                                    <?php /* translators: 1: Opening <a> tag to the settings page, 2: Closing </a> tag, 3: Opening <a> tag to the settings page, 4: Closing </a> tag */
+                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ); ?>
                                 </div>
                             </div>
                         <?php } else { ?>
@@ -167,7 +167,7 @@ if ( ! isset( $view ) ) {
                     </div>
                 </div>
 
-                <div id="url" style="<?php echo ( $current_tab === 'url' ? '' : 'display:none;' ); ?>" class="col-sm-12 p-0 m-0 tab-panel">
+                <div id="url" style="<?php echo ( $current_tab === 'url' ? '' : 'display:none;' ); ?>" class="col-sm-12 p-0 m-0 tab-panel <?php echo ( $current_tab === 'cdn' ? 'tab-panel-first' : '' ); ?>">
                     <div class="card col-sm-12 p-0 m-0">
                         <h3 class="card-title hmwp_header p-2 m-0">
                             <?php echo esc_html__( 'URL Mapping', 'hide-my-wp' ); ?>
@@ -176,8 +176,8 @@ if ( ! isset( $view ) ) {
                         <?php if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' ) { ?>
                             <div class="card-body">
                                 <div class="col-sm-12 border-0 py-3 mx-0 my-3 text-black-50 text-center">
-                                    <?php /* translators: 1: <a> opening tag, 2: </a> closing tag, 3: <a> opening tag, 4: </a> closing tag. */ ?>
-                                    <?php echo sprintf( wp_kses_post( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ) ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ); ?>
+                                    <?php /* translators: 1: Opening <a> tag to the settings page, 2: Closing </a> tag, 3: Opening <a> tag to the settings page, 4: Closing </a> tag */
+                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ); ?>
                                 </div>
                             </div>
                         <?php } else { ?>
@@ -243,7 +243,7 @@ if ( ! isset( $view ) ) {
                     </div>
                 </div>
 
-                <div id="cdn" style="<?php echo ( $current_tab === 'cdn' ? '' : 'display:none;' ); ?>" class="col-sm-12 p-0 m-0 tab-panel">
+                <div id="cdn" style="<?php echo ( $current_tab === 'cdn' ? '' : 'display:none;' ); ?>" class="col-sm-12 p-0 m-0 tab-panel <?php echo ( $current_tab === 'cdn' ? 'tab-panel-first' : '' ); ?>">
                     <div class="card col-sm-12 p-0 m-0">
                         <h3 class="card-title hmwp_header p-2 m-0">
                             <?php echo esc_html__( 'CDN URL Mapping', 'hide-my-wp' ); ?>
@@ -252,8 +252,8 @@ if ( ! isset( $view ) ) {
                         <?php if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' ) { ?>
                             <div class="card-body">
                                 <div class="col-sm-12 border-0 py-3 mx-0 my-3 text-black-50 text-center">
-                                    <?php /* translators: 1: <a> opening tag, 2: </a> closing tag, 3: <a> opening tag, 4: </a> closing tag. */ ?>
-                                    <?php echo sprintf( wp_kses_post( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ) ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ); ?>
+                                    <?php /* translators: 1: Opening <a> tag to the settings page, 2: Closing </a> tag, 3: Opening <a> tag to the settings page, 4: Closing </a> tag */
+                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ); ?>
                                 </div>
                             </div>
                         <?php } else { ?>

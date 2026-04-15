@@ -519,7 +519,7 @@ class HMWP_Models_Login {
 						return;
 					}
 					spinner.classList.add('is-active');
-					submitBtn.disabled = true;
+					setTimeout(function(){ submitBtn.disabled = true; }, 10);
 				});
 			}
 

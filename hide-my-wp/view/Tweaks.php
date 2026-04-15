@@ -20,7 +20,7 @@ if ( function_exists( 'wp_roles' ) ) {
 </noscript>
 <div id="hmwp_wrap" class="d-flex flex-row p-0 my-3">
     <?php
-    echo wp_kses_post( $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) ) );
+    $view->getAdminTabs( HMWP_Classes_Tools::getValue( 'page' ) );
 
     $current_tab = HMWP_Classes_Tools::getValue( 'tab' );
     $subtabs = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Menu' )->getSubMenu( HMWP_Classes_Tools::getValue( 'page' ) );
@@ -46,138 +46,146 @@ if ( function_exists( 'wp_roles' ) ) {
                         <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Redirects', 'hide-my-wp' ); ?>
                             <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                         </h3>
-                        <div class="card-body">
-                            <div class="col-sm-12 row py-3 mx-0 my-3">
-                                <div class="col-sm-4 p-1">
-                                    <div class="font-weight-bold"><?php echo esc_html__( 'Redirect Hidden Paths', 'hide-my-wp' ); ?>:</div>
-                                </div>
-                                <div class="col-sm-8 p-0 input-group mb-1">
-                                    <select name="hmwp_url_redirect" class="selectpicker form-control">
-                                        <option value="." <?php selected( '.', HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?>><?php echo esc_html__( "Front page", 'hide-my-wp' ) ?></option>
-                                        <option value="404" <?php selected( '404', HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?> ><?php echo esc_html__( "404 page", 'hide-my-wp' ) ?></option>
-                                        <option value="NFError" <?php selected( 'NFError', HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?> ><?php echo esc_html__( "404 HTML Error", 'hide-my-wp' ) ?></option>
-                                        <option value="NAError" <?php selected( 'NAError', HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?> ><?php echo esc_html__( "403 HTML Error", 'hide-my-wp' ) ?></option>
-                                        <?php
-                                        $pages = get_pages( array( 'number' => 50 ) );
-                                        foreach ( $pages as $page ) {
-                                            if ( $page->post_title <> '' ) { ?>
-                                                <option value="<?php echo esc_attr( $page->post_name ) ?>" <?php echo selected( $page->post_name, HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?> ><?php echo esc_html( $page->post_title ) ?></option>
-                                        <?php	}
-                                        } ?>
-                                    </select>
-                                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-redirect-hidden-paths' ) ?>" target="_blank" class="position-absolute float-right" style="right: 40px;top: 25%;"><i class="dashicons dashicons-editor-help"></i></a>
-                                </div>
-                                <div class="p-1">
-                                    <div class="text-black-50 small"><?php echo esc_html__( 'Redirect the protected paths /wp-admin, /wp-login to a Page or trigger an HTML Error.', 'hide-my-wp' ); ?></div>
-                                    <div class="text-black-50 small"><?php echo esc_html__( 'You can create a new page and come back to choose to redirect to that page.', 'hide-my-wp' ); ?></div>
-                                </div>
+                        <?php if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' ) { ?>
+                            <div class="card-body">
+                                <div class="col-sm-12 border-0 py-3 mx-0 my-3 text-black-50 text-center">
+                                    <?php /* translators: 1: Opening <a> tag to the settings page, 2: Closing </a> tag, 3: Opening <a> tag to the settings page, 4: Closing </a> tag */
+                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ); ?>                                </div>
                             </div>
-                            <div class="col-sm-12 row mb-1 ml-1 p-2">
-                                <div class="checker col-sm-12 row my-2 py-1">
-                                    <div class="col-sm-12 p-0 switch switch-sm">
-                                        <input type="hidden" name="hmwp_do_redirects" value="0"/>
-                                        <input type="checkbox" id="hmwp_do_redirects" name="hmwp_do_redirects" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_do_redirects' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                        <label for="hmwp_do_redirects"><?php echo esc_html__( 'Do Login & Logout Redirects', 'hide-my-wp' ); ?>
-                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                        </label>
-                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Add redirects for the logged users based on user roles.", 'hide-my-wp' ); ?></div>
+                        <?php } else { ?>
+                            <div class="card-body">
+                                <div class="col-sm-12 row py-3 mx-0 my-3">
+                                    <div class="col-sm-4 p-1">
+                                        <div class="font-weight-bold"><?php echo esc_html__( 'Redirect Hidden Paths', 'hide-my-wp' ); ?>:</div>
+                                    </div>
+                                    <div class="col-sm-8 p-0 input-group mb-1">
+                                        <select name="hmwp_url_redirect" class="selectpicker form-control">
+                                            <option value="." <?php selected( '.', HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?>><?php echo esc_html__( "Front page", 'hide-my-wp' ) ?></option>
+                                            <option value="404" <?php selected( '404', HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?> ><?php echo esc_html__( "404 page", 'hide-my-wp' ) ?></option>
+                                            <option value="NFError" <?php selected( 'NFError', HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?> ><?php echo esc_html__( "404 HTML Error", 'hide-my-wp' ) ?></option>
+                                            <option value="NAError" <?php selected( 'NAError', HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?> ><?php echo esc_html__( "403 HTML Error", 'hide-my-wp' ) ?></option>
+                                            <?php
+                                            $pages = get_pages( array( 'number' => 50 ) );
+                                            foreach ( $pages as $page ) {
+                                                if ( $page->post_title <> '' ) { ?>
+                                                    <option value="<?php echo esc_attr( $page->post_name ) ?>" <?php echo selected( $page->post_name, HMWP_Classes_Tools::getOption( 'hmwp_url_redirect' ) ) ?> ><?php echo esc_html( $page->post_title ) ?></option>
+                                            <?php	}
+                                            } ?>
+                                        </select>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-redirect-hidden-paths' ) ?>" target="_blank" class="position-absolute float-right" style="right: 40px;top: 25%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                    </div>
+                                    <div class="p-1">
+                                        <div class="text-black-50 small"><?php echo esc_html__( 'Redirect the protected paths /wp-admin, /wp-login to a Page or trigger an HTML Error.', 'hide-my-wp' ); ?></div>
+                                        <div class="text-black-50 small"><?php echo esc_html__( 'You can create a new page and come back to choose to redirect to that page.', 'hide-my-wp' ); ?></div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-sm-12 py-3 m-0 hmwp_do_redirects">
-                                <?php $urlRedirects = HMWP_Classes_Tools::getOption( 'hmwp_url_redirects' ); ?>
-                                <ul class="nav nav-tabs" role="tablist">
-                                    <li class="nav-item m-0">
-                                        <a class="nav-link active" data-toggle="tab" href="#default" role="tab" aria-controls="default" aria-selected="true"><?php echo esc_html__( "Default", 'hide-my-wp' ) ?></a>
-                                    </li>
-                                    <?php if ( ! empty( $allroles ) ) { ?>
-                                        <li class="nav-item dropdown m-0">
-                                            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"><?php echo esc_html__( "User Role", 'hide-my-wp' ) ?></a>
-                                            <div class="dropdown-menu" style="height: auto; max-height: 200px; overflow-x: hidden;">
-                                                <?php foreach ( $allroles as $role => $name ) { ?>
-                                                    <a class="dropdown-item" data-toggle="tab" href="#nav-<?php echo esc_attr( $role ) ?>" role="tab" aria-controls="nav-<?php echo esc_attr( $role ) ?>" aria-selected="false"><?php echo esc_html( $name ) ?></a>
-                                                <?php } ?>
-                                            </div>
+                                <div class="col-sm-12 row mb-1 ml-1 p-2">
+                                    <div class="checker col-sm-12 row my-2 py-1">
+                                        <div class="col-sm-12 p-0 switch switch-sm">
+                                            <input type="hidden" name="hmwp_do_redirects" value="0"/>
+                                            <input type="checkbox" id="hmwp_do_redirects" name="hmwp_do_redirects" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_do_redirects' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_do_redirects"><?php echo esc_html__( 'Do Login & Logout Redirects', 'hide-my-wp' ); ?>
+                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                            </label>
+                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Add redirects for the logged users based on user roles.", 'hide-my-wp' ); ?></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12 py-3 m-0 hmwp_do_redirects">
+                                    <?php $urlRedirects = HMWP_Classes_Tools::getOption( 'hmwp_url_redirects' ); ?>
+                                    <ul class="nav nav-tabs" role="tablist">
+                                        <li class="nav-item m-0">
+                                            <a class="nav-link active" data-toggle="tab" href="#default" role="tab" aria-controls="default" aria-selected="true"><?php echo esc_html__( "Default", 'hide-my-wp' ) ?></a>
                                         </li>
-                                    <?php } ?>
-                                </ul>
-                                <div class="tab-content border-right border-left border-bottom p-0 m-0">
-                                    <div class="tab-pane show active" id="default" role="tabpanel" aria-labelledby="nav-home-tab">
+                                        <?php if ( ! empty( $allroles ) ) { ?>
+                                            <li class="nav-item dropdown m-0">
+                                                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"><?php echo esc_html__( "User Role", 'hide-my-wp' ) ?></a>
+                                                <div class="dropdown-menu" style="height: auto; max-height: 200px; overflow-x: hidden;">
+                                                    <?php foreach ( $allroles as $role => $name ) { ?>
+                                                        <a class="dropdown-item" data-toggle="tab" href="#nav-<?php echo esc_attr( $role ) ?>" role="tab" aria-controls="nav-<?php echo esc_attr( $role ) ?>" aria-selected="false"><?php echo esc_html( $name ) ?></a>
+                                                    <?php } ?>
+                                                </div>
+                                            </li>
+                                        <?php } ?>
+                                    </ul>
+                                    <div class="tab-content border-right border-left border-bottom p-0 m-0">
+                                        <div class="tab-pane show active" id="default" role="tabpanel" aria-labelledby="nav-home-tab">
 
-                                        <div class="col-sm-12 row py-3 m-0">
-                                            <div class="col-sm-4 p-0 py-2 font-weight-bold">
-                                                <?php echo esc_html__( 'Login Redirect URL', 'hide-my-wp' ); ?>:
-                                                <div class="small text-black-50"><?php echo esc_html__( "e.g.", 'hide-my-wp' ) . ' ' . esc_url(admin_url( '', 'relative' )); ?></div>
+                                            <div class="col-sm-12 row py-3 m-0">
+                                                <div class="col-sm-4 p-0 py-2 font-weight-bold">
+                                                    <?php echo esc_html__( 'Login Redirect URL', 'hide-my-wp' ); ?>:
+                                                    <div class="small text-black-50"><?php echo esc_html__( "e.g.", 'hide-my-wp' ) . ' ' . esc_url(admin_url( '', 'relative' )); ?></div>
+                                                </div>
+                                                <div class="col-sm-8 p-0 input-group ">
+                                                    <input type="text" class="form-control  mt-2" name="hmwp_url_redirects[default][login]" value="<?php echo( isset( $urlRedirects['default']['login'] ) ? esc_url( $urlRedirects['default']['login'] ) : '' ) ?>"/>
+                                                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                                </div>
                                             </div>
-                                            <div class="col-sm-8 p-0 input-group ">
-                                                <input type="text" class="form-control  mt-2" name="hmwp_url_redirects[default][login]" value="<?php echo( isset( $urlRedirects['default']['login'] ) ? esc_url( $urlRedirects['default']['login'] ) : '' ) ?>"/>
-                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
+
+                                            <div class="col-sm-12 row py-3 mx-0">
+                                                <div class="col-sm-4 p-0 py-2 font-weight-bold">
+                                                    <?php echo esc_html__( 'Logout Redirect URL', 'hide-my-wp' ); ?>:
+                                                    <div class="small text-black-50"><?php echo esc_html__( "e.g. /logout or", 'hide-my-wp' ) . ' ' . esc_url(home_url( '', 'relative' )); ?></div>
+                                                </div>
+                                                <div class="col-sm-8 p-0 input-group">
+                                                    <input type="text" class="form-control  mt-2" name="hmwp_url_redirects[default][logout]" value="<?php echo( isset( $urlRedirects['default']['logout'] ) ? esc_url( $urlRedirects['default']['logout'] ) : '' ) ?>"/>
+                                                    <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                                </div>
                                             </div>
+
+                                            <div class="p-3">
+                                                <div class="p-2 text-danger"><?php /* translators: 1: Line break tag <br /> */ echo wp_kses_post( sprintf( __( 'Make sure the redirect URLs exist on your website. %1$sThe User Role redirect URL has higher priority than the Default redirect URL.', 'hide-my-wp' ), '<br />' ) ); ?></div>                                        </div>
                                         </div>
 
-                                        <div class="col-sm-12 row py-3 mx-0">
-                                            <div class="col-sm-4 p-0 py-2 font-weight-bold">
-                                                <?php echo esc_html__( 'Logout Redirect URL', 'hide-my-wp' ); ?>:
-                                                <div class="small text-black-50"><?php echo esc_html__( "e.g. /logout or", 'hide-my-wp' ) . ' ' . esc_url(home_url( '', 'relative' )); ?></div>
-                                            </div>
-                                            <div class="col-sm-8 p-0 input-group">
-                                                <input type="text" class="form-control  mt-2" name="hmwp_url_redirects[default][logout]" value="<?php echo( isset( $urlRedirects['default']['logout'] ) ? esc_url( $urlRedirects['default']['logout'] ) : '' ) ?>"/>
-                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
-                                            </div>
+                                        <?php if ( ! empty( $allroles ) ) {
+                                            foreach ( $allroles as $role => $name ) { ?>
+                                                <div class="tab-pane" id="nav-<?php echo esc_attr( $role ) ?>" role="tabpanel" aria-labelledby="nav-profile-tab">
+                                                    <h5 class="card-title pt-3 pb-1 mx-3 text-black-50 border-bottom border-light"><?php echo esc_html( ucwords( str_replace( '_', ' ', $role ) ) ) . ' ' . esc_html__( "redirects", 'hide-my-wp' ); ?>:</h5>
+                                                    <div class="col-sm-12 row py-3 m-0">
+                                                        <div class="col-sm-4 p-0 py-2 font-weight-bold">
+                                                            <?php echo esc_html__( 'Login Redirect URL', 'hide-my-wp' ); ?>:
+                                                            <div class="small text-black-50"><?php echo esc_html__( "e.g.", 'hide-my-wp' ) . ' ' . esc_url(admin_url( '', 'relative' )); ?></div>
+                                                        </div>
+                                                        <div class="col-sm-8 p-0 input-group">
+                                                            <input type="text" class="form-control  mt-2" name="hmwp_url_redirects[<?php echo esc_attr( $role ) ?>][login]" value="<?php echo( isset( $urlRedirects[ $role ]['login'] ) ? esc_url( $urlRedirects[ $role ]['login'] ) : '' ) ?>"/>
+                                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-sm-12 row py-3 m-0">
+                                                        <div class="col-sm-4 p-0 py-2 font-weight-bold">
+                                                            <?php echo esc_html__( 'Logout Redirect URL', 'hide-my-wp' ); ?>:
+                                                            <div class="small text-black-50"><?php echo esc_html__( "e.g. /logout or", 'hide-my-wp' ) . ' ' . esc_url(home_url( '', 'relative' )); ?></div>
+                                                        </div>
+                                                        <div class="col-sm-8 p-0 input-group">
+                                                            <input type="text" class="form-control  mt-2" name="hmwp_url_redirects[<?php echo esc_attr( $role ) ?>][logout]" value="<?php echo( isset( $urlRedirects[ $role ]['logout'] ) ? esc_url( $urlRedirects[ $role ]['logout'] ) : '' ) ?>"/>
+                                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="p-3">
+                                                        <div class="p-2 text-danger"><?php /* translators: 1: Line break tag <br /> */ echo wp_kses_post( sprintf( __( 'Make sure the redirect URLs exist on your website. %1$sThe User Role redirect URL has higher priority than the Default redirect URL.', 'hide-my-wp' ), '<br />' ) ); ?></div>                                                </div>
+                                                </div>
+                                            <?php }
+                                        } ?>
+
+
+                                    </div>
+                                </div>
+                                <div class="col-sm-12 row mb-1 ml-1 p-2">
+                                    <div class="checker col-sm-12 row my-2 py-1">
+                                        <div class="col-sm-12 p-0 switch switch-sm">
+                                            <input type="hidden" name="hmwp_logged_users_redirect" value="0"/>
+                                            <input type="checkbox" id="hmwp_logged_users_redirect" name="hmwp_logged_users_redirect" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_logged_users_redirect' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_logged_users_redirect"><?php echo esc_html__( 'Redirect Logged Users To Dashboard', 'hide-my-wp' ); ?>
+                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-redirect-logged-users-to-dashboard' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                            </label>
+                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Automatically redirect the logged in users to the admin dashboard.", 'hide-my-wp' ); ?></div>
                                         </div>
-
-                                        <div class="p-3">
-                                            <div class="p-2 text-danger"><?php /* translators: 1: Line break tag <br /> */ echo wp_kses_post( sprintf( __( 'Make sure the redirect URLs exist on your website. %1$sThe User Role redirect URL has higher priority than the Default redirect URL.', 'hide-my-wp' ), '<br />' ) ); ?></div>                                        </div>
-                                    </div>
-
-                                    <?php if ( ! empty( $allroles ) ) {
-                                        foreach ( $allroles as $role => $name ) { ?>
-                                            <div class="tab-pane" id="nav-<?php echo esc_attr( $role ) ?>" role="tabpanel" aria-labelledby="nav-profile-tab">
-                                                <h5 class="card-title pt-3 pb-1 mx-3 text-black-50 border-bottom border-light"><?php echo esc_html( ucwords( str_replace( '_', ' ', $role ) ) ) . ' ' . esc_html__( "redirects", 'hide-my-wp' ); ?>:</h5>
-                                                <div class="col-sm-12 row py-3 m-0">
-                                                    <div class="col-sm-4 p-0 py-2 font-weight-bold">
-                                                        <?php echo esc_html__( 'Login Redirect URL', 'hide-my-wp' ); ?>:
-                                                        <div class="small text-black-50"><?php echo esc_html__( "e.g.", 'hide-my-wp' ) . ' ' . esc_url(admin_url( '', 'relative' )); ?></div>
-                                                    </div>
-                                                    <div class="col-sm-8 p-0 input-group">
-                                                        <input type="text" class="form-control  mt-2" name="hmwp_url_redirects[<?php echo esc_attr( $role ) ?>][login]" value="<?php echo( isset( $urlRedirects[ $role ]['login'] ) ? esc_url( $urlRedirects[ $role ]['login'] ) : '' ) ?>"/>
-                                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-sm-12 row py-3 m-0">
-                                                    <div class="col-sm-4 p-0 py-2 font-weight-bold">
-                                                        <?php echo esc_html__( 'Logout Redirect URL', 'hide-my-wp' ); ?>:
-                                                        <div class="small text-black-50"><?php echo esc_html__( "e.g. /logout or", 'hide-my-wp' ) . ' ' . esc_url(home_url( '', 'relative' )); ?></div>
-                                                    </div>
-                                                    <div class="col-sm-8 p-0 input-group">
-                                                        <input type="text" class="form-control  mt-2" name="hmwp_url_redirects[<?php echo esc_attr( $role ) ?>][logout]" value="<?php echo( isset( $urlRedirects[ $role ]['logout'] ) ? esc_url( $urlRedirects[ $role ]['logout'] ) : '' ) ?>"/>
-                                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-login-redirect-url-amp-logout-redirect-url' ) ?>" target="_blank" class="position-absolute float-right" style="right: 7px;top: 30%;"><i class="dashicons dashicons-editor-help"></i></a>
-                                                    </div>
-                                                </div>
-
-                                                <div class="p-3">
-                                                    <div class="p-2 text-danger"><?php /* translators: 1: Line break tag <br /> */ echo wp_kses_post( sprintf( __( 'Make sure the redirect URLs exist on your website. %1$sThe User Role redirect URL has higher priority than the Default redirect URL.', 'hide-my-wp' ), '<br />' ) ); ?></div>                                                </div>
-                                            </div>
-                                        <?php }
-                                    } ?>
-
-
-                                </div>
-                            </div>
-                            <div class="col-sm-12 row mb-1 ml-1 p-2">
-                                <div class="checker col-sm-12 row my-2 py-1">
-                                    <div class="col-sm-12 p-0 switch switch-sm">
-                                        <input type="hidden" name="hmwp_logged_users_redirect" value="0"/>
-                                        <input type="checkbox" id="hmwp_logged_users_redirect" name="hmwp_logged_users_redirect" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_logged_users_redirect' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                        <label for="hmwp_logged_users_redirect"><?php echo esc_html__( 'Redirect Logged Users To Dashboard', 'hide-my-wp' ); ?>
-                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/redirects/#ghost-redirect-logged-users-to-dashboard' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                        </label>
-                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Automatically redirect the logged in users to the admin dashboard.", 'hide-my-wp' ); ?></div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        <?php } ?>
                     </div>
                 </div>
 
@@ -190,7 +198,8 @@ if ( function_exists( 'wp_roles' ) ) {
                             <div class="card-body">
                                 <div class="col-sm-12 border-0 py-3 mx-0 my-3 text-black-50 text-center">
                                     <?php /* translators: 1: Opening <a> tag to the settings page, 2: Closing </a> tag, 3: Opening <a> tag to the settings page, 4: Closing </a> tag */
-                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ); ?>                                </div>
+                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ); ?>
+                                </div>
                             </div>
                         <?php } else { ?>
                             <div class="card-body">
@@ -266,7 +275,8 @@ if ( function_exists( 'wp_roles' ) ) {
                             <div class="card-body">
                                 <div class="col-sm-12 border-0 py-3 mx-0 my-3 text-black-50 text-center">
                                     <?php /* translators: 1: Opening <a> tag to the settings page, 2: Closing </a> tag, 3: Opening <a> tag to the settings page, 4: Closing </a> tag */
-                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s.', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '</a>', '</a>' ) ); ?>                                </div>
+                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ); ?>
+                                </div>
                             </div>
                         <?php } else { ?>
                             <div class="card-body">
@@ -328,7 +338,8 @@ if ( function_exists( 'wp_roles' ) ) {
                             <div class="card-body">
                                 <div class="col-sm-12 border-0 py-3 mx-0 my-3 text-black-50 text-center">
                                     <?php /* translators: 1: Opening <a> tag to the settings page, 2: Closing </a> tag, 3: Opening <a> tag to the settings page, 4: Closing </a> tag */
-                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ); ?>                                </div>
+                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ); ?>
+                                </div>
                             </div>
                         <?php } else { ?>
                             <div class="card-body">
@@ -501,315 +512,304 @@ if ( function_exists( 'wp_roles' ) ) {
                             <?php echo esc_html__( 'Disable Options', 'hide-my-wp' ); ?>
                             <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                         </h3>
-                        <?php if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' ) { ?>
-                            <div class="card-body">
-                                <div class="col-sm-12 border-0 py-3 mx-0 my-3 text-black-50 text-center">
-                                    <?php
-                                    /* translators: 1: Opening <a> tag to the settings page, 2: Closing </a> tag, 3: Opening <a> tag to the settings page, 4: Closing </a> tag */
-                                    echo wp_kses_post( sprintf( __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) );
-                                    ?>
+                         <div class="card-body">
+                            <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
+                                <div class="checker col-sm-12 row my-2 py-1">
+                                    <div class="col-sm-12 p-0 switch switch-sm">
+                                        <input type="hidden" name="hmwp_disable_click" value="0"/>
+                                        <input type="checkbox" id="hmwp_disable_click" name="hmwp_disable_click" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_click' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                        <label for="hmwp_disable_click"><?php echo esc_html__( 'Disable Right-Click', 'hide-my-wp' ); ?>
+                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-right-click' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        </label>
+                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable the right-click functionality on your website.", 'hide-my-wp' ); ?></div>
+                                    </div>
                                 </div>
+
+                                <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_click">
+                                    <div class="col-sm-5 p-0 pr-3 font-weight-bold">
+                                        <?php echo esc_html__( 'Disable Click Message', 'hide-my-wp' ); ?>:
+                                        <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                    <div class="col-sm-7 p-0 input-group">
+                                        <input type="text" class="form-control  mt-2" name="hmwp_disable_click_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_click_message' )) ?>"/>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_click">
+                                    <div class="checker col-sm-12 row my-2 py-0">
+                                        <div class="col-sm-12 p-0 switch switch-xxs">
+                                            <input type="hidden" name="hmwp_disable_click_loggedusers" value="0"/>
+                                            <input type="checkbox" id="hmwp_disable_click_loggedusers" name="hmwp_disable_click_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_click_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_disable_click_loggedusers"><?php echo esc_html__( 'Disable Right-Click for Logged Users', 'hide-my-wp' ); ?></label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_click_loggedusers">
+                                        <div class="col-sm-4 p-1">
+                                            <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
+                                            <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the Right-Click.", 'hide-my-wp' ); ?></div>
+                                        </div>
+                                        <div class="col-sm-8 p-0 input-group">
+                                            <select multiple name="hmwp_disable_click_roles[]" class="selectpicker form-control mb-1">
+                                                <?php
+
+                                                $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_click_roles' );
+
+                                                foreach ( $allroles as $role => $name ) {
+                                                    echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
+                                                } ?>
+
+                                            </select>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
                             </div>
-                        <?php } else { ?>
-                            <div class="card-body">
-                                <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
-                                    <div class="checker col-sm-12 row my-2 py-1">
-                                        <div class="col-sm-12 p-0 switch switch-sm">
-                                            <input type="hidden" name="hmwp_disable_click" value="0"/>
-                                            <input type="checkbox" id="hmwp_disable_click" name="hmwp_disable_click" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_click' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                            <label for="hmwp_disable_click"><?php echo esc_html__( 'Disable Right-Click', 'hide-my-wp' ); ?>
-                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-right-click' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                            </label>
-                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable the right-click functionality on your website.", 'hide-my-wp' ); ?></div>
+                            <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
+                                <div class="checker col-sm-12 row my-2 py-1">
+                                    <div class="col-sm-12 p-0 switch switch-sm">
+                                        <input type="hidden" name="hmwp_disable_inspect" value="0"/>
+                                        <input type="checkbox" id="hmwp_disable_inspect" name="hmwp_disable_inspect" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                        <label for="hmwp_disable_inspect"><?php echo esc_html__( 'Disable Inspect Element', 'hide-my-wp' ); ?>
+                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-inspect-element' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        </label>
+                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable the inspect element view on your website.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                </div>
+
+
+                                <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_inspect">
+                                    <div class="col-sm-5 p-0 pr-3 font-weight-bold">
+                                        <?php echo esc_html__( 'Disable Inspect Element Message', 'hide-my-wp' ); ?>:
+                                        <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                    <div class="col-sm-7 p-0 input-group">
+                                        <input type="text" class="form-control  mt-2" name="hmwp_disable_inspect_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect_message' )) ?>"/>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_inspect">
+
+                                    <div class="checker col-sm-12 row my-2 py-1 hmwp_disable_inspect">
+                                        <div class="col-sm-12 p-0 switch switch-xxs">
+                                            <input type="hidden" name="hmwp_disable_inspect_blank" value="0"/>
+                                            <input type="checkbox" id="hmwp_disable_inspect_blank" name="hmwp_disable_inspect_blank" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect_blank' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_disable_inspect_blank"><?php echo esc_html__( 'Blank Screen On Debugging', 'hide-my-wp' ); ?>
+                                                <em>(<?php echo esc_html__( 'not recommended', 'hide-my-wp' ); ?>)</em></label>
+                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Show blank screen when Inspect Element is active on browser.", 'hide-my-wp' ); ?></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12 p-3 m-0 mt-1 bg-warning">
+                                        <strong><?php echo esc_html__( 'Important:', 'hide-my-wp' ); ?></strong>
+                                        <?php echo esc_html__( 'This may not work with all new mobile devices.', 'hide-my-wp' ); ?>
+                                    </div>
+
+                                    <div class="checker col-sm-12 row my-2 py-0">
+                                        <div class="col-sm-12 p-0 switch switch-xxs">
+                                            <input type="hidden" name="hmwp_disable_inspect_loggedusers" value="0"/>
+                                            <input type="checkbox" id="hmwp_disable_inspect_loggedusers" name="hmwp_disable_inspect_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_disable_inspect_loggedusers"><?php echo esc_html__( 'Disable Inspect Element for Logged Users', 'hide-my-wp' ); ?></label>
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_click">
-                                        <div class="col-sm-5 p-0 pr-3 font-weight-bold">
-                                            <?php echo esc_html__( 'Disable Click Message', 'hide-my-wp' ); ?>:
-                                            <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
+                                    <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_inspect_loggedusers">
+                                        <div class="col-sm-4 p-1">
+                                            <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
+                                            <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the inspect element.", 'hide-my-wp' ); ?></div>
                                         </div>
-                                        <div class="col-sm-7 p-0 input-group">
-                                            <input type="text" class="form-control  mt-2" name="hmwp_disable_click_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_click_message' )) ?>"/>
-                                        </div>
-                                    </div>
+                                        <div class="col-sm-8 p-0 input-group">
+                                            <select multiple name="hmwp_disable_inspect_roles[]" class="selectpicker form-control mb-1">
+                                                <?php
 
-                                    <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_click">
-                                        <div class="checker col-sm-12 row my-2 py-0">
-                                            <div class="col-sm-12 p-0 switch switch-xxs">
-                                                <input type="hidden" name="hmwp_disable_click_loggedusers" value="0"/>
-                                                <input type="checkbox" id="hmwp_disable_click_loggedusers" name="hmwp_disable_click_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_click_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                                <label for="hmwp_disable_click_loggedusers"><?php echo esc_html__( 'Disable Right-Click for Logged Users', 'hide-my-wp' ); ?></label>
-                                            </div>
-                                        </div>
+                                                $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect_roles' );
 
-                                        <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_click_loggedusers">
-                                            <div class="col-sm-4 p-1">
-                                                <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
-                                                <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the Right-Click.", 'hide-my-wp' ); ?></div>
-                                            </div>
-                                            <div class="col-sm-8 p-0 input-group">
-                                                <select multiple name="hmwp_disable_click_roles[]" class="selectpicker form-control mb-1">
-                                                    <?php
+                                                foreach ( $allroles as $role => $name ) {
+                                                    echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
+                                                } ?>
 
-                                                    $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_click_roles' );
-
-                                                    foreach ( $allroles as $role => $name ) {
-                                                        echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
-                                                    } ?>
-
-                                                </select>
-                                            </div>
-
+                                            </select>
                                         </div>
 
                                     </div>
 
                                 </div>
-                                <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
-                                    <div class="checker col-sm-12 row my-2 py-1">
-                                        <div class="col-sm-12 p-0 switch switch-sm">
-                                            <input type="hidden" name="hmwp_disable_inspect" value="0"/>
-                                            <input type="checkbox" id="hmwp_disable_inspect" name="hmwp_disable_inspect" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                            <label for="hmwp_disable_inspect"><?php echo esc_html__( 'Disable Inspect Element', 'hide-my-wp' ); ?>
-                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-inspect-element' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                            </label>
-                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable the inspect element view on your website.", 'hide-my-wp' ); ?></div>
-                                        </div>
-                                    </div>
 
-
-                                    <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_inspect">
-                                        <div class="col-sm-5 p-0 pr-3 font-weight-bold">
-                                            <?php echo esc_html__( 'Disable Inspect Element Message', 'hide-my-wp' ); ?>:
-                                            <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
-                                        </div>
-                                        <div class="col-sm-7 p-0 input-group">
-                                            <input type="text" class="form-control  mt-2" name="hmwp_disable_inspect_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect_message' )) ?>"/>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_inspect">
-
-                                        <div class="checker col-sm-12 row my-2 py-1 hmwp_disable_inspect">
-                                            <div class="col-sm-12 p-0 switch switch-xxs">
-                                                <input type="hidden" name="hmwp_disable_inspect_blank" value="0"/>
-                                                <input type="checkbox" id="hmwp_disable_inspect_blank" name="hmwp_disable_inspect_blank" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect_blank' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                                <label for="hmwp_disable_inspect_blank"><?php echo esc_html__( 'Blank Screen On Debugging', 'hide-my-wp' ); ?>
-                                                    <em>(<?php echo esc_html__( 'not recommended', 'hide-my-wp' ); ?>)</em></label>
-                                                <div class="text-black-50 ml-5"><?php echo esc_html__( "Show blank screen when Inspect Element is active on browser.", 'hide-my-wp' ); ?></div>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-12 p-3 m-0 mt-1 bg-warning">
-                                            <strong><?php echo esc_html__( 'Important:', 'hide-my-wp' ); ?></strong>
-                                            <?php echo esc_html__( 'This may not work with all new mobile devices.', 'hide-my-wp' ); ?>
-                                        </div>
-
-                                        <div class="checker col-sm-12 row my-2 py-0">
-                                            <div class="col-sm-12 p-0 switch switch-xxs">
-                                                <input type="hidden" name="hmwp_disable_inspect_loggedusers" value="0"/>
-                                                <input type="checkbox" id="hmwp_disable_inspect_loggedusers" name="hmwp_disable_inspect_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                                <label for="hmwp_disable_inspect_loggedusers"><?php echo esc_html__( 'Disable Inspect Element for Logged Users', 'hide-my-wp' ); ?></label>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_inspect_loggedusers">
-                                            <div class="col-sm-4 p-1">
-                                                <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
-                                                <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the inspect element.", 'hide-my-wp' ); ?></div>
-                                            </div>
-                                            <div class="col-sm-8 p-0 input-group">
-                                                <select multiple name="hmwp_disable_inspect_roles[]" class="selectpicker form-control mb-1">
-                                                    <?php
-
-                                                    $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_inspect_roles' );
-
-                                                    foreach ( $allroles as $role => $name ) {
-                                                        echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
-                                                    } ?>
-
-                                                </select>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-                                <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
-                                    <div class="checker col-sm-12 row my-2 py-1">
-                                        <div class="col-sm-12 p-0 switch switch-sm">
-                                            <input type="hidden" name="hmwp_disable_source" value="0"/>
-                                            <input type="checkbox" id="hmwp_disable_source" name="hmwp_disable_source" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_source' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                            <label for="hmwp_disable_source"><?php echo esc_html__( 'Disable View Source', 'hide-my-wp' ); ?>
-                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-view-source' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                            </label>
-                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable the source-code view on your website.", 'hide-my-wp' ); ?></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_source">
-                                        <div class="col-sm-5 p-0 pr-3 font-weight-bold">
-                                            <?php echo esc_html__( 'Disable View Source Message', 'hide-my-wp' ); ?>:
-                                            <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
-                                        </div>
-                                        <div class="col-sm-7 p-0 input-group">
-                                            <input type="text" class="form-control  mt-2" name="hmwp_disable_source_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_source_message' )) ?>"/>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_source">
-                                        <div class="checker col-sm-12 row my-2 py-1">
-                                            <div class="col-sm-12 p-0 switch switch-xxs">
-                                                <input type="hidden" name="hmwp_disable_source_loggedusers" value="0"/>
-                                                <input type="checkbox" id="hmwp_disable_source_loggedusers" name="hmwp_disable_source_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_source_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                                <label for="hmwp_disable_source_loggedusers"><?php echo esc_html__( 'Disable View Source for Logged Users', 'hide-my-wp' ); ?></label>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_source_loggedusers">
-                                            <div class="col-sm-4 p-1">
-                                                <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
-                                                <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the view source.", 'hide-my-wp' ); ?></div>
-                                            </div>
-                                            <div class="col-sm-8 p-0 input-group">
-                                                <select multiple name="hmwp_disable_source_roles[]" class="selectpicker form-control mb-1">
-                                                    <?php
-
-                                                    $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_source_roles' );
-
-                                                    foreach ( $allroles as $role => $name ) {
-                                                        echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
-                                                    } ?>
-
-                                                </select>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-                                <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
-                                    <div class="checker col-sm-12 row my-2 py-1">
-                                        <div class="col-sm-12 p-0 switch switch-sm">
-                                            <input type="hidden" name="hmwp_disable_copy_paste" value="0"/>
-                                            <input type="checkbox" id="hmwp_disable_copy_paste" name="hmwp_disable_copy_paste" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_copy_paste' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                            <label for="hmwp_disable_copy_paste"><?php echo esc_html__( 'Disable Copy', 'hide-my-wp' ); ?>
-                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-copy-and-paste' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                            </label>
-                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable copy function on your website.", 'hide-my-wp' ); ?></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_copy_paste">
-                                        <div class="col-sm-5 p-0 pr-3 font-weight-bold">
-                                            <?php echo esc_html__( 'Disable Copy/Paste Message', 'hide-my-wp' ); ?>:
-                                            <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
-                                        </div>
-                                        <div class="col-sm-7 p-0 input-group">
-                                            <input type="text" class="form-control  mt-2" name="hmwp_disable_copy_paste_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_copy_paste_message' )) ?>"/>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_copy_paste">
-
-                                        <div class="checker col-sm-12 row my-2 py-1">
-                                            <div class="col-sm-12 p-0 switch switch-xxs">
-                                                <input type="hidden" name="hmwp_disable_paste" value="0"/>
-                                                <input type="checkbox" id="hmwp_disable_paste" name="hmwp_disable_paste" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_paste' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                                <label for="hmwp_disable_paste"><?php echo esc_html__( 'Disable Paste', 'hide-my-wp' ); ?></label>
-                                                <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable paste function on your website.", 'hide-my-wp' ); ?></div>
-                                            </div>
-                                        </div>
-
-                                        <div class="checker col-sm-12 row my-2 py-1">
-                                            <div class="col-sm-12 p-0 switch switch-xxs">
-                                                <input type="hidden" name="hmwp_disable_copy_paste_loggedusers" value="0"/>
-                                                <input type="checkbox" id="hmwp_disable_copy_paste_loggedusers" name="hmwp_disable_copy_paste_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_copy_paste_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                                <label for="hmwp_disable_copy_paste_loggedusers"><?php echo esc_html__( 'Disable Copy/Paste for Logged Users', 'hide-my-wp' ); ?></label>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_copy_paste_loggedusers">
-                                            <div class="col-sm-4 p-1">
-                                                <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
-                                                <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the copy/paste.", 'hide-my-wp' ); ?></div>
-                                            </div>
-                                            <div class="col-sm-8 p-0 input-group">
-                                                <select multiple name="hmwp_disable_copy_paste_roles[]" class="selectpicker form-control mb-1">
-                                                    <?php
-
-                                                    $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_copy_paste_roles' );
-
-                                                    foreach ( $allroles as $role => $name ) {
-                                                        echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
-                                                    } ?>
-
-                                                </select>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-                                <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
-                                    <div class="checker col-sm-12 row my-2 py-1">
-                                        <div class="col-sm-12 p-0 switch switch-sm">
-                                            <input type="hidden" name="hmwp_disable_drag_drop" value="0"/>
-                                            <input type="checkbox" id="hmwp_disable_drag_drop" name="hmwp_disable_drag_drop" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_drag_drop' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                            <label for="hmwp_disable_drag_drop"><?php echo esc_html__( 'Disable Drag/Drop Images', 'hide-my-wp' ); ?>
-                                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-drag-drop-images' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                            </label>
-                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable image drag & drop on your website.", 'hide-my-wp' ); ?></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_drag_drop">
-                                        <div class="col-sm-5 p-0 pr-3 font-weight-bold">
-                                            <?php echo esc_html__( 'Disable Drag/Drop Message', 'hide-my-wp' ); ?>:
-                                            <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
-                                        </div>
-                                        <div class="col-sm-7 p-0 input-group">
-                                            <input type="text" class="form-control  mt-2" name="hmwp_disable_drag_drop_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_drag_drop_message' )) ?>"/>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_drag_drop">
-                                        <div class="checker col-sm-12 row my-2 py-1">
-                                            <div class="col-sm-12 p-0 switch switch-xxs">
-                                                <input type="hidden" name="hmwp_disable_drag_drop_loggedusers" value="0"/>
-                                                <input type="checkbox" id="hmwp_disable_drag_drop_loggedusers" name="hmwp_disable_drag_drop_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_drag_drop_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                                <label for="hmwp_disable_drag_drop_loggedusers"><?php echo esc_html__( 'Disable Drag/Drop for Logged Users', 'hide-my-wp' ); ?></label>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_drag_drop_loggedusers">
-                                            <div class="col-sm-4 p-1">
-                                                <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
-                                                <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the drag/drop.", 'hide-my-wp' ); ?></div>
-                                            </div>
-                                            <div class="col-sm-8 p-0 input-group">
-                                                <select multiple name="hmwp_disable_drag_drop_roles[]" class="selectpicker form-control mb-1">
-                                                    <?php
-
-                                                    $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_drag_drop_roles' );
-
-                                                    foreach ( $allroles as $role => $name ) {
-                                                        echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
-                                                    } ?>
-
-                                                </select>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
                             </div>
-                        <?php } ?>
+                            <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
+                                <div class="checker col-sm-12 row my-2 py-1">
+                                    <div class="col-sm-12 p-0 switch switch-sm">
+                                        <input type="hidden" name="hmwp_disable_source" value="0"/>
+                                        <input type="checkbox" id="hmwp_disable_source" name="hmwp_disable_source" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_source' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                        <label for="hmwp_disable_source"><?php echo esc_html__( 'Disable View Source', 'hide-my-wp' ); ?>
+                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-view-source' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        </label>
+                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable the source-code view on your website.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_source">
+                                    <div class="col-sm-5 p-0 pr-3 font-weight-bold">
+                                        <?php echo esc_html__( 'Disable View Source Message', 'hide-my-wp' ); ?>:
+                                        <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                    <div class="col-sm-7 p-0 input-group">
+                                        <input type="text" class="form-control  mt-2" name="hmwp_disable_source_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_source_message' )) ?>"/>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_source">
+                                    <div class="checker col-sm-12 row my-2 py-1">
+                                        <div class="col-sm-12 p-0 switch switch-xxs">
+                                            <input type="hidden" name="hmwp_disable_source_loggedusers" value="0"/>
+                                            <input type="checkbox" id="hmwp_disable_source_loggedusers" name="hmwp_disable_source_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_source_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_disable_source_loggedusers"><?php echo esc_html__( 'Disable View Source for Logged Users', 'hide-my-wp' ); ?></label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_source_loggedusers">
+                                        <div class="col-sm-4 p-1">
+                                            <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
+                                            <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the view source.", 'hide-my-wp' ); ?></div>
+                                        </div>
+                                        <div class="col-sm-8 p-0 input-group">
+                                            <select multiple name="hmwp_disable_source_roles[]" class="selectpicker form-control mb-1">
+                                                <?php
+
+                                                $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_source_roles' );
+
+                                                foreach ( $allroles as $role => $name ) {
+                                                    echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
+                                                } ?>
+
+                                            </select>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                            <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
+                                <div class="checker col-sm-12 row my-2 py-1">
+                                    <div class="col-sm-12 p-0 switch switch-sm">
+                                        <input type="hidden" name="hmwp_disable_copy_paste" value="0"/>
+                                        <input type="checkbox" id="hmwp_disable_copy_paste" name="hmwp_disable_copy_paste" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_copy_paste' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                        <label for="hmwp_disable_copy_paste"><?php echo esc_html__( 'Disable Copy', 'hide-my-wp' ); ?>
+                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-copy-and-paste' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        </label>
+                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable copy function on your website.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_copy_paste">
+                                    <div class="col-sm-5 p-0 pr-3 font-weight-bold">
+                                        <?php echo esc_html__( 'Disable Copy/Paste Message', 'hide-my-wp' ); ?>:
+                                        <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                    <div class="col-sm-7 p-0 input-group">
+                                        <input type="text" class="form-control  mt-2" name="hmwp_disable_copy_paste_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_copy_paste_message' )) ?>"/>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_copy_paste">
+
+                                    <div class="checker col-sm-12 row my-2 py-1">
+                                        <div class="col-sm-12 p-0 switch switch-xxs">
+                                            <input type="hidden" name="hmwp_disable_paste" value="0"/>
+                                            <input type="checkbox" id="hmwp_disable_paste" name="hmwp_disable_paste" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_paste' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_disable_paste"><?php echo esc_html__( 'Disable Paste', 'hide-my-wp' ); ?></label>
+                                            <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable paste function on your website.", 'hide-my-wp' ); ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="checker col-sm-12 row my-2 py-1">
+                                        <div class="col-sm-12 p-0 switch switch-xxs">
+                                            <input type="hidden" name="hmwp_disable_copy_paste_loggedusers" value="0"/>
+                                            <input type="checkbox" id="hmwp_disable_copy_paste_loggedusers" name="hmwp_disable_copy_paste_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_copy_paste_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_disable_copy_paste_loggedusers"><?php echo esc_html__( 'Disable Copy/Paste for Logged Users', 'hide-my-wp' ); ?></label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_copy_paste_loggedusers">
+                                        <div class="col-sm-4 p-1">
+                                            <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
+                                            <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the copy/paste.", 'hide-my-wp' ); ?></div>
+                                        </div>
+                                        <div class="col-sm-8 p-0 input-group">
+                                            <select multiple name="hmwp_disable_copy_paste_roles[]" class="selectpicker form-control mb-1">
+                                                <?php
+
+                                                $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_copy_paste_roles' );
+
+                                                foreach ( $allroles as $role => $name ) {
+                                                    echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
+                                                } ?>
+
+                                            </select>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                            <div class="col-sm-12 row mb-1 ml-1 p-2 border-bottom border-light">
+                                <div class="checker col-sm-12 row my-2 py-1">
+                                    <div class="col-sm-12 p-0 switch switch-sm">
+                                        <input type="hidden" name="hmwp_disable_drag_drop" value="0"/>
+                                        <input type="checkbox" id="hmwp_disable_drag_drop" name="hmwp_disable_drag_drop" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_drag_drop' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                        <label for="hmwp_disable_drag_drop"><?php echo esc_html__( 'Disable Drag/Drop Images', 'hide-my-wp' ); ?>
+                                            <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-drag-drop-images' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                        </label>
+                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Disable image drag & drop on your website.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 row py-3 mx-0 my-3 hmwp_disable_drag_drop">
+                                    <div class="col-sm-5 p-0 pr-3 font-weight-bold">
+                                        <?php echo esc_html__( 'Disable Drag/Drop Message', 'hide-my-wp' ); ?>:
+                                        <div class="small text-black-50"><?php echo esc_html__( "Leave it blank if you don't want to display any message.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                    <div class="col-sm-7 p-0 input-group">
+                                        <input type="text" class="form-control  mt-2" name="hmwp_disable_drag_drop_message" value="<?php echo esc_attr(HMWP_Classes_Tools::getOption( 'hmwp_disable_drag_drop_message' )) ?>"/>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_disable_drag_drop">
+                                    <div class="checker col-sm-12 row my-2 py-1">
+                                        <div class="col-sm-12 p-0 switch switch-xxs">
+                                            <input type="hidden" name="hmwp_disable_drag_drop_loggedusers" value="0"/>
+                                            <input type="checkbox" id="hmwp_disable_drag_drop_loggedusers" name="hmwp_disable_drag_drop_loggedusers" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_disable_drag_drop_loggedusers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                            <label for="hmwp_disable_drag_drop_loggedusers"><?php echo esc_html__( 'Disable Drag/Drop for Logged Users', 'hide-my-wp' ); ?></label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-12 row py-3 mx-1 my-3 hmwp_disable_drag_drop_loggedusers">
+                                        <div class="col-sm-4 p-1">
+                                            <div class="font-weight-bold"><?php echo esc_html__( 'Select User Roles', 'hide-my-wp' ); ?>:</div>
+                                            <div class="small text-black-50"><?php echo esc_html__( "User roles for who to disable the drag/drop.", 'hide-my-wp' ); ?></div>
+                                        </div>
+                                        <div class="col-sm-8 p-0 input-group">
+                                            <select multiple name="hmwp_disable_drag_drop_roles[]" class="selectpicker form-control mb-1">
+                                                <?php
+
+                                                $selected_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_disable_drag_drop_roles' );
+
+                                                foreach ( $allroles as $role => $name ) {
+                                                    echo '<option value="' . esc_attr($role) . '" ' . ( in_array( $role, $selected_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $name ) . '</option>';
+                                                } ?>
+
+                                            </select>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
                     </div>
                 </div>
 

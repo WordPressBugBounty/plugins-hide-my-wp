@@ -50,9 +50,24 @@ if ( ! isset( $view ) ) {
                         </div>
                     </div>
 
+                </div>
 
+            </div>
+
+            <div class="card col-sm-12 p-0 m-0 mt-3">
+                <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Rollback to version', 'hide-my-wp' ) . ' ' . HMWP_STABLE_VERSION ?></h3>
+                <div class="card-body">
+                    <div class="hmwp_settings_rollback">
+                        <div class="text-black-50 mb-2"><?php echo esc_html__( 'Install the last stable version of the plugin.', 'hide-my-wp' ); ?></div>
+                        <form method="POST">
+                            <?php wp_nonce_field( 'hmwp_rollback_stable', 'hmwp_nonce' ); ?>
+                            <input type="hidden" name="action" value="hmwp_rollback_stable"/>
+                            <input type="submit" class="btn rounded-0 btn-default" name="hmwp_backup" onclick="return confirm('<?php echo esc_html__( 'Are you sure you want to rollback to the previous version of the plugin?', 'hide-my-wp' ) ?>');" value="<?php echo esc_html__( 'Rollback Now', 'hide-my-wp' ) ?>"/>
+                        </form>
+                    </div>
                 </div>
             </div>
+
             <div class="card col-sm-12 p-0 m-0 mt-3">
                 <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Reset Settings', 'hide-my-wp' ); ?></h3>
                 <div class="card-body">

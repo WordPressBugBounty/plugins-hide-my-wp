@@ -1,14 +1,14 @@
 ﻿=== WP Ghost (Hide My WP Ghost) - Security & Firewall ===
 Contributors: johndarrel
-Tags: security,firewall,hide my wp,brute force,login
+Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.0
-Requires PHP: 7.0
-Stable tag: 7.0.00
+Requires PHP: 7.4
+Stable tag: 7.0.01
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Hide and Secure WP paths with the complete WP security suite for Site Hardening. Includes an advanced 8G Firewall, Brute Force protection, and Passkeys.
+Hide and Secure WP paths with the complete WP security suite for Site Hardening. Includes 8G Firewall, Brute Force protection, and Passkeys.
 
 == Description ==
 
@@ -44,7 +44,7 @@ WP Ghost is packed with advanced defensive mechanisms to protect your site again
 * **Bot Reconnaissance**: Prevents "fingerprinting" that hackers use to map your site.
 * **Spam & Scrapers**: Filters malicious traffic, saving bandwidth and server load.
 
-### Over 65 Free Security Features Included
+### Over 115 Free Security Features Included
 
 We believe professional security should be accessible to everyone. The free version of WP Ghost includes a massive suite of tools to harden your WordPress architecture.
 
@@ -55,7 +55,10 @@ We believe professional security should be accessible to everyone. The free vers
 * **Change wp-content & wp-includes**: Secure your core system folders from direct access.
 * **Anonymize Plugins & Themes**: Change visible plugin/theme paths so hackers can't identify your software version.
 * **Secure admin-ajax.php & REST API**: Change the /wp-json path to prevent data scraping.
+* **Security Presets**: One-click activation with three preset levels — from minimal to full protection with Firewall, Brute Force, Logs, and 2FA.
+* **Frontend Test**: Verify your site loads correctly after changing paths before confirming settings.
 * **Custom Redirects**: Set unique login/logout redirects based on user roles.
+* **Login Page Designer**: Customize your secured login page with your logo, colors, background, and 10 color schemes.
 
 #### 2. Next-Gen Firewall & Authentication
 
@@ -64,6 +67,11 @@ We believe professional security should be accessible to everyone. The free vers
 * **Standard 2FA (Code & Email)**: Add an extra verification layer to all user accounts.
 * **Security Headers**: Automatically implement CSP, HSTS, X-Frame-Options, and more.
 * **IP & User Agent Blocking**: Manually blacklist suspicious traffic or referrers.
+* **Security Threats Log**: Track blocked attacks and malicious requests directly in your dashboard (limited view).
+* **User Events Log**: Monitor login activity, role changes, and user actions (limited view).
+* **GEO Threats Map**: Visualize where attacks originate with an interactive world map showing the top 5 threat countries.
+* **Security Optimization Score**: Real-time 0-100 score showing exactly how hardened your site is, with actionable recommendations.
+* **Temporary Logins**: Create time-limited access links for developers and clients without sharing passwords.
 
 #### 3. Deep Hiding & Footprint Removal
 
@@ -93,14 +101,18 @@ We believe professional security should be accessible to everyone. The free vers
 
 #### Premium Hack-Prevention Features
 
-For agencies and high-traffic sites, WP Ghost Premium adds over 80 advanced features focused on Security Intelligence and Automated Response.
+For agencies and high-traffic sites, WP Ghost Premium adds advanced features focused on Security Intelligence, Automated Response, and Copyright Protection.
 
-* **Advanced File Hardening**: Secure sensitive files like wp-config.php, php.ini, and debug.log.
-* **IP Block Automation**: Proactively and automatically block repeat offenders at the firewall.
-* **Security Threats Monitoring**: A professional dashboard to track every blocked scan and exploit.
-* **User Events Cloud Log**: Optional 30-day cloud storage for auditing user activity and detecting internal threats.
+* **Ghost Mode**: Maximum security preset, changes all paths, hides all file extensions, and enables all hiding options in one click.
+* **IP Block Automation**: Automatically block IP addresses that trigger repeated security threats.
+* **AI Copyright Protection**: Block 30+ AI training crawlers (GPTBot, ClaudeBot, PerplexityBot, and others) at the firewall level. List auto-updated with each release. Does not affect Google, Bing, or regular search visibility.
+* **Full Security Threats Log**: Unlimited entries with filters by threat type, status, country, and time range, full-text search, pagination, and CSV export.
+* **Full User Events Log**: Unlimited entries with filters, search, pagination, and CSV export.
+* **Cloud Event Storage**: 30-day cloud retention for audits and incident reports.
 * **Real-time Email Alerts**: Get notified instantly of brute-force attempts or suspicious activity.
-* **Geo-Security (Country Blocking)**: Block entire countries known for high malicious traffic.
+* **Geo-Security (Country Blocking)**: Block entire countries or specific paths by country.
+* **Advanced File Hardening**: Hide file extensions (PHP, CSS, JS, JSON), secure wp-config.php, php.ini, and debug.log.
+* **Database & Server Hardening**: Fix file permissions, change database prefix, regenerate SALT keys.
 * **Priority Support**: Direct access to our security experts and founder-led assistance.
 
 <a href="https://wpghost.com/features/">Hide My WP Premium Feature</a>
@@ -161,8 +173,14 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 17. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+= 7.0.01 (15 April 2026) =
+* Update - Added the option to roll back to the last stable version in the Backup/Restore page
+* Fix - Corrected the colors in the dark mode style
+* Fix - Rewrite rules not correctly displayed in the notification bar when rules must be added manually to the server config
+* Fix - Typos and minor bugs
+
 = 7.0.00 (31 March 2026) =
-⚡ Major Release: Security Score, Login Page Designer, Passkey 2FA, Security Threats Log, User Events Log, GEO Threats Map, and expanded Firewall rules.
+Major Release: Security Score, Login Page Designer, Passkey 2FA, Security Threats Log, User Events Log, GEO Threats Map, and expanded 7G/8G Firewall rules. Free update for all users.
 
 * New - Security Optimization Score (0-100) with dynamic gauge on the Overview dashboard and Security Check page
 * New - Security Threats Log to track blocked attacks and malicious requests (limited view)
@@ -628,19 +646,17 @@ Compatibility with PHP 8.3 and WP 6.4.3
 
 
 Security:
-Two-Factor Authenticator Code
-2FA Security
-Temporary Login without password
-WordPress Security Plugin
+Hide My WP - WordPress Security Plugin
+Hide WordPress - Hack Prevention Plugin
+Secure WordPress from Hackers
+WordPress Hack Prevention
+Hide wp-login URL
+2FA Security and Passkey Authentication
+WordPress Firewall Plugin
 Ocultar Mi WP - Plugin de seguridad de WordPress
 Ocultar meu WP - Segurança do WordPress
 Cacher mon WordPress - Plugin de sécurité WordPress
 Verstecken Sie mein WordPress - WordPress Sicherheits-Plugin
-Hide My WP - WordPress Security Plugin
-Hide WordPress
-Security Plugin
-Hide My WP free download
-Hide wp-login URL
 
 == Frequently Asked Questions ==
 
@@ -693,3 +709,11 @@ WP Ghost provides an elite proactive defense by neutralizing the **Reconnaissanc
 = How do I change the WordPress paths in the Admin Dashboard area? =
 By default, WP Ghost only changes paths on the frontend to ensure maximum compatibility. To harden the admin dashboard as well, add `define('HMW_ALWAYS_CHANGE_PATHS', true);` to your wp-config.php file and re-save your settings.
 
+= Does WP Ghost include a security score? =
+Yes. WP Ghost 7.0 includes a Security Optimization Score from 0 to 100 that shows exactly how hardened your site is. The score updates automatically as you enable features and complete security tasks. It appears on the Overview dashboard and the Security Check page as both a visual gauge and a numeric value.
+
+= Can I customize the WordPress login page with WP Ghost? =
+Yes. WP Ghost includes a Login Page Designer that lets you add your custom logo, background image, and brand colors to your secured login page. It includes 12 layout presets and 10 color scheme presets. The designer works with your custom login URL, so your branded page is served at your hidden path instead of the default wp-login.php.
+
+= Does WP Ghost protect my content from AI training bots? =
+WP Ghost Premium includes an AI Copyright Protection feature that blocks 30+ AI training crawlers including GPTBot, ClaudeBot, PerplexityBot, CCBot, and Bytespider at the firewall level. It also adds Disallow rules to your robots.txt automatically. This protects your copyrighted content from being used for AI model training without affecting your regular Google, Bing, or Yahoo search visibility. The crawler list is automatically updated with each plugin release.

@@ -174,7 +174,7 @@ class HMWP_Classes_Tools {
 			'hmwp_bruteforce_woocommerce'    => 0,
 			'hmwp_bruteforce_comments'       => 0,
 			'hmwp_bruteforce_username'       => 0,
-			'hmwp_brute_message'             => '',
+			'hmwp_brute_message'             => false,
 			'hmwp_hide_classes'              => wp_json_encode( array() ),
 			'trusted_ip_header'              => '',
 
@@ -2369,6 +2369,11 @@ class HMWP_Classes_Tools {
 	 * @return void
 	 */
 	public static function sendLoginPathsApi() {
+
+		// Not connected to the API
+		if ( ! HMWP_Classes_Tools::getOption( 'api_token' ) ) {
+			return;
+		}
 
 		$domain  = ( self::isMultisites() && defined( 'BLOG_ID_CURRENT_SITE' ) ) ? get_home_url( BLOG_ID_CURRENT_SITE ) : site_url();
 		$options = array( 'timeout' => 10, 'headers' => array( 'USER-URL' => $domain ) );

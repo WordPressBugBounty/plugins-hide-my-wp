@@ -1,6 +1,6 @@
 <?php defined( 'ABSPATH' ) || die( 'Cheating uh?' ); ?>
 <?php if ( ! isset( $view ) ) {
-	return;
+    return;
 } ?>
 <?php
 if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
@@ -27,7 +27,6 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
                 var blocked = s.blocked || [];
                 var threats = s.threats || [];
 
-                // Passed = total threats - prevented threats
                 var passed = threats.map(function(total, i) {
                     var prevented = parseInt(blocked[i], 10) || 0;
                     total = parseInt(total, 10) || 0;
@@ -39,6 +38,12 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
 
                 var colorPassed  = "#FFA500";
                 var colorBlocked = "#3F72AF";
+
+                var css = getComputedStyle(document.documentElement);
+                var textColor  = (css.getPropertyValue('--hmwp-color-text') || '#292929').trim();
+                var mutedColor = (css.getPropertyValue('--hmwp-color-text-muted') || '#6c757d').trim();
+                var borderColor = (css.getPropertyValue('--hmwp-color-border-light') || '#DBE2Ef').trim();
+                var bgColor = (css.getPropertyValue('--hmwp-color-background') || '#FFFFFF').trim();
 
                 new Chart(el, {
                     type: "bar",
@@ -71,8 +76,26 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: true },
+                            legend: {
+                                display: true,
+                                labels: {
+                                    color: textColor,
+                                    boxWidth: 14,
+                                    boxHeight: 14,
+                                    padding: 16,
+                                    font: {
+                                        size: 12,
+                                        weight: '500'
+                                    }
+                                }
+                            },
                             tooltip: {
+                                backgroundColor: bgColor,
+                                titleColor: textColor,
+                                bodyColor: textColor,
+                                footerColor: textColor,
+                                borderColor: borderColor,
+                                borderWidth: 1,
                                 callbacks: {
                                     footer: function(items) {
                                         if (!items.length) return '';
@@ -84,11 +107,30 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
                         },
                         scales: {
                             x: {
-                                stacked: true
+                                stacked: true,
+                                ticks: {
+                                    color: mutedColor
+                                },
+                                grid: {
+                                    color: borderColor
+                                },
+                                border: {
+                                    color: borderColor
+                                }
                             },
                             y: {
                                 beginAtZero: true,
-                                stacked: true
+                                stacked: true,
+                                ticks: {
+                                    color: mutedColor,
+                                    precision: 0
+                                },
+                                grid: {
+                                    color: borderColor
+                                },
+                                border: {
+                                    color: borderColor
+                                }
                             }
                         },
 
@@ -102,7 +144,7 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
                             if (!elements || !elements.length) return;
 
                             var e = elements[0];
-                            var datasetIndex = e.datasetIndex; // 0 = blocked, 1 = passed
+                            var datasetIndex = e.datasetIndex;
                             var index        = e.index;
 
                             var base = (datasetIndex === 0) ? urlBlocked : urlPassed;
