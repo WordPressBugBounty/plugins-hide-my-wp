@@ -63,17 +63,6 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 		//admin dashboard hooks
 		add_action( 'admin_notices', array( $this->model, 'adminNotices' ) );
 
-		// Register the default two-factor strings
-		add_action( 'init', function() {
-			add_filter( 'hmwp_translate_strings', function ( $keys ) {
-				$keys['hmwp_2falogin_message'] = __( "ERROR: Too many invalid verification codes, you can try again in {time}.", 'hide-my-wp' );
-				$keys['hmwp_2falogin_fail_message'] = __( "WARNING: Your account has attempted to login {count} times without providing a valid code. The last failed login occurred {time} ago. If this wasn't you, please reset your password.", 'hide-my-wp' );
-				$keys['hmwp_2falogin_email_subject'] = __( "Your Login Confirmation Code", 'hide-my-wp' );
-				$keys['hmwp_2falogin_email_message'] = __( "Your login confirmation code is: %s\n\nThis code is valid for a limited time and can be used only once.\n\nIf you did not attempt to log in, please ignore this email.", 'hide-my-wp' ); //phpcs:ignore
-				return $keys;
-			});
-		}, 1 );
-
 	}
 
 	/**

@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 7.0.01
+Stable tag: 7.0.02
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -167,12 +167,19 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 11. **Hardening Tweaks**: Deep hide options to remove WordPress version tags and identifiable meta-data.
 12. **Redirect Logic**: Custom 404 and role-based redirect options for secured paths.
 13. **Safe Access**: Manage Temporary Logins and Magic Links for secure developer access.
-14. **Front-end View**: Example of a custom, secured login path (/newlogin).
-15. **Attack Blocked**: Default wp-login.php now returns a 404 error to confuse hacker bots.
-16. **Access Denied**: Default wp-admin path is fully secured and hidden from public view.
-17. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
+14. **Security Threats Log**: Activate Security Threats Log to track blocked attacks and malicious requests.
+15. **Security Threats Log**: The list of the recent threats prevented by WP Ghost.
+16. **Overview Dashboard**: An overview of the last 7 days of security events.
+17. **Front-end View**: Example of a custom, secured login path (/newlogin).
+10. **Attack Blocked**: Default wp-login.php now returns a 404 error to confuse hacker bots.
+19. **Access Denied**: Default wp-admin path is fully secured and hidden from public view.
+20. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+= 7.0.02 (11 May 2026) =
+* Fix - Update knowledge base links to match the new plugin documentation
+* Fix - Minor bugs and typos
+
 = 7.0.01 (15 April 2026) =
 * Update - Added the option to roll back to the last stable version in the Backup/Restore page
 * Fix - Corrected the colors in the dark mode style

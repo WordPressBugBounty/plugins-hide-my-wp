@@ -32,14 +32,6 @@ class HMWP_Controllers_Brute extends HMWP_Classes_FrontController {
 		// Call parent constructor
 		parent::__construct();
 
-		// Register the default brute force strings
-		add_action( 'init', function() {
-			add_filter( 'hmwp_translate_strings', function ( $keys ) {
-				$keys['hmwp_brute_message'] = __( "Your IP has been flagged for potential security violations. Please try again in a little while.", 'hide-my-wp' );
-				return $keys;
-			});
-		}, 1 );
-
 		// Load all Brute Force instances
 		$this->init();
 	}

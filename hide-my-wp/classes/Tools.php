@@ -1297,7 +1297,7 @@ class HMWP_Classes_Tools {
 				if ( in_array( $key, array( 'hmwp_email_address', 'email', 'user_email', 'hmwp_email', 'whitelist_ip', 'banlist_ip', 'log', 'ip' ) ) ) {
 					// Validate email address, logs and ip addresses
 					$ret = preg_replace( '/[^A-Za-z0-9-_.+*#:~@\!\'\/]/', '', $ret );
-				} elseif ( in_array( $key, array_keys( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Translate' )->getStrings() ) ) ) {
+				} elseif ( strpos( $key , '_message') !== false || in_array( $key, array_keys( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Translate' )->getStrings() ) ) ) {
 					// Validate email address, logs and ip addresses
 					$ret = preg_replace( '/[^A-Za-z0-9-_.+*#:~\!\'\n\r\s\/]@/', '', $ret );
 				} elseif ( $key == 'hmwp_disable_name' ) {

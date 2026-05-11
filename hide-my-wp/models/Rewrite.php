@@ -54,6 +54,7 @@ class HMWP_Models_Rewrite {
 		$parsed = wp_parse_url( $siteurl );
 
 		$parsed['path'] = ( $parsed['path'] ?? '' );
+		$parsed['host'] = ( $parsed['host'] ?? '' );
 
 		//Set the blog URL
 		$this->_siteurl = $parsed['host'] . $parsed['path'];
@@ -830,7 +831,7 @@ class HMWP_Models_Rewrite {
 
 			if ( $rewritecode <> '' ) {
 				/* translators: 1: Opening <strong><a> tag with tutorial link and label, 2: Closing </a></strong> tag, 3: Rewrite rules block and form HTML. */
-				HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Flywheel detected. Add the redirects in the Flywheel Redirect rules panel %1$s.', 'hide-my-wp' ), '<strong><a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/how-to-setup-hide-my-wp-on-flywheel-server/' ) ) . '" target="_blank" style="color: red">' . esc_html__( 'Learn How To Add the Code', 'hide-my-wp' ) . '</a></strong> <br /><br /><pre>' . $rewritecode . '</pre>' . $form ) , 'notice', false ); //phpcs:ignore
+				HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Flywheel detected. Add the redirects in the Flywheel Redirect rules panel %1$s.', 'hide-my-wp' ), '<strong><a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/flywheel-server-wp-ghost-setup/' ) ) . '" target="_blank" style="color: red">' . esc_html__( 'Learn How To Add the Code', 'hide-my-wp' ) . '</a></strong> <br /><br /><pre>' . $rewritecode . '</pre>' . $form ) , 'notice', false ); //phpcs:ignore
 				$success = false; //always show the Flywheel Rules as manually action
 			}
 
@@ -2400,6 +2401,7 @@ class HMWP_Models_Rewrite {
 							$parsed = wp_parse_url( $cdn );
 
 							$parsed['path'] = ( $parsed['path'] ?? '' );
+							$parsed['host'] = ( $parsed['host'] ?? '' );
 
 							$cdn = $parsed['host'] . $parsed['path'] . '/';
 

@@ -40,6 +40,11 @@ class HMWP_Models_Translate {
 			'hmwp_disable_source_message'     => __( "View Source is disabled!", 'hide-my-wp' ),
 			'hmwp_disable_copy_paste_message' => __( "Copy/Paste is disabled!", 'hide-my-wp' ),
 			'hmwp_disable_drag_drop_message'  => __( "Drag-n-Drop is disabled!", 'hide-my-wp' ),
+			'hmwp_2falogin_message'           => __( "ERROR: Too many invalid verification codes, you can try again in {time}.", 'hide-my-wp' ),
+			'hmwp_2falogin_fail_message'      => __( "WARNING: Your account has attempted to login {count} times without providing a valid code. The last failed login occurred {time} ago. If this wasn't you, please reset your password.", 'hide-my-wp' ),
+			'hmwp_2falogin_email_subject'     => __( "Your Login Confirmation Code", 'hide-my-wp' ),
+			'hmwp_2falogin_email_message'     => __( "Your login confirmation code is: %s\n\nThis code is valid for a limited time and can be used only once.\n\nIf you did not attempt to log in, please ignore this email.", 'hide-my-wp' ), //phpcs:ignore
+			'hmwp_brute_message'              => __( "Your IP has been flagged for potential security violations. Please try again in a little while.", 'hide-my-wp' ),
 		);
 	}
 
