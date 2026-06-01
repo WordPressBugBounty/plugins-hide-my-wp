@@ -1681,7 +1681,13 @@ class HMWP_Models_Rewrite {
 
 					wp_logout();
 
-					header( "Location: " . apply_filters( 'hmwp_url_logout_redirect', $redirect_to ) );
+					// Enforce same-origin redirects: external URLs fall back to home_url() to prevent open redirect (CVE-2026-7527)
+					$redirect_to = apply_filters( 'hmwp_url_logout_redirect', $redirect_to );
+					$redirect_to = wp_validate_redirect( $redirect_to, home_url() );
+
+					if ( wp_safe_redirect( esc_url_raw( $redirect_to ) ) ) {
+						exit;
+					}
 					die;
 
 				}
@@ -2791,8 +2797,20 @@ class HMWP_Models_Rewrite {
 			return $rel;
 		}
 
-		// parse base URL  and convert to local variables: $scheme, $host,  $path
-		extract( wp_parse_url( home_url() ) );
+		// parse base URL and convert to local variables: $scheme, $host, $path
+		$base_parts = wp_parse_url( home_url() );
+		$site_parts = wp_parse_url( site_url() );
+
+		// If a multilingual plugin (WPML / Polylang) extended home_url with a
+		// language prefix beyond site_url, fall back to site_url — otherwise
+		// /wp-content and /wp-includes get the language prefix prepended and 404.
+		$home_path = isset( $base_parts['path'] ) ? $base_parts['path'] : '';
+		$site_path = isset( $site_parts['path'] ) ? $site_parts['path'] : '';
+		if ( $home_path !== $site_path && strpos( $home_path, $site_path ) === 0 ) {
+			$base_parts = $site_parts;
+		}
+
+		extract( $base_parts );
 
 		//add the scheme to the URL
 		if ( strpos( $rel, "//" ) === 0 ) {

@@ -901,10 +901,56 @@ class HMWP_Classes_Tools {
 	 */
 	public static function isApi() {
 
-		if ( isset( $_SERVER['REQUEST_URI'] ) ) {
-			$uri = filter_var( $_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		// WordPress sets this once the REST route is matched.
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return true;
+		}
 
-			if ( $uri && strpos( $uri, '/' . HMWP_Classes_Tools::getOption( 'hmwp_wp-json' ) . '/' ) !== false ) {
+		if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
+			return false;
+		}
+
+		$request_uri = wp_unslash( $_SERVER['REQUEST_URI'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		// Only inspect the path, never the query string. Matching the raw
+		// REQUEST_URI allowed /anything?x=/wp-json/ to be seen as an API call
+		// and skip the firewall.
+		$path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		$path = '/' . ltrim( $path, '/' );
+
+		// The REST API can be reached through the renamed prefix, the default
+		// wp-json prefix (legacy/cached/external clients), or WordPress' own
+		// resolved prefix. Match any of them so a renamed slug or a multilingual
+		// language prefix (e.g. /de/wp-json/...) is still recognized as API.
+		$prefixes = array(
+			HMWP_Classes_Tools::getOption( 'hmwp_wp-json' ),
+			HMWP_Classes_Tools::getDefault( 'hmwp_wp-json' ),
+		);
+
+		if ( function_exists( 'rest_get_url_prefix' ) ) {
+			$prefixes[] = rest_get_url_prefix();
+		}
+
+		foreach ( array_unique( array_filter( $prefixes ) ) as $prefix ) {
+			$prefix = trim( $prefix, '/' );
+			if ( $prefix == '' ) {
+				continue;
+			}
+
+			// Match the prefix only as a full path segment: /<prefix>/ or a
+			// path ending in /<prefix>. Still works when WPML/Polylang prepend
+			// a language directory.
+			if ( preg_match( '#(?:^|/)' . preg_quote( $prefix, '#' ) . '(?:/|$)#', $path ) ) {
+				return true;
+			}
+		}
+
+		// REST API reached through the ?rest_route= fallback form (used when
+		// permalinks are plain, and by core/plugins). Only accept it on the
+		// front-controller path (/ or /index.php) so it can't be appended to
+		// /wp-login.php, /xmlrpc.php, etc. to skip the firewall.
+		if ( HMWP_Classes_Tools::getValue( 'rest_route' ) <> '' ) {
+			if ( $path == '/' || preg_match( '#/index\.php$#', $path ) ) {
 				return true;
 			}
 		}

@@ -54,6 +54,9 @@ class HMWP_Controllers_Brute extends HMWP_Classes_FrontController {
 		// Check Brute Force on login
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_login' ) ) {
 			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Login' );
+
+			// Extend the same login brute force protection to the REST API
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_RestApi' );
 		}
 		// Check Brute Force on a lost password
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_lostpassword' ) ) {

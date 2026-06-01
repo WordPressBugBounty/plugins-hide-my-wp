@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 7.0.02
+Stable tag: 7.0.03
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -176,8 +176,19 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 20. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+= 7.0.03 (18 May 2026) =
+* Fix - WPML/Polylang with a custom or renamed REST API path: WPML Advanced Translation Editor and other REST API calls no longer fail with a network error in the admin
+* Fix - REST API requests made through the ?rest_route= form are no longer mistakenly treated as normal page requests and blocked
+* Fix - Renamed REST API path: legacy, cached and external clients still calling the default wp-json path are now recognized correctly instead of being 404'd
+* Fix - Compatibility module for WPML: the Advanced Translation Editor sync routes and WPML/ICL admin-ajax requests are no longer rewritten with the active language prefix
+* Security - Hardened REST API detection: the firewall can no longer be bypassed by appending /wp-json/ (or ?rest_route=) to the query string of another request
+* Security - Brute force protection also covers REST API Application Password authentication
+* Security - Fixed unauthenticated Open Redirect via the `redirect_to` parameter on the custom logout URL.
+
 = 7.0.02 (11 May 2026) =
-* Fix - Update knowledge base links to match the new plugin documentation
+* Fix - Compatibility with WPML and Polylang: static asset URLs (wp-content, wp-includes) no longer get the language prefix prepended (e.g. /en/wp-content/...) when "Change Relative URLs to Absolute URLs" is enabled
+* Fix - Password-protected pages (built-in WordPress post password) now submit correctly on Nginx and other servers without server-level rewrites when the login URL is customized
+* Fix - Refreshed knowledge base links across admin notices to point to the new documentation
 * Fix - Minor bugs and typos
 
 = 7.0.01 (15 April 2026) =
