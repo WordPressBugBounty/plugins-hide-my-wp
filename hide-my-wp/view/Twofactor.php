@@ -68,6 +68,37 @@ if ( ! isset( $view ) ) {
                                 </div>
                             </div>
 
+                            <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_2falogin">
+                                <div class="checker col-sm-12 row my-2 py-0">
+                                    <div class="col-sm-12 p-0 switch switch-xxs pl-5">
+                                        <input type="hidden" name="hmwp_2fa_forced" value="0"/>
+                                        <input type="checkbox" id="hmwp_2fa_forced" name="hmwp_2fa_forced" class="switch" <?php echo( HMWP_Classes_Tools::getOption( 'hmwp_2fa_forced' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                        <label for="hmwp_2fa_forced"><?php echo esc_html__( 'Force 2FA Setup', 'hide-my-wp' ); ?></label>
+                                        <div class="text-black-50 ml-5"><?php echo esc_html__( "Require users to set up Two-Factor Authentication before they can use the dashboard. Users without 2FA are redirected to a setup screen after login.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                </div>
+                                <div class="hmwp_2fa_forced col-sm-12 row py-3 mx-1 my-3">
+                                    <div class="col-sm-4 p-1 pl-5">
+                                        <div class="font-weight-bold"><?php echo esc_html__( 'Apply to Roles', 'hide-my-wp' ); ?>:</div>
+                                        <div class="small text-black-50"><?php echo esc_html__( "Leave empty to require 2FA for all user roles.", 'hide-my-wp' ); ?></div>
+                                    </div>
+                                    <div class="col-sm-8 p-0 input-group">
+                                        <select multiple name="hmwp_2fa_forced_roles[]" class="selectpicker form-control mb-1">
+											<?php
+											$hmwp_forced_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_2fa_forced_roles' );
+											$hmwp_allroles     = array();
+											if ( function_exists( 'wp_roles' ) ) {
+												$hmwp_allroles = wp_roles()->get_names();
+											}
+
+											foreach ( $hmwp_allroles as $hmwp_role => $hmwp_role_name ) {
+												echo '<option value="' . esc_attr( $hmwp_role ) . '" ' . ( in_array( $hmwp_role, $hmwp_forced_roles ) ? 'selected="selected"' : '' ) . '>' . esc_html( $hmwp_role_name ) . '</option>';
+											} ?>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_2fa_user_select hmwp_2falogin">
                                 <div class="checker col-sm-12 row my-2 py-0">
                                     <div class="col-sm-12 p-0 switch switch-xxs pl-5">

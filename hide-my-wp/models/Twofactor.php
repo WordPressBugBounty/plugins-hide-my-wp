@@ -53,6 +53,75 @@ class HMWP_Models_Twofactor {
     }
 
     /**
+     * Check whether the user has at least one 2FA method fully configured
+     * (an authenticator key, a verified email code, or a registered passkey).
+     *
+     * @param WP_User $user The user to check.
+     *
+     * @return bool True if any 2FA service is active for the user.
+     * @throws Exception
+     */
+    public function hasConfiguredTwoFactor( $user ) {
+
+        if ( ! isset( $user->ID ) ) {
+            return false;
+        }
+
+        /** @var HMWP_Models_Twofactor_Tftotp $twoFactorService */
+        $twoFactorService = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor_Tftotp' );
+
+        /** @var HMWP_Models_Twofactor_Email $emailService */
+        $emailService = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor_Email' );
+
+        /** @var HMWP_Models_Twofactor_Passkey $passkeyService */
+        $passkeyService = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor_Passkey' );
+
+        return ( $twoFactorService->isServiceActive( $user ) || $emailService->isServiceActive( $user ) || $passkeyService->isServiceActive( $user ) );
+    }
+
+    /**
+     * Check whether the given user is required to set up 2FA.
+     *
+     * True only when the "Force 2FA setup" option is enabled, the user has a role
+     * that is in scope (empty scope list means all roles), and at least one 2FA
+     * method is enabled on the site so the user can actually enroll. Fails open
+     * (returns false) whenever enrollment would be impossible, so nobody is locked
+     * out. The result can be overridden with the `hmwp_2fa_force_setup` filter.
+     *
+     * @param WP_User $user The user to check.
+     *
+     * @return bool True if the user must set up 2FA.
+     */
+    public function isForcedForUser( $user ) {
+
+        $forced = false;
+
+        // Only force users that can actually reach their profile page (where the
+        // setup UI lives). Every standard role has 'read'; this fails open for any
+        // custom role without it, so nobody is redirected to a page they can't load.
+        if ( isset( $user->ID ) && $user->exists() && user_can( $user, 'read' )
+            && HMWP_Classes_Tools::getOption( 'hmwp_2falogin' )
+            && HMWP_Classes_Tools::getOption( 'hmwp_2fa_forced' ) ) {
+
+            // Make sure at least one method is enabled, otherwise enrollment is impossible.
+            if ( HMWP_Classes_Tools::getOption( 'hmwp_2fa_totp' )
+                || HMWP_Classes_Tools::getOption( 'hmwp_2fa_email' )
+                || HMWP_Classes_Tools::getOption( 'hmwp_2fa_passkey' ) ) {
+
+                $scoped_roles = (array) HMWP_Classes_Tools::getOption( 'hmwp_2fa_forced_roles' );
+                $user_roles   = ( isset( $user->roles ) && is_array( $user->roles ) ) ? $user->roles : array();
+
+                // Empty scope means every role is required.
+                if ( empty( $scoped_roles ) || array_intersect( $scoped_roles, $user_roles ) ) {
+                    $forced = true;
+                }
+            }
+        }
+
+        return (bool) apply_filters( 'hmwp_2fa_force_setup', $forced, $user );
+    }
+
+    /**
      * Display the login form.
      *
      * @param WP_User $user The WP_User instance representing the currently logged-in user.

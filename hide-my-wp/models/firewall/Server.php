@@ -51,7 +51,12 @@ class HMWP_Models_Firewall_Server {
 
 
 	/**
-	 * Get validated IPs from caller server
+	 * Get validated IPs from caller server.
+	 *
+	 * Only REMOTE_ADDR (the real TCP peer) is trusted unconditionally. Forwarded-IP
+	 * headers (CF-Connecting-IP, X-Real-IP, ...) are attacker-controllable and are
+	 * included ONLY when the request demonstrably came through a trusted proxy, to
+	 * prevent IP spoofing that would bypass the firewall/whitelist and brute-force lockout.
 	 *
 	 * @return array
 	 */
@@ -61,23 +66,18 @@ class HMWP_Models_Firewall_Server {
 			return $this->ips;
 		}
 
-		$ips       = array();
+		$ips = array();
 
-		// Set valid headers
-		$headers = $this->getValidHeaders();
+		// REMOTE_ADDR is the only non-spoofable source: the actual TCP peer.
+		$remote = $this->readHeaderIp( 'REMOTE_ADDR' );
+		if ( $remote ) {
+			$ips['REMOTE_ADDR'] = $remote;
+		}
 
-		foreach ( $headers as $header ) {
-			$ip = $_SERVER[ $header ] ?? false; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-
-			if ( $ip && strpos( $ip, ',' ) !== false ) {
-				$ip = preg_replace( '/[\s,]/', '', explode( ',', $ip ) );
-				if ( $clean_ip = $this->getCleanIp( $ip ) ) {
-					$ips[ $header ] = $clean_ip;
-				}
-			} else {
-				if ( $clean_ip = $this->getCleanIp( $ip ) ) {
-					$ips[ $header ] = $clean_ip;
-				}
+		// Add forwarded-IP headers only when they originate from a trusted proxy.
+		foreach ( $this->getTrustedForwardHeaders( $remote ) as $header ) {
+			if ( $forward = $this->readHeaderIp( $header ) ) {
+				$ips[ $header ] = $forward;
 			}
 		}
 
@@ -88,13 +88,75 @@ class HMWP_Models_Firewall_Server {
 	}
 
 	/**
-	 * Get valid headers for the real IP
+	 * Read and clean an IP from a single server header.
+	 *
+	 * @param string $header
+	 *
+	 * @return string|false
+	 */
+	private function readHeaderIp( $header ) {
+
+		$ip = $_SERVER[ $header ] ?? false; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+
+		if ( $ip === false || $ip === '' ) {
+			return false;
+		}
+
+		if ( strpos( $ip, ',' ) !== false ) {
+			$ip = preg_replace( '/[\s,]/', '', explode( ',', $ip ) );
+		}
+
+		return $this->getCleanIp( $ip );
+	}
+
+	/**
+	 * Decide which forwarded-IP headers can be trusted for the current request.
+	 *
+	 * @param string|false $remote The cleaned REMOTE_ADDR of the request.
+	 *
+	 * @return string[]
+	 */
+	private function getTrustedForwardHeaders( $remote ) {
+
+		$headers = array();
+
+		// Admin explicit opt-in for custom proxies/CDNs (e.g. Sucuri, load balancers).
+		$trusted_header = HMWP_Classes_Tools::getOption( 'trusted_ip_header' );
+		if ( $trusted_header && isset( $_SERVER[ $trusted_header ] ) ) {
+			$headers[] = $trusted_header;
+		}
+
+		if ( $remote ) {
+			// Cloudflare overwrites CF-Connecting-IP with the real client IP, so it is
+			// trustworthy only when the connection actually originates from Cloudflare.
+			if ( $this->isCloudflareIp( $remote ) ) {
+				$headers[] = 'HTTP_CF_CONNECTING_IP';
+			}
+
+			// Same-host reverse proxy (nginx/Apache -> PHP): REMOTE_ADDR is loopback/private.
+			if ( $this->isPrivate( $remote ) || $remote === '::1' ) {
+				$headers[] = 'HTTP_X_REAL_IP';
+				$headers[] = 'HTTP_X_MIDDLETON_IP';
+			}
+		}
+
+		// Allow site owners to refine the trusted headers for non-standard setups.
+		$headers = apply_filters( 'hmwp_trusted_ip_headers', $headers, $remote );
+
+		return array_values( array_unique( array_filter( (array) $headers ) ) );
+	}
+
+	/**
+	 * Get all the known IP headers (for reference/compatibility).
+	 *
+	 * NOTE: this is NOT the trust list. Trust is decided in getTrustedForwardHeaders()
+	 * based on the verified REMOTE_ADDR of the request.
 	 *
 	 * @return string[]
 	 */
 	public function getValidHeaders() {
 
-		// List of the valid header Ips
+		// List of the known header Ips
 		return array(
 			// CloudFlare IP address
 			'HTTP_CF_CONNECTING_IP',
@@ -104,6 +166,140 @@ class HMWP_Models_Firewall_Server {
 			// Remote IP address
 			'REMOTE_ADDR',
 		);
+	}
+
+	/**
+	 * Check if an IP belongs to the published Cloudflare proxy ranges.
+	 *
+	 * @param string $ip
+	 *
+	 * @return bool
+	 */
+	public function isCloudflareIp( $ip ) {
+
+		$is_ipv6 = ( strpos( $ip, ':' ) !== false );
+
+		foreach ( $this->getCloudflareRanges( $is_ipv6 ) as $cidr ) {
+			if ( $this->ipInCidr( $ip, $cidr ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Published Cloudflare IP ranges (https://www.cloudflare.com/ips/).
+	 *
+	 * These are intentionally hardcoded so the trust check works offline with no
+	 * external dependency. Cloudflare's ranges are very stable, but if they ever
+	 * change the list can be extended/overridden via the 'hmwp_cloudflare_ranges'
+	 * filter without editing the plugin. A stale list fails safe: an unrecognised
+	 * Cloudflare edge simply has its CF-Connecting-IP header ignored (no spoofing).
+	 *
+	 * @param bool $ipv6 Return the IPv6 list instead of the IPv4 list.
+	 *
+	 * @return string[]
+	 */
+	private function getCloudflareRanges( $ipv6 = false ) {
+
+		if ( $ipv6 ) {
+			$ranges = array(
+				'2400:cb00::/32',
+				'2606:4700::/32',
+				'2803:f800::/32',
+				'2405:b500::/32',
+				'2405:8100::/32',
+				'2a06:98c0::/29',
+				'2c0f:f248::/32',
+			);
+		} else {
+			$ranges = array(
+				'173.245.48.0/20',
+				'103.21.244.0/22',
+				'103.22.200.0/22',
+				'103.31.4.0/22',
+				'141.101.64.0/18',
+				'108.162.192.0/18',
+				'190.93.240.0/20',
+				'188.114.96.0/20',
+				'197.234.240.0/22',
+				'198.41.128.0/17',
+				'162.158.0.0/15',
+				'104.16.0.0/13',
+				'104.24.0.0/14',
+				'172.64.0.0/13',
+				'131.0.72.0/22',
+			);
+		}
+
+		// Allow the ranges to be patched without a plugin release if Cloudflare changes them.
+		$ranges = apply_filters( 'hmwp_cloudflare_ranges', $ranges, $ipv6 );
+
+		return array_filter( (array) $ranges );
+	}
+
+	/**
+	 * Check whether an IP falls within a CIDR range (IPv4 and IPv6).
+	 *
+	 * @param string $ip
+	 * @param string $cidr
+	 *
+	 * @return bool
+	 */
+	private function ipInCidr( $ip, $cidr ) {
+
+		if ( strpos( $cidr, '/' ) === false ) {
+			return false;
+		}
+
+		list( $subnet, $bits ) = explode( '/', $cidr, 2 );
+		$bits = (int) $bits;
+
+		// IPv4
+		if ( strpos( $ip, ':' ) === false && strpos( $subnet, ':' ) === false ) {
+			$ip_long     = ip2long( $ip );
+			$subnet_long = ip2long( $subnet );
+
+			if ( $ip_long === false || $subnet_long === false || $bits < 0 || $bits > 32 ) {
+				return false;
+			}
+
+			if ( $bits === 0 ) {
+				return true;
+			}
+
+			$mask = - 1 << ( 32 - $bits );
+
+			return ( ( $ip_long & $mask ) === ( $subnet_long & $mask ) );
+		}
+
+		// IPv6
+		if ( strpos( $ip, ':' ) !== false && strpos( $subnet, ':' ) !== false && $this->isIPv6Support() ) {
+			$ip_bin     = @inet_pton( $ip );
+			$subnet_bin = @inet_pton( $subnet );
+
+			if ( $ip_bin === false || $subnet_bin === false || $bits < 0 || $bits > 128 ) {
+				return false;
+			}
+
+			$whole_bytes = intdiv( $bits, 8 );
+			$remainder   = $bits % 8;
+
+			if ( $whole_bytes > 0 && strncmp( $ip_bin, $subnet_bin, $whole_bytes ) !== 0 ) {
+				return false;
+			}
+
+			if ( $remainder > 0 ) {
+				$mask = chr( ( 0xff << ( 8 - $remainder ) ) & 0xff );
+
+				return ( ( $ip_bin[ $whole_bytes ] & $mask ) === ( $subnet_bin[ $whole_bytes ] & $mask ) );
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 
 

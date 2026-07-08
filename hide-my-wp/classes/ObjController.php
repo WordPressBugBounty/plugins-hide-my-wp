@@ -130,12 +130,9 @@ class HMWP_Classes_ObjController
     private static function includeClass($classDir, $className)
     {
 
-        // Initialize WordPress Filesystem
-        $wp_filesystem = self::initFilesystem();
-
         $path = $classDir.$className.'.php';
-        // Include the class file if it exists
-        if ($wp_filesystem->exists($path)) {
+        // Include the bundled class file if it exists.
+        if (file_exists($path)) {
             include_once $path;
         }
 
@@ -199,14 +196,13 @@ class HMWP_Classes_ObjController
     public static function getClassByPath($className)
     {
 
-        // Initialize WordPress Filesystem
-        $wp_filesystem = self::initFilesystem();
-
         // Get the class dir and name
         $class = self::getClassPath($className);
 
-        // Return the class if the file exists
-        if ($wp_filesystem->exists($class['dir'].$class['name'].'.php') || file_exists($class['dir'].$class['name'].'.php')) {
+        // Return the class if the bundled file exists.
+        // Local plugin file, so use file_exists() directly and avoid loading the
+        // WordPress Filesystem API on the class-resolution hot path (see includeClass()).
+        if (is_array($class) && file_exists($class['dir'].$class['name'].'.php')) {
             return $class;
         }
 
@@ -224,24 +220,63 @@ class HMWP_Classes_ObjController
         // The WordPress filesystem.
         global $wp_filesystem;
 
+        // Reuse the filesystem once it has been initialized.
+        if (is_object($wp_filesystem) && is_a($wp_filesystem, 'WP_Filesystem_Base')) {
+            return $wp_filesystem;
+        }
+
         if ( ! function_exists('WP_Filesystem')) {
             include_once ABSPATH.'wp-admin/includes/file.php';
         }
 
-        // Call WordPress filesystem function
-        WP_Filesystem();
+        // Read the FTP/SSH credentials a site may define in wp-config.php, mirroring what WordPress core reads.
+        $credentials = array();
+        $constants   = array(
+            'hostname'    => 'FTP_HOST',
+            'username'    => 'FTP_USER',
+            'password'    => 'FTP_PASS',
+            'public_key'  => 'FTP_PUBKEY',
+            'private_key' => 'FTP_PRIKEY',
+        );
+        foreach ($constants as $key => $constant) {
+            if (defined($constant)) {
+                $credentials[ $key ] = constant($constant);
+            }
+        }
 
-        // If the filesystem is not connected to the files,
-        // Initiate filesystem with direct connection to the server files
-        if ( ! $wp_filesystem->connect()) {
-            add_filter('filesystem_method', function ($method) {
-                return 'direct';
-            }, 1);
+        if ( ! empty($credentials['hostname'])) {
+            // A remote filesystem (FTP/SSH) is explicitly configured: honor it.
+            if ((defined('FTP_SSH') && FTP_SSH) || (defined('FS_METHOD') && 'ssh2' === FS_METHOD)) {
+                $credentials['connection_type'] = 'ssh';
+            } elseif (defined('FTP_SSL') && FTP_SSL) {
+                $credentials['connection_type'] = 'ftps';
+            }
+            WP_Filesystem($credentials);
+        }
+
+        // Fall back to a direct connection when no valid remote credentials are
+        // available (the common case, and always true under WP-CLI).
+        if ( ! is_object($wp_filesystem) || ! is_a($wp_filesystem, 'WP_Filesystem_Base') || ! $wp_filesystem->connect()) {
+            add_filter('filesystem_method', array(__CLASS__, 'getDirectFilesystemMethod'), 999);
             WP_Filesystem();
+            remove_filter('filesystem_method', array(__CLASS__, 'getDirectFilesystemMethod'), 999);
         }
 
         // return the filesystem object
         return $wp_filesystem;
+    }
+
+    /**
+     * Force the WordPress "direct" filesystem method.
+     *
+     * Used as a `filesystem_method` filter callback so the FTP/SSH handlers are
+     * never selected when no remote credentials are available.
+     *
+     * @return string
+     */
+    public static function getDirectFilesystemMethod()
+    {
+        return 'direct';
     }
 
 }

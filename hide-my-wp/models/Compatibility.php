@@ -806,9 +806,25 @@ class HMWP_Models_Compatibility {
 			//Check if the rules are working as expected
 			$mappings = HMWP_Classes_Tools::getOption( 'file_mappings' );
 			if ( ! empty( $mappings ) ) {
-				$restoreLink = '<br /><a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_ignore_errors' ), 'action'     => 'hmwp_ignore_errors' ) ) ) . '" class="btn btn-default btn-sm mt-3" />' . esc_html__( "Close Error", 'hide-my-wp' ) . '</a>';
-				/* translators: 1: Line breaks and mappings HTML, 2: Tutorial link HTML including restore link. */
-				HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Attention! Some URLs passed through the config file rules and were loaded through WordPress rewrite which may slow down your website. %1$s Please follow this tutorial to fix the issue: %2$s', 'hide-my-wp' ), '<br /><br />' . join( '<br />', $mappings ) . '<br /><br />', '<a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/theme-not-loading-correctly-website-loads-slower/' ) . '" target="_blank" class="text-warning">' . esc_html( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) ) . '/kb/theme-not-loading-correctly-website-loads-slower/</a> ' . $restoreLink ) ), 'text-white bg-danger' );
+
+				//Detect if any of the unrewritten files is a layout asset (css/js/font/svg).
+				//These break the frontend design, while images only slow down the website.
+				$breaks_layout = (bool) preg_grep( '/\.(css|js|svg|woff2?|ttf|eot)(\?|$)/i', (array) $mappings );
+
+				$checkLink   = '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '" class="btn btn-default btn-sm mt-3 mr-2">' . esc_html__( "Run Frontend Check", 'hide-my-wp' ) . '</a>';
+				$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_ignore_errors' ), 'action'     => 'hmwp_ignore_errors' ) ) ) . '" class="btn btn-default btn-sm mt-3" />' . esc_html__( "Close Error", 'hide-my-wp' ) . '</a>';
+
+				$kbLink = '<a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/theme-not-loading-correctly-website-loads-slower/' ) . '" target="_blank" class="text-warning">' . esc_html( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) ) . '/kb/theme-not-loading-correctly-website-loads-slower/</a>';
+
+				if ( $breaks_layout ) {
+					/* translators: 1: Line breaks and the list of affected file URLs, 2: Tutorial link HTML followed by the action buttons. */
+					$message = sprintf( __( 'Attention! Your frontend layout may not be loading correctly. Some theme files (CSS/JS) passed through the config file rules and were loaded through WordPress rewrite instead, which can break the website design. %1$s Please follow this tutorial to fix the issue: %2$s', 'hide-my-wp' ), '<br /><br />' . join( '<br />', $mappings ) . '<br /><br />', $kbLink . '<br />' . $checkLink . ' ' . $restoreLink );
+				} else {
+					/* translators: 1: Line breaks and the list of affected file URLs, 2: Tutorial link HTML followed by the action buttons. */
+					$message = sprintf( __( 'Attention! Some URLs passed through the config file rules and were loaded through WordPress rewrite which may slow down your website. %1$s Please follow this tutorial to fix the issue: %2$s', 'hide-my-wp' ), '<br /><br />' . join( '<br />', $mappings ) . '<br /><br />', $kbLink . '<br />' . $checkLink . ' ' . $restoreLink );
+				}
+
+				HMWP_Classes_Error::setNotification( wp_kses_post( $message ), 'text-white bg-danger' );
 			}
 
 			if ( HMWP_Classes_Tools::isPluginActive( 'ultimate-member/ultimate-member.php' ) && HMWP_Classes_Tools::getOption( 'hmwp_bruteforce' ) && HMWP_Classes_Tools::getOption( 'brute_use_captcha_v3' ) ) {

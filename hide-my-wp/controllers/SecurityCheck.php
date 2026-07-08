@@ -635,6 +635,32 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 
 	/**
+	 * Build a single, readable Frontend Check result row.
+	 *
+	 * Renders a status badge, a short label and the URL on its own line so long
+	 * URLs wrap cleanly instead of breaking the centered layout.
+	 *
+	 * @param string $label Short description of the issue (may be empty).
+	 * @param string $url   The tested URL.
+	 * @param string $badge Short status text shown in the badge (e.g. "404").
+	 *
+	 * @return string
+	 */
+	private function frontendError( $label, $url, $badge ) {
+		// Show a clean URL without the internal preview parameter
+		$display = remove_query_arg( 'hmwp_preview', $url );
+
+		return '<div style="display:flex;align-items:flex-start;gap:10px;text-align:left;margin:6px 0;padding:8px 12px;background:#fff;border-radius:6px;border-left:4px solid #FFA500;box-shadow:0 1px 2px rgba(0,0,0,0.06);">'
+			. '<span style="flex:0 0 auto;display:inline-block;min-width:40px;text-align:center;padding:2px 6px;font-size:11px;font-weight:700;line-height:1.4;color:#fff;background:#1d2327;border-radius:4px;">' . esc_html( $badge ) . '</span>'
+			. '<span style="flex:1 1 auto;min-width:0;">'
+			. ( $label !== '' ? '<span style="display:block;font-weight:600;font-size:12px;color:#1d2327;margin-bottom:2px;">' . esc_html( $label ) . '</span>' : '' )
+			. '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener" style="display:block;font-family:Menlo,Consolas,monospace;font-size:12px;line-height:1.5;word-break:break-all;color:#2271b1;text-decoration:none;">' . esc_html( $display ) . '</a>'
+			. '</span>'
+			. '</div>';
+	}
+
+
+	/**
 	 * Run the actions on submit
 	 *
 	 * @throws Exception
@@ -661,6 +687,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 			case 'hmwp_frontendcheck':
 
 				$urls       = $error = array();
+				$home_body  = '';
 				$filesystem = HMWP_Classes_Tools::initFilesystem();
 				$disable_name        = HMWP_Classes_Tools::getOption( 'hmwp_disable_name' );
 
@@ -689,9 +716,10 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 				}
 
-				$url    = home_url( '/' ) . '?hmwp_preview=' . $disable_name;
-				$url    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
-				$urls[] = $url;
+				$url      = home_url( '/' ) . '?hmwp_preview=' . $disable_name;
+				$url      = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
+				$home_url = $url;
+				$urls[]   = $url;
 
 				if ( HMWP_Classes_Tools::getOption( 'hmwp_hideajax_admin' ) ) {
 					$url = home_url( HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) ) . '?hmwp_preview=' . $disable_name;
@@ -710,7 +738,15 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 					$urls[] = $url;
 				}
 
+				// Text Mapping renames classes/IDs/JS variables in the output and can break a
+				// theme that uses a renamed label as a style hook. When an active mapping exists,
+				// also validate that the homepage actually renders, not just that it returns 200.
+				$text_mapping     = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ), true );
+				$has_text_mapping = ! empty( $text_mapping['from'] );
+
 				foreach ( $urls as $url ) {
+
+					$is_home = ( $url === $home_url );
 
 					if ( is_ssl() ) {
 						$url = str_replace( 'http://', 'https://', $url );
@@ -722,7 +758,16 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 					) );
 
 					if ( ! is_wp_error( $response ) && in_array( wp_remote_retrieve_response_code( $response ), array( 404, 302, 301 ) ) ) {
-						$error[] = '<a href="' . $url . '" target="_blank" style="word-break: break-word;">' . str_replace( '?hmwp_preview=' . $disable_name, '', $url ) . '</a> (' . wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response ) . ')';
+						$error[] = $this->frontendError( wp_remote_retrieve_response_message( $response ), $url, wp_remote_retrieve_response_code( $response ) );
+					} elseif ( $is_home && ! is_wp_error( $response ) && (int) wp_remote_retrieve_response_code( $response ) === 200 ) {
+						// Keep the homepage HTML to validate the render and to probe theme assets below
+						$home_body = wp_remote_retrieve_body( $response );
+
+						// Text Mapping renames classes/IDs and can break a theme that styles a renamed label.
+						// Broken render heuristic: empty body or truncated HTML (no closing tag)
+						if ( $has_text_mapping && ( $home_body === '' || stripos( $home_body, '</html>' ) === false ) ) {
+							$error[] = $this->frontendError( esc_html__( 'The page did not render correctly. A renamed Text Mapping label may be used by your theme.', 'hide-my-wp' ), $url, esc_html__( 'Layout', 'hide-my-wp' ) );
+						}
 					}
 				}
 
@@ -746,19 +791,80 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 							302,
 							301
 						) ) ) {
-						$error[] = '<a href="' . $url . '" target="_blank" style="word-break: break-word;">' . str_replace( '?hmwp_preview=' . $disable_name, '', $url ) . '</a> (' . wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response ) . ')';
+						$error[] = $this->frontendError( wp_remote_retrieve_response_message( $response ), $url, wp_remote_retrieve_response_code( $response ) );
 
 					}
 				}
 
-				if ( ! empty( $error ) && HMWP_Classes_Tools::isNginx() ) {
-					$error[] = '<a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/setup-wp-ghost-on-nginx-server/' ) . '" target="_blank" style="word-break: break-word;line-height: 35px;font-weight: 700;">' . esc_html__( "Don't forget to reload the Nginx service.", 'hide-my-wp' ) . '</a>';
+				// Probe a sample of the theme's CSS/JS assets referenced by the homepage. This catches a
+				// broken layout where the page returns 200 but its stylesheets/scripts don't load because
+				// the renamed wp-content/wp-includes paths are not served by the config rules.
+				if ( $home_body !== '' && preg_match_all( '/<(?:link[^>]+href|script[^>]+src)=["\']([^"\']+\.(?:css|js)(?:\?[^"\']*)?)["\']/i', $home_body, $matches ) ) {
+
+					$host   = wp_parse_url( home_url(), PHP_URL_HOST );
+					$assets = array();
+
+					foreach ( $matches[1] as $asset ) {
+						// Normalize protocol-relative URLs
+						if ( strpos( $asset, '//' ) === 0 ) {
+							$asset = ( is_ssl() ? 'https:' : 'http:' ) . $asset;
+						}
+
+						// Only test same-host static assets and skip duplicates
+						if ( wp_parse_url( $asset, PHP_URL_HOST ) === $host && ! in_array( $asset, $assets ) ) {
+							$assets[] = $asset;
+						}
+
+						// Keep the check fast: test up to 4 assets
+						if ( count( $assets ) >= 4 ) {
+							break;
+						}
+					}
+
+					foreach ( $assets as $asset ) {
+						// Bypass the WordPress fallback handler (showFile) so only the server config
+						// rules serve the file — otherwise a broken rewrite is masked by a 200 response.
+						$test = add_query_arg( 'hmwp_preview', $disable_name, $asset );
+
+						if ( is_ssl() ) {
+							$test = str_replace( 'http://', 'https://', $test );
+						}
+
+						$response = HMWP_Classes_Tools::hmwp_localcall( $test, array(
+							'redirection' => 0,
+							'cookies'     => false
+						) );
+
+						if ( ! is_wp_error( $response ) && in_array( wp_remote_retrieve_response_code( $response ), array( 404, 302, 301 ) ) ) {
+							$error[] = $this->frontendError( esc_html__( 'Theme asset not loading', 'hide-my-wp' ), $asset, wp_remote_retrieve_response_code( $response ) );
+						}
+					}
+				}
+
+				// Runtime fallback state: when assets were auto-detected loading through WordPress instead of
+				// the config rules, the plugin temporarily disabled path hiding (prevent_slow_loading).
+				$file_mappings = (array) HMWP_Classes_Tools::getOption( 'file_mappings' );
+
+				// If the paths/assets failed and the safe-fallback already recorded offending files,
+				// list them as context so the user sees exactly which files load through WordPress.
+				if ( ! empty( $error ) && ! empty( $file_mappings ) ) {
+					foreach ( $file_mappings as $mapping ) {
+						$error[] = $this->frontendError( esc_html__( 'Loaded through WordPress instead of the config rules', 'hide-my-wp' ), $mapping, esc_html__( 'Bypass', 'hide-my-wp' ) );
+					}
 				}
 
 				if ( HMWP_Classes_Tools::isAjax() ) {
 					if ( empty( $error ) ) {
 						$message   = array();
-						$message[] = esc_html__( 'Great! The new paths are loading correctly.', 'hide-my-wp' );
+
+						// Recovery: paths and assets load correctly now, so lift the temporary
+						// safe-fallback (prevent_slow_loading) by clearing the recorded mappings.
+						if ( ! empty( $file_mappings ) ) {
+							HMWP_Classes_Tools::saveOptions( 'file_mappings', array() );
+							$message[] = '<div style="margin-bottom:6px;">' . esc_html__( 'The website assets are now loading correctly through the config rules. The temporary safe mode has been lifted.', 'hide-my-wp' ) . '</div>';
+						}
+
+						$message[] = '<div style="font-weight:600;margin-bottom:6px;">' . esc_html__( 'Great! The new paths are loading correctly.', 'hide-my-wp' ) . '</div>';
 						if ( HMWP_Classes_Tools::getOption( 'prevent_slow_loading' ) ) {
 							$message[] = '<form id="hmwp_fixsettings_form" method="POST">
                                          ' . wp_nonce_field( 'hmwp_fixsettings', 'hmwp_nonce', false, false ) . '
@@ -784,7 +890,14 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 						wp_send_json_success( join( '', $message ) );
 					} else {
-						wp_send_json_error( esc_html__( 'Error! The new paths are not loading correctly. Clear all cache and try again.', 'hide-my-wp' ) . "<br /><br />" . join( '<br />', $error ) );
+						$html  = '<div style="font-weight:600;margin-bottom:10px;">' . esc_html__( 'Error! The new paths are not loading correctly. Clear all cache and try again.', 'hide-my-wp' ) . '</div>';
+						$html .= '<div style="text-align:left;">' . join( '', $error ) . '</div>';
+
+						if ( HMWP_Classes_Tools::isNginx() ) {
+							$html .= '<div style="margin-top:12px;font-weight:700;"><a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/setup-wp-ghost-on-nginx-server/' ) . '" target="_blank" rel="noopener">' . esc_html__( "Don't forget to reload the Nginx service.", 'hide-my-wp' ) . '</a></div>';
+						}
+
+						wp_send_json_error( $html );
 					}
 				}
 

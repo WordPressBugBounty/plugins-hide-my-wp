@@ -466,6 +466,9 @@ class HMWP_Models_Twofactor_Email extends HMWP_Models_Twofactor_Abstract {
 	 * @return array Options for the UsersSettings View
 	 */
 	public function getEmailOption( $user ) {
+		if ( ! isset( $user->ID ) ) {
+			return false;
+		}
 
 		return array(
 			'user'        => $user,

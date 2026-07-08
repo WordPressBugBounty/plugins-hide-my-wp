@@ -846,8 +846,10 @@ class HMWP_Models_Firewall_Rules {
 	public function isWhitelistedIP( $ip ) {
 		$wl_items = array();
 
+		// Fail closed: an invalid/unparsable IP must never be treated as whitelisted,
+		// otherwise a malformed forwarded header could downgrade the protections.
 		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			return true;
+			return false;
 		}
 
 		//jetpack whitelist

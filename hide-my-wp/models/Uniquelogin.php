@@ -95,6 +95,10 @@ class HMWP_Models_Uniquelogin {
 	public function getUserDetails( $user ) {
 		$details = array();
 
+		if ( ! $user instanceof WP_User ) {
+			return json_decode( wp_json_encode( $details ) );
+		}
+
 		$details['redirect_to'] = HMWP_Classes_Tools::getUserMeta( self::USER_REDIRECT, $user->ID );
 		$details['expire']      = HMWP_Classes_Tools::getUserMeta( self::USER_SESSION_EXPIRE, $user->ID );
 

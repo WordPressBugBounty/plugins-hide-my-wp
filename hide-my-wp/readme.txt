@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 7.0.03
+Stable tag: 7.0.05
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -176,11 +176,24 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 20. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
-= 7.0.03 (18 May 2026) =
+= 7.0.05 (08 July 2026) =
+* New - Force 2FA Setup: require selected user roles to set up Two-Factor Authentication before they can access the dashboard, with a guided setup screen shown right after login
+* Fix - Temporary Login page no longer triggers a fatal error when opened for a user that was deleted or expired
+* Fix - Two-Factor email setup and Magic Login no longer emit PHP warnings when the requested user no longer exists
+* Fix - WP-CLI commands no longer emit a PHP 8.5 "Undefined array key hostname" warning
+
+= 7.0.04 (29 June 2026) =
+* New - Frontend Check now also verifies the theme's CSS and JS files load, catching a broken layout on pages that still return 200
+* New - Detects when CSS/JS/font files load through WordPress instead of the server config, falls back to safe paths and warns you on the settings page
+* Improvement - Redesigned the Frontend Check results into clear, uniform rows that stay readable with long URLs
+
+= 7.0.03 (02 June 2026) =
 * Fix - WPML/Polylang with a custom or renamed REST API path: WPML Advanced Translation Editor and other REST API calls no longer fail with a network error in the admin
 * Fix - REST API requests made through the ?rest_route= form are no longer mistakenly treated as normal page requests and blocked
 * Fix - Renamed REST API path: legacy, cached and external clients still calling the default wp-json path are now recognized correctly instead of being 404'd
 * Fix - Compatibility module for WPML: the Advanced Translation Editor sync routes and WPML/ICL admin-ajax requests are no longer rewritten with the active language prefix
+* Fix - Some sites could show a blank page when source code optimization was enabled; the header/tag find & replace is now fail-safe and never blanks the output on a regex error
+* Fix - Prefetch/speculation rules cleanup now removes the wp-admin and wp-*.php entries without leaving the rules JSON invalid
 * Security - Hardened REST API detection: the firewall can no longer be bypassed by appending /wp-json/ (or ?rest_route=) to the query string of another request
 * Security - Brute force protection also covers REST API Application Password authentication
 * Security - Fixed unauthenticated Open Redirect via the `redirect_to` parameter on the custom logout URL.
@@ -316,353 +329,6 @@ UI & Experience:
 * Fix - Hide the new login on registration redirect when the registration is deactivated
 * Fix - Remove newlines from the rewrite rules
 
-= 5.4.01 (06 Ian 2025) =
-* Update - Changed Hide My WP Ghost plugin name with short WP Ghost
-* Update - WP Ghost comes with a new logo in 2025
-* Update - More security on REST API for user listing when User Security is activated
-* Update - Plugin Security and Firewall rules
-
-= 5.3.02 (08 Nov 2024) =
-* Update - Compatibility with WP 6.7
-* Update - Add Brute Force for comments form in Brute Force
-* Update - Translations
-* Fix - Issue when changing relative to absolute path in javascript
-* Fix - Root domain regarding multisite with subdomains
-* Fix - Compatibility with LiteSpeed CDN domains
-* Fix - Use WordPress function for all parse url
-* Fix - Activate firewall by default when Lite mode option is selected
-* Fix - Compatibility with WP Rocket background CSS loader
-* Fix - Flush changed to config file when some features are activated in Overview section
-* Fix - Clear cache for Litespeed plugin when changing is made in the Mapping section
-* Fix - Activate the Text Mapping in CSS and JS files option for hiding class names like elementor or woocommerce
-
-= 5.3.01 (07 Oct 2024) =
-* Update - Added Hide My WP Advanced Pack in Plugins suggestion
-* Update - Added Drupal 11 in CMS simulation
-* Update - Set 404 Not Found error as default option for hidden paths
-* Update - The files CSS and JS files from WP 6.6 when Clean Login is selected in Advanced > Compatibility
-* Update - Added the option to pause the plugin for 5 minutes for testing purposes
-* Update - Compatibility with WP Rocket Background CSS loader
-* Update - Map Litespeed cache directory in URL Mapping
-* Fix - Redirect to homepage the newadmin when user is not logged in
-* Fix - Remove dynamic CSS and JS when Text Mapping is switched off
-* Fix - Prevent changing wp-content and wp-includes paths in deep URL location and avoid 404 errors
-
-= 5.3.00 (20 Sept 2024) =
-* Update - Added New Feature Magic Link Login Without Password in Hide My WP > Overview
-* Update - Added New Feature Two-factor Authentication By Code (2FA) in Hide My WP > Overview
-* Update - Added New Feature Two-factor Authentication By Email (2FA) in Hide My WP > Overview
-* Update - Added New Feature Temporary Logins Without Password in Hide My WP > Overview
-* Update - Compatibility with WP 6.6.2 & 8.3.11
-* Update - Brute Force compatibility with UsersWP plugin
-* Update - Cookie set on WP Multisite with subdomains
-* Update - Brute Force shortcode to work with different login forms
-* Update - Brute Force shortcode to work with Elementor login form
-* Fix - Compatibility with Nitrocache
-* Fix - Compatibility with Squirrly SEO
-* Fix - Compatibility with Autoptimize
-* Fix - Compatibility with Woocommerce
-* Fix - Compatibility with Wordfence
-* Fix - Security Check on admin url and login url
-* Fix - Google reCaptcha on frontend popup to load google header if not already loaded
-* Fix - Hide New Login Path to allow redirects from custom paths: lost password, signup and disconnect
-* Fix - WP Multisite active plugins check to ignore inactive plugins
-* Fix - Small bugs
-
-= 5.2.04 (07 July 2024) =
-* Fix - Compatibility with WP 6.6
-* Fix - Security * Update on wp-login.php and login.php
-
-= 5.2.03 (04 July 2024) =
-* Update - Added the option to hide the new login path on redirects
-* Update - Hide login.php path together with wp-login.php path from being redirect to the new login
-* Update - File permissions check in Security Check to check htaccess and login paths
-* Fix - Small bugs
-
-= 5.2.02 (19 June 2024) =
-* Update - Added more path in Frontend Test to make sure the settings are okay before confirmation
-* Update - Firewall message on blocking process when loading on WP initialization
-* Update - Compatibility with Wordfence to prevent rewrite rules * Update on security scan
-* Update - Language translation and typos fixed
-* Update - Disable click and keys to work without jQuery
-* Update - Added the option to immediately block a wrong username in Brute Force
-* Update - Sub-option layouts
-* Fix - Trim error in cookie when main domain cookie is set
-* Fix - Filter words in 8G Firewall that might be used in article slugs
-
-
-= 5.2.01 (04 June 2024) =
-* Update - Added Firewall blacklist by User Agent
-* Update - Added Firewall blacklist by Referrer
-* Update - Added Firewall blacklist by Hostname
-* Update - Added the option to select the level of access for an IP address in whitelist
-Removed - Mysql database permission check as WordPress 6.5 handles DB permissions more secure
-Moved - Firewall section was moved to the main menu as includes more subsections
-* Fix - 8G Firewall compatibility with all page builder plugins
-* Fix - preg_match warning on firewall.php when checking search engine bots
-* Fix - Firewall saving process for Whitelist and Blacklist features
-* Fix - Login access when member plugins are used for login process
-
-= 5.1.03 (20 May 2024) =
-* Update - Compatibility with WP 6.5.3
-* Update - Compatibility with WPEngine rules on wp-admin and wp-login.php
-* Update - Add whitelist paths feature
-* Update - Select the Whitelist level for IPs and Paths
-* Fix - Prevent firewall to record all triggered filters as fail attempts
-* Fix - Remove filter on robots when 8G firewall is active
-* Fix - Frontend Login Check popup to prevent any redirect to admin panel in popup test
-* Fix - Prevent redirect the wp-admin to new login when wp-admin path is hidden
-* Fix - Prevent blocking login page on password protection page when the login path is set by another plugin
-
-= 5.1.02 (30 Apr 2024) =
-* Update - Security Check verifies the firewall against SQL & Script injection and weak usernames
-* Update - Font-sizes and layouts
-* Update - Add support to MyList theme
-* Update - 7g & 8G firewall to match more WP actions and compatibility with more plugins
-
-= 5.1.01 (10 Apr 2024) =
-* Update - Added the 8G Firewall filter
-* Update - Added the required header security for Apache and Nginx
-* Update - Added the option to block the theme detectors
-* Update - Added the option to block theme detectors crawlers by IP & agent
-* Update - Added the option to simulate CMSs like Drupal & Joomla
-* Update - Added the option on Apache to insert the firewall rules into .htaccess
-* Fix - Load Firewall on all server types only in frontend to avoid functionality issues in backend
-* Fix - Avoid loading recaptcha on Password reset link
-* Fix - Screen 120dpi display layout
-* Fix - Hide reCaptcha secret key in Settings
-
-= 5.0.29 (19 Mar 2024) =
-* Update - Compatibility with WP 6.5
-* Update - Compatibility with CloudPanel & Nginx servers
-* Update - Compatibility with WordFence scanning
-* Fix - Hide rest_route only for visitors to avoid errors with builders
-
-= 5.0.28 (14 Feb 2024) =
-Compatibility with PHP 8.3 and WP 6.4.3
-* Update - Compatibility with Hostinger
-* Update - Compatibility with InstaWP
-* Update - Compatibility with Solid Security Plugin (ex Solid Security)
-* Update - Added the option to block the API call by rest_route param
-* Update - Added new detectors in the option to block the Theme Detectors
-* Update - Security Check for valid WP paths
-* Fix - Don't load shortcode recapcha for logged users
-* Fix - Rewrite rules for the custom  wp-login path on Cloud Panel and Nginx servers
-* Fix - Issue on change paths when WP Multisite with Subcategories
-* Fix - Hide rest_route param when Rest API directory is changed
-* Fix - Multilanguage support plugins
-* Fix - Small bugs & typos
-
-= 5.0.27 (18 Oct 2023) =
-* Update - Compatibility with WP 6.4.1 & PHP 8.3
-* Update - Option to create a random suffix number instead of the version number to prevent caching on static files in admin
-* Fix - Default redirect URL in Tweaks > Redirects
-* Update - Compatibility with MainWP Server-Client
-* Update - Compatibility with WPML plugin
-* Update - Hide rest_route param when Rest API directory is changed
-* Fix - URL query args sanitization when the rewrite rules are not added correctly in config file
-* Fix - Specify the jQuery on Disable Click feature
-* Update - Compatibility with Hostinger
-* Update - Compatibility with InstaWP
-* Update - Add shortcode on BruteForce [hmwp_bruteforce] for any login form
-* Fix - Small Bugs
-
-= 5.0.26 (28 Aug 2023) =
-* Fix - Brute Force Math Recaptcha security
-* Fix - Compatibility with themes without Brute Force Math Recaptcha
-
-= 5.0.25 (23 Aug 2023) =
-* Fix - Paths change in feed for logos and links
-* Fix - Security Check report
-* Fix - Improved security on login
-* Fix - Typos & Bugs
-
-= 5.0.24 (03 July 2023) =
-* Update - Frontend Test to check and show the not found links
-* Update - Add compatibility with 2FA and Two-Factor plugins for two factor authentication
-* Update - Add Compatibility with FlyingPress & WPFrontendAdmin
-* Update - WP functions and notifications for PHP 8.2 compatibility
-* Update - Add new key combinations in HMWP disable inspect element and view source
-* Fix - Prevent login redirect when the prevent slowing website is activated
-
-= 5.0.23 (29 May 2023) =
-* Update - Add the option to connect to the custom login path from Cloud
-* Update - Compatibility with WP 6.2.2
-* Fix - Typos and small bugs
-
-= 5.0.22 (16 May 2023) =
-* Update - Add compatibility for Cloud Panel servers
-* Update - Add compatibility for CMP Coming Soon & Maintenance Plugin by NiteoThemes plugin
-* Update - Add the option to select the server type if it's not detected by the server
-* Update - Add the option to add the rules between the WordPress rewrite rules on Apache/Litespeed servers
-* Update - Compatibility with SiteGround
-* Update - Compatibility with Avada when cache plugins are enabled
-* Fix - Remove the rewrites from WordPress section when the plugin is deactivated
-* Fix - User roles names display on Tweaks
-* Fix - Combined the Plugin Loading Hook into one option
-
-= 5.0.20 (03 May 2023) =
-* Update - File processing when the rules are not set correctly
-* Update - Security headers default values
-* Fix - Compatibilities with the last versions of other plugins
-* Fix - Reduce resource usage on 404 pages
-
-= 5.0.19 (23 Apr 2023) =
-* Update - Brute Force protection on lost password form
-* Update - Brute Force protection on Woocommerce (login, signup, lost passowrd)
-* Update - Compatibility with MemberPress plugin
-* Fix - My account link on multisite option
-* Fix - Settings to verify the array values on settings saving process
-* Fix - Small Bugs
-
-= 5.0.18 (03 Mar 2023) =
-* Update - Compatibility with WP 6.2
-* Update - Compatibility with more plugins and themes
-* Update - Security check when wp-content is customized
-* Update - File handle for login, signup, logout
-* Update - Compatibility with PHP 8.2
-* Update - Remove the atom+xml meta from header
-* Update - Remove the noredirect param if the redirect is fixed
-* Update - Check the XML and TXT URI by REQUEST_URI to make sure the Sitemap and Robots URLs are identified
-* Update - Check the rewrite rules on WordPress Automatic updates too
-* Update - Add the option to disable HMWP Ghost custom paths for the whitelisted IPs
-* Update - Save all section on backup restore
-* Update - Add the option to remove the sitemap style as a separate option from changing the paths in Sitemap.
-
-= 5.0.17 (19 Dec 2022) =
-* Update - Compatibility with WP 6.1
-* Update - Remove the noredirect param if the redirect is fixed
-* Update - Update the verification of the XML and TXT URI
-* Update - Get the correct login URL when backend URL is different from frontend URL
-* Update - Add the Whitelabel IP option in Security Level and allow the Whitelabel IP addresses to pass login recaptcha and hidden URLs
-* Fix - Allow self access to hidden paths to avoid cron errors on backup/migration plugins
-* Fix - White screen on iphone > safari when disable inspect element option is on
-* Fix - To remove the version from URL even if the 'ver' param doesn't have any value
-* Fix - Typo in Security Check
-
-= 5.0.16 (21 Oct 2022) =
-* Update - Add the Brute Force protection on Register Form to prevent account spam
-* Update - Add the Whitelabel IP option in Security Level and allow the Whitelabel IP addresses to pass login recaptcha and hidden URLs
-* Update - Added the option to prioritize the loading of HMWP Ghost plugin for more compatibility with other plugins
-* Update - Compatibility with LiteSpeed servers and last version of WordPress
-* Update - Compatibility with Breakdance plugin
-* Update - Compatibility with Nicepage Builder plugin
-* Update - Compatibility with WP 6.0.2
-* Fix - Allow self access to hidden paths to avoid cron errors on backup/migration plugins
-* Fix - Remove the get_site_icon_url hook to avoid any issue on the login page with other themes
-* Fix - Compatibility with ShortPixel webp extension when Feed Security is enabled
-* Fix - Fixed the ltrim of null error on PHP 8.1 for site_url() path
-
-= 5.0.15 (06 Sept 2022) =
-* Fix - URL Mapping for Nginx servers to prevent 404 pages
-* Fix - PHP error in Security Check when the X-Powered-By header is not string
-* Fix - Compatibility with Wp-Rocket last version
-* Fix - Brute force math issue on woocommerce login when third party woocommerce logins
-* Fix - Not to hide the image on login page when no custom image is set in Appearance > Customize > Site Logo
-* Fix - Compatibility with ShortPixel webp extension when Feed Security is enabled
-* Update - Compatibility with Nicepage Builder plugin
-* Update - Compatibility with WP 6.0.2
-
-= 5.0.14 (17 June 2022) =
-* Update - Compatibility with Coming Soon & Maintenance Mode PRO
-* Update - Compatibility with WordPress 6.0
-* Update - Add the option to automatically redirect to admin when access the login page and the user is logged
-* Fix - Avoid showing 404 error on Litespeed WP Multisite when a new site is created
-* Fix - Avoid showing 404 error on Litespeed WP Multisite when a new taxonomy is created
-* Fix - Brute force math security when the math field is deleted
-* Fixed the hidden URLs process
-
-= 5.0.13 (03 May 2022) =
-* Update - Compatibility with WordPress 5.9.3
-* Update - Compatibility with BackUpWordPress plugin
-* Update - Compatibility with Themify theme
-* Fix - Added the URI in the redirected URL
-* Fix - Compatibility with LiteSpeed cache plugin
-
-= 5.0.12 (08 Mar 2022) =
-* Update - Added compatibility with Backup Guard Plugin
-* Update - Prevent affecting the cron processes on Wordfence & changing the paths during the cron process
-* Update - Change the WP-Rocket cache files on all subsites for WP Multisite
-* Update - Automatically add the CDN URL if WP_CONTENT_URL is set as a different domain
-* Update - Compatibility with WordPress 5.9.1
-* Fix - Change Paths for Logged Users issue
-* Fix - Show the feature icon in the feature list
-* Fix - Show all the rewrite paths for WpEngine with PHP >7.4
-* Fix - Frontend test when the plugins paths are not changed
-
-= 5.0.11 (22 Feb 2022) =
-* Update - Added 7G Firewall option in Hide My WP > Change Paths > Firewall & Headers > Firewall Against Script Injection
-* Update - Fixed the menu hidden issue when other security plugins are active
-* Update - Compatibility with Login/Signup Popup plugin when Brute Force Google reCaptcha is activated
-* Update - Compatibility with Buy Me A Coffee plugin
-* Fix - Library loading ID in HMWP Ghost
-
-= 5.0.10 (17 Feb 2022) =
-* Update - Added new option in Login Security: Hide the language switcher option on the login page
-* Update - Added the option to reset all settings to default
-* Update - Added the Ctrl + Shift + C restriction when Inspect Element option is active
-* Update - Added the features text for translation
-* Update - Added Firewall & Headers option
-* Update - Added the option to ignore the notifications and avoid repeating alerts
-* Update - Added the option to disable Right-Click for logged users and user roles
-* Update - Added the option to disable Inspect Element for logged users and user roles
-* Update - Added the option to disable View Source for logged users and user roles
-* Update - Added the option to disable Copy/Paste for logged users and user roles
-* Update - Added the option to disable Drag/Drop for logged users and user roles
-* Update - Add the option to hide the wp-admin path for non-admin users
-* Update - Compatibility with Namecheap hosting
-* Update - Compatibility with Ploi.io
-* Update - Compatibility with WordPress 5.9
-* Update - Compatibility with Coming Soon & Maintenance Mode PRO
-* Update - Compatibility with Advanced Access Manager (AAM) plugin
-* Update - Compatibility with WPS Hide Login
-* Update - Compatibility with JobCareer theme
-* Update - Compatibility with Wordfence Security Scan when the wp-admin is hidden
-* Update - Compatibility with the Temporary Login Without Password plugin to work with the passwordless connection on custom admin
-* Update - Compatibility with the LoginPress plugin to work with the passwordless connection on custom admin
-* Update - Compatibility with WordPress Sitemap, Rank Math SEO, SEOPress, XML Sitemaps to hide the paths and style on Nginx servers
-* Update - Compatibility with Nitropack
-* Update - Compatibility with OptimizePress Dashboard
-* Update - Compatibility with Bricks Builder
-* Update - Compatibility with Zion Builder
-* Update - Compatibility with MainWP
-* Update - Compatibility with Limit Login Attempts Reloaded
-* Update - Compatibility with Loginizer
-* Update - Compatibility with Shield Security
-* Update - Compatibility with iThemes Security
-* Update - Compatibility with Smush plugin
-* Update - Compatibility with Wordfence 2FA when reCaptcha is active
-* Update - Added compatibility with JCH Optimize 3 plugin
-* Update - Added compatibility with Oxygen 3.8 plugin
-* Update - Added compatibility with WP Bakery plugin
-* Update - Added compatibility with Bunny CDN plugin
-* Update - Update compatibility with Manage WP plugin
-* Update - Update compatibility with the Autoptimize plugin
-* Update - Update compatibility with Breeze plugin
-* Update - Update compatibility with Cache Enabler plugin
-* Update - Update compatibility with CDN Enabler plugin
-* Update - Update compatibility with Comet Cache plugin
-* Update - Update compatibility with the Hummingbird plugin
-* Update - Update compatibility with Hyper Cache plugin
-* Update - Update compatibility with the Litespeed Cache plugin
-* Update - Update compatibility with the Power Cache plugin
-* Update - Update compatibility with the W3 Total Cache plugin
-* Update - Update compatibility with WP Fastest Cache plugin
-* Update - Update compatibility with the iThemes plugin
-* Update - Added compatibility with Hummingbird Performance plugin
-* Update - Advanced Text Mapping to work with Page Builders in admin
-* Update - Changing the paths in sitemap.xml and robots.txt to work with all SEO plugins
-* Update - Translate the plugin into more languages
-* Update - Select the cache directory if there is a custom cache directory set in the cache plugin
-* Update - Show the change in cache files option for more cache plugins
-* Update - Removed the WordPress title tag from login/register pages
-* Fix - Brute Force blocking Wordfence Cron Job
-* Fix - Infinite loop when POST action on unknown paths
-* Fix - Remove the login URL from the logo on the custom login page
-* Fix - Set Filesystem to direct connection for file management
-* Fix - Don't show the rewrite alert messages if nothing was changed in HMWP
-
-
 Security:
 Hide My WP - WordPress Security Plugin
 Hide WordPress - Hack Prevention Plugin
@@ -675,6 +341,7 @@ Ocultar Mi WP - Plugin de seguridad de WordPress
 Ocultar meu WP - Segurança do WordPress
 Cacher mon WordPress - Plugin de sécurité WordPress
 Verstecken Sie mein WordPress - WordPress Sicherheits-Plugin
+
 
 == Frequently Asked Questions ==
 

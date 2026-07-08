@@ -225,6 +225,8 @@ class HMWP_Classes_Tools {
 			'hmwp_2falogin_fail_message'     => false,
 			'hmwp_2falogin_delete_uninstal'  => false,
 			'hmwp_2fa_passkey'               => 0,
+			'hmwp_2fa_forced'                => 0,
+			'hmwp_2fa_forced_roles'          => array(),
 
 			//Math reCaptcha
 			'brute_use_math'                 => 1,

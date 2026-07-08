@@ -62,6 +62,9 @@ class HMWP_Models_Firewall_Bots {
 			'@^.*DuplexWeb-Google.*$@',
 			'@^.*Google\sFavicon.*$@',
 			'@^.*Google-Read-Aloud.*$@',
+			'@^.*Google-InspectionTool.*$@',
+			'@^.*GoogleInspectionTool.*$@',
+			'@^.*Storebot-Google.*$@',
 			'@^.*googleweblight.*$@'
 		);
 

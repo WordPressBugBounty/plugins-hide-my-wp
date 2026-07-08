@@ -32,6 +32,8 @@
             <div id="hmwp_frontendcheck_content" class="my-3"></div>
             <div id="hmwp_solutions" style="display: none">
                 <div class="my-3 pt-3 border-top border-white text-center">
+                    <div class="mb-2" style="font-weight:700;font-size:1rem;"><?php echo esc_html__( 'How to fix this', 'hide-my-wp' ); ?></div>
+                    <div class="mb-3 mx-auto" style="max-width:620px;font-size:0.9rem;"><?php echo esc_html__( "The hidden paths return 404, which means the rewrite rules are not active on your server. Follow the setup guide for your server below, clear your cache, then run the Frontend Test again.", 'hide-my-wp' ); ?></div>
                     <?php if ( HMWP_Classes_Tools::isLitespeed() ) { ?>
                         <div class="mb-2">
                             <a href="<?php echo esc_url( HMWP_Classes_Tools::getSettingsUrl( 'litespeed-toolbox' ) ) ?>" target="_blank">Make sure you purge

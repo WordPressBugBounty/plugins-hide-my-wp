@@ -103,6 +103,10 @@ class HMWP_Models_Presets {
 				return __( 'Hide WordPress DNS Prefetch META Tags', 'hide-my-wp' );
 			case 'hmwp_hide_generator':
 				return __( 'Hide WordPress Generator META Tags', 'hide-my-wp' );
+			case 'hmwp_disable_xmlrpc':
+				return __( 'Disable XML-RPC and Pingback', 'hide-my-wp' );
+			case 'hmwp_hide_rsd':
+				return __( 'Hide Really Simple Discovery (RSD)', 'hide-my-wp' );
 			case 'hmwp_hide_comments':
 				return __( 'Hide HTML Comments', 'hide-my-wp' );
 			case 'hmwp_hide_source_map':
@@ -314,7 +318,7 @@ class HMWP_Models_Presets {
 		$lite    = @array_merge( $default, HMWP_Classes_Tools::$lite );
 		$presets = array(
 			'hmwp_sqlinjection'        => 1, 'hmwp_sqlinjection_level' => 4, 'hmwp_hide_unsafe_headers' => 1,
-			'hmwp_hide_author'         => 1, 'hmwp_hide_author_enumeration' => 1, 'hmwp_disable_xmlrpc' => 1, 'hmwp_hide_oldpaths' => 1,
+			'hmwp_hide_author'         => 1, 'hmwp_hide_author_enumeration' => 1, 'hmwp_disable_xmlrpc' => 1, 'hmwp_hide_rsd' => 1, 'hmwp_hide_oldpaths' => 1,
 			'hmwp_detectors_block'     => 1, 'hmwp_security_header' => 1, 'hmwp_hide_version' => 1,
 			'hmwp_hide_version_random' => 1, 'hmwp_hide_styleids' => 0, 'hmwp_hide_prefetch' => 1,
 			'hmwp_hide_generator'      => 1, 'hmwp_hide_comments' => 1, 'hmwp_hide_source_map' => 1, 'hmwp_disable_embeds' => 1,

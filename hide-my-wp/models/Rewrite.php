@@ -2999,20 +2999,24 @@ class HMWP_Models_Rewrite {
 	public function replaceHeadersAndTags( $content ) {
 		$find = $replace = array();
 
-		// Remove the admin path and wp from the prefetch list
-		if ( strpos( $content, HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' )  . '/*' ) !== false ||
-		     strpos( $content, HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' )  . '\/*' ) !== false ) {
+		// Remove the admin path and wp from the prefetch/speculation-rules list (e.g. "\/wp-*.php", "\/wp-admin\/*").
+		if ( strpos( $content, HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '/*' ) !== false ||
+		     strpos( $content, HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '\/*' ) !== false ) {
 
-			$find[]    = '#"[^"]*\/wp\-\*.php"\s*,\s*#i';
+			$admin_url = preg_quote( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ), '#' );
+
+			// "\/wp-*.php" entry: element + trailing comma, then leading comma + element (for the last element in the array)
+			$find[]    = '#"[^"]*\\\\?/wp\-\*\.php"\s*,#i';
 			$replace[] = '';
 
-			$find[]    = '#"[^"]*\\\/wp\-\*.php"\s*,\s*#i';
+			$find[]    = '#,\s*"[^"]*\\\\?/wp\-\*\.php"#i';
 			$replace[] = '';
 
-			$find[]    = '#"[^"]*\/' . HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '\/\*"\s*,\s*#i';
+			// "\/wp-admin\/*" entry: element + trailing comma, then leading comma + element
+			$find[]    = '#"[^"]*\\\\?/' . $admin_url . '\\\\?/\*"\s*,#i';
 			$replace[] = '';
 
-			$find[]    = '#"[^"]*\\\/' . HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '\\\/\*"\s*,\s*#i';
+			$find[]    = '#,\s*"[^"]*\\\\?/' . $admin_url . '\\\\?/\*"#i';
 			$replace[] = '';
 
 		}
@@ -3117,7 +3121,16 @@ class HMWP_Models_Rewrite {
 		}
 
 
-		return preg_replace( $find, $replace, $content );
+		if ( empty( $find ) ) {
+			return $content;
+		}
+
+		$result = preg_replace( $find, $replace, $content );
+
+		// preg_replace() returns NULL on a PCRE error (e.g. pcre.backtrack_limit exceeded on large pages,
+		// or invalid UTF-8 bytes combined with the /i flag). Falling back to the original content prevents
+		// the whole page from rendering blank.
+		return ( null === $result ) ? $content : $result;
 	}
 
 	/**

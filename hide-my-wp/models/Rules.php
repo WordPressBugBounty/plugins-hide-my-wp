@@ -587,6 +587,13 @@ class HMWP_Models_Rules {
 				$rules .= "RewriteEngine On" . PHP_EOL;
 				$rules .= "RewriteBase $home_root" . PHP_EOL;
 
+				// Let the whitelisted IPs bypass the firewall rules (added without [OR] so they are AND-ed before the rule group)
+				if ( !empty($this->whitelist_ips) ){
+					foreach ($this->whitelist_ips as $ip){
+						$rules .= "RewriteCond %{REMOTE_ADDR} !^$ip$" . PHP_EOL;
+					}
+				}
+
 				// Prevent -f checks on index.php.
 				if ( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 1 ) {
 					$rules .= "RewriteCond %{THE_REQUEST} etc/passwd [NC,OR]" . PHP_EOL;

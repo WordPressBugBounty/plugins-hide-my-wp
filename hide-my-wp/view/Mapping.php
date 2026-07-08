@@ -46,6 +46,7 @@ if ( ! isset( $view ) ) {
                             <div class="card-body">
                                 <div class="text-black-50"><?php echo esc_html__( 'Text Mapping only Classes, IDs, JS variables', 'hide-my-wp' ); ?></div>
                                 <div class="text-black-50 py-2"><?php echo esc_html__( 'After adding the classes, verify the frontend to ensure that your theme is not affected.', 'hide-my-wp' ); ?></div>
+                                <div class="text-black-50 py-2"><?php echo esc_html__( 'Only rename labels that nothing styles (e.g. body class fingerprints). Do not map CSS variables or layout classes such as --wp-*, wp-block-* or has-*-color, as they are used by stylesheets and will break the design. Use {blank} to remove a label or {rand} for a random value.', 'hide-my-wp' ); ?></div>
 
                                 <div class="hmwp_text_mapping_group py-3">
 
@@ -64,6 +65,8 @@ if ( ! isset( $view ) ) {
                                     $wpclasses['wp-escape']          = 'escape';
                                     $wpclasses['wp-element']         = 'element';
                                     $wpclasses['wp-switch-editor']   = 'switch-editor';
+                                    // Body class fingerprint that WordPress core does not style. Safe to blank.
+                                    $wpclasses['wp-singular']        = '{blank}';
 
 
                                     $hmwp_text_mapping = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ), true );

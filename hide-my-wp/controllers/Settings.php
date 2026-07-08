@@ -219,8 +219,11 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 		if ( HMWP_Classes_Tools::getValue( 'action' ) == 'hmwp_update' && HMWP_Classes_Tools::getValue( 'user_id' ) ) {
 			$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
 
-			$this->user          = get_user_by( 'ID', $user_id );
-			$this->user->details = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Templogin' )->getUserDetails( $this->user );
+			$this->user = get_user_by( 'ID', $user_id );
+
+			if ( $this->user instanceof WP_User ) {
+				$this->user->details = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Templogin' )->getUserDetails( $this->user );
+			}
 		}
 
 		if ( HMWP_Classes_Tools::getValue( 'hmwp_message' ) ) {

@@ -63,6 +63,18 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 		//admin dashboard hooks
 		add_action( 'admin_notices', array( $this->model, 'adminNotices' ) );
 
+		// Show the 2FA setup section on the user's own profile page for every role,
+		// not just admins (the admin menu only registers it for manage_options users).
+		// Same object, hook and priority as that registration, so it is not duplicated.
+		add_action( 'show_user_profile', array( $this, 'hookUserSettings' ), 11, 1 );
+		add_action( 'edit_user_profile', array( $this, 'hookUserSettings' ), 11, 1 );
+
+		// Force users without 2FA to enroll before using the dashboard
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_2fa_forced' ) ) {
+			add_action( 'admin_init', array( $this, 'hookForceTwoFactorSetup' ), 1 );
+			add_action( 'admin_notices', array( $this, 'hookForceNotice' ) );
+		}
+
 	}
 
 	/**
@@ -74,6 +86,28 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 	 * @throws Exception
 	 */
 	public function hookUserSettings( $user ) {
+
+		$this->registerUserOptionBlocks( $user );
+
+		$this->user = $user;
+
+		//Show 2FA in user settings profile
+		$this->show( 'TwofactorUser' );
+
+		do_action( 'hmwp_user_security_settings_after', $user );
+	}
+
+	/**
+	 * Register the 2FA setup blocks (authenticator, email, passkey) for the given
+	 * user on the `hmwp_two_factor_user_options` action. Shared by the profile page
+	 * and the forced-setup interstitial so both render the same enrollment UI.
+	 *
+	 * @param WP_User $user The user the blocks are rendered for.
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function registerUserOptionBlocks( $user ) {
 
 		HMWP_Classes_ObjController::getClass( 'HMWP_Classes_DisplayController' )->loadMedia( 'twofactor' );
 		HMWP_Classes_ObjController::getClass( 'HMWP_Classes_DisplayController' )->loadMedia( 'qrcode' );
@@ -110,7 +144,7 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 			$this->show( 'blocks/Email' );
 		} );
 
-		//add 2FA with Email Code in user settings View
+		//add 2FA with Passkey in user settings View
 		add_action( 'hmwp_two_factor_user_options', function () use ( $user ) {
 
 			if ( ! $this->model->isActiveService( $user, 'hmwp_2fa_passkey' )  ) {
@@ -125,13 +159,75 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 			//Show the two factor block
 			$this->show( 'blocks/Passkey' );
 		} );
+	}
 
-		$this->user = $user;
+	/**
+	 * Force users without 2FA to enroll before they can use the dashboard.
+	 *
+	 * Runs on admin_init. When the current user is required to set up 2FA and has
+	 * no method configured yet, every admin request is redirected to their profile
+	 * page, where the 2FA setup section is shown. Only interactive dashboard requests
+	 * are affected - AJAX, cron, REST, the CLI and whitelisted IPs are left untouched,
+	 * the profile page itself always stays reachable, and logout is never blocked.
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function hookForceTwoFactorSetup() {
+		global $pagenow;
 
-		//Show 2FA in user settings profile
-		$this->show( 'TwofactorUser' );
+		// Only interactive dashboard requests.
+		if ( HMWP_Classes_Tools::isAjax() || HMWP_Classes_Tools::isCron() || HMWP_Classes_Tools::isApi() || HMWP_Classes_Tools::isXmlRpc() ) {
+			return;
+		}
 
-		do_action( 'hmwp_user_security_settings_after', $user );
+		// The profile page hosts the 2FA setup section, so always let it through.
+		if ( 'profile.php' === $pagenow ) {
+			return;
+		}
+
+		$user = wp_get_current_user();
+
+		if ( ! $user || ! $user->exists() ) {
+			return;
+		}
+
+		// Don't block whitelisted IPs (matches the login flow behavior).
+		if ( isset( $_SERVER['REMOTE_ADDR'] ) ) { // phpcs:ignore WordPress.Security, check isset only
+			if ( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $_SERVER['REMOTE_ADDR'] ) ) { // phpcs:ignore WordPress.Security, filtered in isWhitelistedIP function
+				return;
+			}
+		}
+
+		// Only force users in scope that haven't configured 2FA yet.
+		if ( ! $this->model->isForcedForUser( $user ) || $this->model->hasConfiguredTwoFactor( $user ) ) {
+			return;
+		}
+
+		wp_safe_redirect( admin_url( 'profile.php#hmwp_totp_wrap' ) );
+		exit();
+	}
+
+	/**
+	 * Show a notice on the profile page explaining why 2FA setup is required.
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function hookForceNotice() {
+		global $pagenow;
+
+		if ( 'profile.php' !== $pagenow ) {
+			return;
+		}
+
+		$user = wp_get_current_user();
+
+		if ( ! $user || ! $user->exists() || ! $this->model->isForcedForUser( $user ) || $this->model->hasConfiguredTwoFactor( $user ) ) {
+			return;
+		}
+
+		echo '<div class="notice notice-warning"><p>' . esc_html__( 'Your site administrator requires you to set up Two-Factor Authentication before you can continue. Please configure a method in the 2FA Setup section below.', 'hide-my-wp' ) . '</p></div>';
 	}
 
 	/**
@@ -289,6 +385,12 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 				// Save the text every time to prevent from removing the white space from the text
 				HMWP_Classes_Tools::saveOptions( 'hmwp_2falogin_message', HMWP_Classes_Tools::getValue( 'hmwp_2falogin_message' ) );
 				HMWP_Classes_Tools::saveOptions( 'hmwp_2falogin_fail_message', HMWP_Classes_Tools::getValue( 'hmwp_2falogin_fail_message' ) );
+
+				// Sanitize the forced 2FA roles against the site's real roles
+				$forced_roles = (array) HMWP_Classes_Tools::getValue( 'hmwp_2fa_forced_roles' );
+				$valid_roles  = function_exists( 'wp_roles' ) ? array_keys( wp_roles()->get_names() ) : array();
+				$forced_roles = array_values( array_intersect( array_map( 'sanitize_text_field', $forced_roles ), $valid_roles ) );
+				HMWP_Classes_Tools::saveOptions( 'hmwp_2fa_forced_roles', $forced_roles );
 
 				// Add action for later use
 				do_action( 'hmwp_2fasettings_saved' );

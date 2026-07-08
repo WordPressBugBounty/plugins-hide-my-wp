@@ -396,7 +396,7 @@ class HMWP_Models_Files {
 					//If the plugin is not set to map all the files dynamically
 					if ( ! HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 						//if file is loaded through WordPress rewrites and not through config file
-						if ( wp_parse_url( $url ) && in_array( $ext, array( 'png', 'jpg', 'jpeg', 'webp', 'gif' ) ) ) {
+						if ( wp_parse_url( $url ) && in_array( $ext, array( 'png', 'jpg', 'jpeg', 'webp', 'gif', 'css', 'js', 'svg', 'woff', 'woff2' ) ) ) {
 							if ( stripos( $new_url, 'wp-admin' ) === false ) {
 								//if it's a valid URL and not from admin
 								//add the url in the WP rewrite list
