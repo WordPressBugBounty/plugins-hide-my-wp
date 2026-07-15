@@ -3319,8 +3319,8 @@ class HMWP_Models_Rewrite {
 	 */
 	public function hideRestUsers( $endpoints ) {
 
-		// Remove the users listing from Rest API
-		if (!current_user_can('list_users')) {
+		// Hide the users listing from anonymous visitors only — stripping it from logged-in Editors/Authors breaks the Block Editor.
+		if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cookies' )->isLoggedInCookie() ) {
 
 			if ( isset( $endpoints['/wp/v2/users'] ) ) {
 				unset( $endpoints['/wp/v2/users'] );

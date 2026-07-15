@@ -69,9 +69,26 @@ class HMWP_Models_Translate {
 	 */
 	public function getRawStrings() {
 
+		// switch_to_locale() re-runs create_initial_taxonomies/post_types, which detaches custom taxonomies from CPTs and crashes the Block Editor; suppress them around the switch.
+		$has_tax = has_action( 'change_locale', 'create_initial_taxonomies' );
+		$has_cpt = has_action( 'change_locale', 'create_initial_post_types' );
+		if ( false !== $has_tax ) {
+			remove_action( 'change_locale', 'create_initial_taxonomies', $has_tax );
+		}
+		if ( false !== $has_cpt ) {
+			remove_action( 'change_locale', 'create_initial_post_types', $has_cpt );
+		}
+
 		switch_to_locale( $this->default_locale );
 		$strings = apply_filters( 'hmwp_translate_strings', $this->strings );
 		restore_previous_locale();
+
+		if ( false !== $has_cpt ) {
+			add_action( 'change_locale', 'create_initial_post_types', $has_cpt );
+		}
+		if ( false !== $has_tax ) {
+			add_action( 'change_locale', 'create_initial_taxonomies', $has_tax );
+		}
 
 		// Keep only keys that exist in options
 		return array_intersect_key( $strings, HMWP_Classes_Tools::$options );

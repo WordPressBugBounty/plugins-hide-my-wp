@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 7.0.05
+Stable tag: 7.0.06
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -176,11 +176,17 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 20. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+= 7.0.06 (15 July 2026) =
+* Fix - Editing a custom post type that uses the built-in Categories/Tags taxonomy no longer crashes the Block Editor
+* Fix - Block Editor no longer crashes with "Cannot read properties of undefined" when Hide User Enumeration is on
+* Fix - Settings page navigation menu no longer loses its layout on sites where another plugin or theme restricts the allowed HTML tags
+
 = 7.0.05 (08 July 2026) =
 * New - Force 2FA Setup: require selected user roles to set up Two-Factor Authentication before they can access the dashboard, with a guided setup screen shown right after login
 * Fix - Temporary Login page no longer triggers a fatal error when opened for a user that was deleted or expired
 * Fix - Two-Factor email setup and Magic Login no longer emit PHP warnings when the requested user no longer exists
 * Fix - WP-CLI commands no longer emit a PHP 8.5 "Undefined array key hostname" warning
+* Fix - Settings page navigation menu no longer loses its layout on sites where another plugin or theme restricts the allowed HTML tags; the menu now keeps its own classes and attributes regardless of the site's wp_kses filters
 
 = 7.0.04 (29 June 2026) =
 * New - Frontend Check now also verifies the theme's CSS and JS files load, catching a broken layout on pages that still return 200

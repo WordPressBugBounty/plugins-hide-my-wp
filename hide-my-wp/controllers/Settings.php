@@ -378,28 +378,26 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 
         $allowed = wp_kses_allowed_html( 'post' );
 
-        $allowed['svg'] = array(
-                'width'   => true,
-                'height'  => true,
-                'viewBox' => true,
-                'fill'    => true,
-                'xmlns'   => true,
-        );
+        // Force-allow the tags/attributes this internally-built nav uses, so a third-party wp_kses_allowed_html filter can't strip its classes and break the layout.
+        foreach ( array( 'a', 'div', 'span', 'i', 'img' ) as $tag ) {
+                if ( ! isset( $allowed[ $tag ] ) || ! is_array( $allowed[ $tag ] ) ) {
+                        $allowed[ $tag ] = array();
+                }
+                $allowed[ $tag ]['class']    = true;
+                $allowed[ $tag ]['style']    = true;
+                $allowed[ $tag ]['data-tab'] = true;
+        }
+        $allowed['a']['href']  = true;
+        $allowed['img']['src'] = true;
+        $allowed['img']['alt'] = true;
 
-        $allowed['style'] = array(
-                'type' => true,
-        );
-
-        $allowed['g'] = array(
-                'clip-path' => true,
-        );
-
-        $allowed = wp_kses_allowed_html( 'post' );
-
+        // Inline SVG logo tags.
         $allowed['svg'] = array(
                 'xmlns'   => true,
                 'viewbox' => true,
                 'fill'    => true,
+                'width'   => true,
+                'height'  => true,
         );
 
         $allowed['style'] = array(
@@ -408,6 +406,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 
         $allowed['g'] = array(
                 'clip-path' => true,
+                'opacity'   => true,
         );
 
         $allowed['path'] = array(
