@@ -212,13 +212,13 @@ class HMWP_Models_Templogin {
 
 		$expire      = ! empty( $data['expire'] ) ? $data['expire'] : 'day';
 		$blog_id     = $data['blog_id'] ?? false;
-		$super_admin = $data['super_admin'] ?? false;
+		$super_admin = ( $data['super_admin'] ?? false ) && is_super_admin();
 		$password    = HMWP_Classes_Tools::generateRandomString();
 		$username    = $this->createUsername( $data );
 		$first_name  = isset( $data['first_name'] ) ? sanitize_text_field( $data['first_name'] ) : '';
 		$last_name   = isset( $data['last_name'] ) ? sanitize_text_field( $data['last_name'] ) : '';
 		$email       = isset( $data['user_email'] ) ? sanitize_email( $data['user_email'] ) : '';
-		$role        = ! empty( $data['user_role'] ) ? $data['user_role'] : 'subscriber';
+		$role        = $this->sanitizeRole( isset( $data['user_role'] ) ? $data['user_role'] : '' );
 		$redirect_to = ! empty( $data['redirect_to'] ) ? sanitize_text_field( $data['redirect_to'] ) : '';
 		$user_args   = array(
 			'first_name' => $first_name, 'last_name' => $last_name, 'user_login' => $username, 'user_pass' => $password,
@@ -417,11 +417,11 @@ class HMWP_Models_Templogin {
 
 		$expire      = ! empty( $data['expire'] ) ? $data['expire'] : 'day';
 		$blog_id     = $data['blog_id'] ?? false;
-		$super_admin = $data['super_admin'] ?? false;
+		$super_admin = ( $data['super_admin'] ?? false ) && is_super_admin();
 		$first_name  = isset( $data['first_name'] ) ? sanitize_text_field( $data['first_name'] ) : '';
 		$last_name   = isset( $data['last_name'] ) ? sanitize_text_field( $data['last_name'] ) : '';
 		$redirect_to = isset( $data['redirect_to'] ) ? sanitize_text_field( $data['redirect_to'] ) : '';
-		$role        = ! empty( $data['user_role'] ) ? $data['user_role'] : 'subscriber';
+		$role        = $this->sanitizeRole( isset( $data['user_role'] ) ? $data['user_role'] : '' );
 		$user_args   = array(
 			'first_name' => $first_name, 'last_name' => $last_name, 'role' => $role, 'ID' => $data['user_id']
 		);
@@ -716,6 +716,66 @@ class HMWP_Models_Templogin {
 
 		return apply_filters( 'hmwp_templogin_link', $login_url, $user_id );
 
+	}
+
+	/**
+	 * Validate a requested role for a temporary login.
+	 *
+	 * The role arrives from the request, so it can name any role on the site -
+	 * including administrator. Granting a temporary login capabilities that the
+	 * user creating it does not hold would be a privilege escalation: the creator
+	 * gets the temporary login URL back and can sign in through it. So an unknown
+	 * role, or one that grants anything the current user lacks, falls back to the
+	 * role configured for temporary logins.
+	 *
+	 * @param string $role The requested role slug.
+	 *
+	 * @return string A role slug that is safe for the current user to assign.
+	 */
+	public function sanitizeRole( $role ) {
+
+		$default = HMWP_Classes_Tools::getOption( 'hmwp_templogin_role' );
+
+		if ( empty( $default ) || ! get_role( $default ) ) {
+			$default = 'subscriber';
+		}
+
+		$role = sanitize_text_field( $role );
+
+		if ( empty( $role ) ) {
+			return $default;
+		}
+
+		$role_object = get_role( $role );
+
+		if ( ! $role_object ) {
+			return $default;
+		}
+
+		// Super admins may assign anything.
+		if ( function_exists( 'is_super_admin' ) && is_super_admin() ) {
+			return $role;
+		}
+
+		$current_user = wp_get_current_user();
+
+		if ( ! $current_user || ! $current_user->exists() ) {
+			return $default;
+		}
+
+		// Compare against the caps the current user actually holds rather than
+		// current_user_can(), so that caps map_meta_cap() filters per-request
+		// (unfiltered_html on multisite, for one) don't wrongly reject a role
+		// the user legitimately owns.
+		$own_caps = (array) $current_user->allcaps;
+
+		foreach ( (array) $role_object->capabilities as $cap => $granted ) {
+			if ( $granted && empty( $own_caps[ $cap ] ) ) {
+				return $default;
+			}
+		}
+
+		return $role;
 	}
 
 	/**

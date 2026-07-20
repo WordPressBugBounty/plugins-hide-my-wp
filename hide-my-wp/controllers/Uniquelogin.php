@@ -300,6 +300,13 @@ class HMWP_Controllers_Uniquelogin extends HMWP_Classes_FrontController {
 	public function action() {
 		parent::action();
 
+		// If current user can't manage settings.
+		// This action mints a magic-login link for any account matching the posted
+		// email, so it must stay behind the same gate as the UI that exposes it.
+		if ( ! HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
+			return;
+		}
+
         if ( HMWP_Classes_Tools::getValue( 'action' ) == 'hmwp_uniquelogin_new' ) {
             $user_email = HMWP_Classes_Tools::getValue( 'user_email', false );
 

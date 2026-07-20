@@ -357,6 +357,39 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 	}
 
 	/**
+	 * Resolve the target user ID for a 2FA management request.
+	 *
+	 * The user ID is supplied by the client, so it must never be trusted on its own.
+	 * A user may always manage their own second factor; managing somebody else's is
+	 * only allowed for users who can edit that account (administrators on the
+	 * user-edit profile screen). WordPress action nonces are not bound to a user ID,
+	 * so this ownership check is the only thing standing between a Subscriber and
+	 * another account's 2FA settings.
+	 *
+	 * @param bool $self_only Set to true for device-bound operations (passkeys) which
+	 *                        have no legitimate cross-user flow.
+	 *
+	 * @return int The validated user ID. Never returns when the request is rejected.
+	 */
+	private function getTargetUserId( $self_only = false ) {
+
+		$user_id     = (int) HMWP_Classes_Tools::getValue( 'user_id' );
+		$current_user = get_current_user_id();
+
+		if ( ! $user_id || ! get_user_by( 'ID', $user_id ) ) {
+			wp_send_json_error( esc_html__( 'Not authenticated.', 'hide-my-wp' ) );
+		}
+
+		if ( $user_id <> $current_user ) {
+			if ( $self_only || ! current_user_can( 'edit_user', $user_id ) ) {
+				wp_send_json_error( esc_html__( 'You are not allowed to change the two-factor settings for this user.', 'hide-my-wp' ) );
+			}
+		}
+
+		return $user_id;
+	}
+
+	/**
 	 * Login form validation.
 	 *
 	 * @return void
@@ -400,7 +433,7 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 				break;
 			case 'hmwp_2fa_method':
 
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
+				$user_id = $this->getTargetUserId();
 				$method     = HMWP_Classes_Tools::getValue( 'method' );
 
 				HMWP_Classes_Tools::saveUserMeta('_hmwp_2fa_method', $method, $user_id);
@@ -409,7 +442,7 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 
 				break;
 			case 'hmwp_totp_submit':
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
+				$user_id = $this->getTargetUserId();
 				$key     = HMWP_Classes_Tools::getValue( 'key' );
 				$code    = HMWP_Classes_Tools::getValue( 'authcode' );
 
@@ -430,7 +463,7 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 				}
 				break;
 			case 'hmwp_totp_reset':
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
+				$user_id = $this->getTargetUserId();
 
 
 				/** @var HMWP_Models_Twofactor_Tftotp $twoFactorService */
@@ -452,7 +485,7 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 				}
 				break;
 			case 'hmwp_codes_generate':
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
+				$user_id = $this->getTargetUserId();
 
 				/** @var HMWP_Models_Twofactor_Codes $codesService */
 				$codesService = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor_Codes' );
@@ -471,7 +504,7 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 				break;
 
 			case 'hmwp_email_submit':
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
+				$user_id = $this->getTargetUserId();
 				$email   = HMWP_Classes_Tools::getValue( 'email' );
 
 				/** @var HMWP_Models_Twofactor_Email $emailService */
@@ -492,7 +525,7 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 				break;
 
 			case 'hmwp_email_reset':
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
+				$user_id = $this->getTargetUserId();
 
 				/** @var HMWP_Models_Twofactor_Email $emailService */
 				$emailService = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor_Email' );
@@ -512,7 +545,9 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 				break;
 
 			case 'hmwp_passkey_submit':
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
+				// Passkey enrollment is bound to the authenticator in the caller's own
+				// browser, so it is always self-service - never on behalf of another user.
+				$user_id = $this->getTargetUserId( true );
 
 				if ( ! $user_id ) {
 					wp_send_json_error( esc_html__( 'Not authenticated.', 'hide-my-wp' ) );
@@ -532,7 +567,7 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 
 			case 'hmwp_passkey_register':
 
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
+				$user_id = $this->getTargetUserId( true );
 
 				if ( ! $user_id || ! isset( $_POST['credential'] ) ) { //phpcs:ignore
 					wp_send_json_error( esc_html__( 'Not authenticated.', 'hide-my-wp' ) );
@@ -552,7 +587,7 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 
 			case 'hmwp_passkey_remove':
 
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id' );
+				$user_id = $this->getTargetUserId();
 				$id = HMWP_Classes_Tools::getValue( 'id' );
 
 				if ( ! $user_id ) {

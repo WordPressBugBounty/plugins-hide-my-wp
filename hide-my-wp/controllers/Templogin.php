@@ -255,11 +255,14 @@ class HMWP_Controllers_Templogin extends HMWP_Classes_FrontController {
 
 			case 'hmwp_templogin_update':
 				$data            = HMWP_Classes_Tools::getValue( 'hmwp_details', array() );
-				$data['user_id'] = HMWP_Classes_Tools::getValue( 'user_id', 0 );
+				$data['user_id'] = absint( HMWP_Classes_Tools::getValue( 'user_id', 0 ) );
 				HMWP_Classes_Error::clearErrors();
 
 				if ( $data['user_id'] == 0 ) {
 					HMWP_Classes_Error::setNotification( esc_html__( 'Could not detect the user', 'hide-my-wp' ), 'danger', false );
+				} elseif ( ! $this->model->isValidTempLogin( $data['user_id'] ) ) {
+					// This screen only manages temporary logins
+					HMWP_Classes_Error::setNotification( esc_html__( 'This user is not a temporary login.', 'hide-my-wp' ), 'danger', false );
 				}
 
 				if ( ! HMWP_Classes_Error::isError() ) {
@@ -297,7 +300,13 @@ class HMWP_Controllers_Templogin extends HMWP_Classes_FrontController {
 				break;
 
 			case 'hmwp_templogin_delete':
-				$user_id = HMWP_Classes_Tools::getValue( 'user_id', 0 );
+				$user_id = absint( HMWP_Classes_Tools::getValue( 'user_id', 0 ) );
+
+				// Only temporary logins may be deleted from this screen.
+				if ( ! $user_id || ! $this->model->isValidTempLogin( $user_id ) ) {
+					HMWP_Classes_Error::setNotification( esc_html__( 'User could not be deleted.', 'hide-my-wp' ), 'danger', false );
+					break;
+				}
 
 				//remove actions on remove_user_from_blog to avoid errors on other plugins
 				remove_all_actions( 'remove_user_from_blog' );

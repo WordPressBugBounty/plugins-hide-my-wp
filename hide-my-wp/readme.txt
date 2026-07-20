@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 7.0.06
+Stable tag: 7.0.07
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -176,6 +176,13 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 20. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+= 7.0.07 (20 July 2026) =
+* Security - Two-Factor Authentication settings are now bound to the account they belong to, so the 2FA method, authenticator, email codes, backup codes and passkeys can only be managed by the account owner or by an administrator allowed to edit that user
+* Security - Passkey enrollment is now always self-service, matching the device the passkey is created on
+* Security - Temporary Login updates and deletions now apply only to temporary accounts, so regular accounts are never affected from this screen
+* Security - The role assigned to a temporary login is now validated and can never grant more capabilities than the user creating it already has
+* Security - Magic Login links now require the same permissions as the screen they are offered from
+
 = 7.0.06 (15 July 2026) =
 * Fix - Editing a custom post type that uses the built-in Categories/Tags taxonomy no longer crashes the Block Editor
 * Fix - Block Editor no longer crashes with "Cannot read properties of undefined" when Hide User Enumeration is on
