@@ -17,9 +17,26 @@
         <?php do_action('hmwp_notices'); ?>
         <div class="hmwp_col flex-grow-1 p-0 pr-2 mr-2 mb-3">
             <?php
-            // Check the frontend new paths and login
-            $view->show('blocks/FrontendLoginCheck');
+            // Ghost Doctor replaces the old Frontend Test and Login Test. It runs the
+            // same checks and can also repair what it finds, so both live in one card
+            // instead of three separate ones.
+            //
+            // The post-change confirmation gate renders inside this same card rather
+            // than as a second one above it: both answer "did the path change break
+            // the site?", and splitting them only made the screen harder to read.
             ?>
+            <div class="card col-sm-12 p-0 m-0 mb-3">
+                <h3 class="card-title hmwp_header p-2 m-0">
+                    <?php echo esc_html__('Ghost Doctor', 'hide-my-wp'); ?>
+                    <a href="<?php echo esc_url(HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/category/errors/'); ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white">
+                        <i class="dashicons dashicons-editor-help" style="vertical-align: top; padding: 5px 0 !important;"></i>
+                    </a>
+                </h3>
+                <div class="card-body p-0 m-0">
+                    <?php $view->show('blocks/FrontendLoginCheck'); ?>
+                    <?php HMWP_Classes_ObjController::getClass('HMWP_Controllers_Ghostdoctor')->showPanel(); ?>
+                </div>
+            </div>
 
             <form method="POST">
                 <?php wp_nonce_field('hmwp_settings', 'hmwp_nonce'); ?>
@@ -1369,7 +1386,7 @@
             ?>
             <?php $view->show('blocks/ChangeCacheFiles'); ?>
             <?php $view->show('blocks/SecurityCheck'); ?>
-            <?php $view->show('blocks/FrontendCheck'); ?>
+            <?php // blocks/FrontendCheck removed: Ghost Doctor above supersedes it ?>
         </div>
     </div>
 </div>

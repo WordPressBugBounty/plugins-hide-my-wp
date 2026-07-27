@@ -6,7 +6,7 @@
   Plugin Name: WP Ghost Lite
   Plugin URI: https://wordpress.org/plugins/hide-my-wp/
   Description: Proactive WordPress Hack Prevention: Secure WP paths & login, firewall protection, brute force defense, 2FA, GEO security & bot blocking.
-  Version: 7.0.07
+  Version: 7.0.08
   Author: WP Ghost
   Company: MINBO QRE SRL
   Author URI: https://wpghost.com
@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || die( 'Cheating uh?' );
 if ( ! defined( 'HMW_VERSION' ) ) {
 
 	//Set current plugin version
-	define( 'HMWP_VERSION', '7.0.07' );
+	define( 'HMWP_VERSION', '7.0.08' );
 
 	// Set the last stable version of the plugin
 	define( 'HMWP_STABLE_VERSION', '7.0.06' );

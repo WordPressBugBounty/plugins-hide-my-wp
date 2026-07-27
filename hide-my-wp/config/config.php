@@ -38,6 +38,11 @@ require_once dirname( __FILE__ ) . '/paths.php';
 /**
  * Define the record name in the Option and UserMeta tables
  */
+// Ghost Doctor stores its last diagnosis and the settings snapshot it takes
+// before repairing, so a repair can always be undone.
+define( 'HMWP_GHOSTDOCTOR_REPORT', 'hmwp_ghostdoctor_report' );
+define( 'HMWP_GHOSTDOCTOR_SNAPSHOT', 'hmwp_ghostdoctor_snapshot' );
+
 define( 'HMWP_OPTION', 'hmwp_options' );
 define( 'HMWP_OPTION_SAFE', 'hmwp_options_safe' );
 define( 'HMWP_SECURITY_CHECK', 'hmwp_securitycheck' );

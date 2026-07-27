@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 7.0.07
+Stable tag: 7.0.08
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -176,6 +176,15 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 20. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+= 7.0.08 (27 July 2026) =
+* New - Ghost Doctor: finds what is breaking your paths and repairs it in one click
+* New - Security Check now opens with one prioritized list of what to fix first
+* New - Change Paths shows one card after a path change instead of three
+* Fix - Security Check no longer reports wp-content, the login path or the admin path as visible on sites that are hiding them correctly
+* Fix - Frontend check no longer reports a failure when Disable REST API Access is on
+* Fix - Security Tasks no longer shows an empty table when every task passed
+* Fix - Last check now shows how long ago the scan ran, not a clock time
+
 = 7.0.07 (20 July 2026) =
 * Security - Two-Factor Authentication settings are now bound to the account they belong to, so the 2FA method, authenticator, email codes, backup codes and passkeys can only be managed by the account owner or by an administrator allowed to edit that user
 * Security - Passkey enrollment is now always self-service, matching the device the passkey is created on

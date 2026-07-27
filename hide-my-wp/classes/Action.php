@@ -113,6 +113,17 @@ class HMWP_Classes_Action extends HMWP_Classes_FrontController {
 				),
 			),
 			array(
+				"name"    => "HMWP_Controllers_Ghostdoctor",
+				"actions" => array(
+					"action" => array(
+						"hmwp_ghostdoctor_diagnose",
+						"hmwp_ghostdoctor_repair",
+						"hmwp_ghostdoctor_keep",
+						"hmwp_ghostdoctor_undo"
+					)
+				),
+			),
+			array(
 				"name"    => "HMWP_Controllers_SecurityCheck",
 				"actions" => array(
 					"action" => array(

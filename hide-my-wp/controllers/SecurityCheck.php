@@ -62,6 +62,15 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 		HMWP_Classes_ObjController::getClass( 'HMWP_Classes_DisplayController' )->loadMedia( 'font-awesome' );
 		HMWP_Classes_ObjController::getClass( 'HMWP_Classes_DisplayController' )->loadMedia( 'settings' );
 		HMWP_Classes_ObjController::getClass( 'HMWP_Classes_DisplayController' )->loadMedia( 'alert' );
+		// The toggle styles live in switchery.css. Without it the switches on this
+		// page render as bare text.
+		HMWP_Classes_ObjController::getClass( 'HMWP_Classes_DisplayController' )->loadMedia( 'switchery' );
+
+		// The panels on this screen are WordPress postboxes, so they need the core
+		// scripts that make the collapse arrows work and remember their state.
+		wp_enqueue_script( 'postbox' );
+		wp_enqueue_script( 'common' );
+		wp_enqueue_script( 'wp-lists' );
 
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_security_alert' ) ) {
 			if ( $this->securitycheck_time = get_option( HMWP_SECURITY_CHECK_TIME ) ) {
@@ -661,6 +670,357 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 
 	/**
+	 * Everything that needs the user's attention, worst first, in one list.
+	 *
+	 * The Security Check screen shows a table of every task, passed and failed
+	 * together. That is the evidence, not the answer. This builds the answer: only
+	 * what is still wrong, ranked so the first row is the one to do first.
+	 *
+	 * Two sources are merged here. Failing website checks come first, because a
+	 * site that is not serving its own paths is broken for visitors right now.
+	 * Failed security tasks follow, split by whether they are counted as a real
+	 * risk or as hardening.
+	 *
+	 * @return array
+	 */
+	public function getActionItems() {
+
+		$items     = array();
+		$risktasks = $this->getRiskTasks();
+
+		// The website is not serving its own paths, so visitors see a broken site.
+		// Guarded because Ghost Doctor is a separate model; the row appears on its
+		// own once that model is present rather than needing this method changed.
+		if ( file_exists( _HMWP_MODEL_DIR_ . 'Ghostdoctor.php' ) ) {
+
+			/** @var HMWP_Models_Ghostdoctor $gdmodel */
+			$gdmodel  = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Ghostdoctor' );
+			$gdreport = $gdmodel->getReport();
+
+			if ( ! empty( $gdreport['time'] ) && empty( $gdreport['success'] ) ) {
+				$items[] = array(
+					'id'       => 'paths',
+					'severity' => 'critical',
+					'source'   => 'paths',
+					'title'    => sprintf(
+					/* translators: 1: Number of checks that are failing. */
+						esc_html( _n( '%1$s website check is failing', '%1$s website checks are failing', (int) $gdreport['remaining'], 'hide-my-wp' ) ),
+						(int) $gdreport['remaining']
+					),
+					'why'      => esc_html__( 'Parts of your website are not loading correctly. Ghost Doctor can repair most of these for you.', 'hide-my-wp' ),
+					'link'     => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ),
+				);
+			}
+		}
+
+		// Failed security tasks. The ones counted in the score come first.
+		if ( ! empty( $this->report ) ) {
+			foreach ( $this->report as $function => $row ) {
+
+				if ( ! isset( $row['name'] ) || ! empty( $row['valid'] ) ) {
+					continue;
+				}
+
+				$items[] = array(
+					'id'         => 'task:' . $function,
+					'severity'   => ( in_array( $function, $risktasks ) ? 'important' : 'suggested' ),
+					'source'     => 'task',
+					'title'      => wp_strip_all_tags( $row['name'] ),
+					'why'        => ( isset( $row['solution'] ) ? wp_kses_post( $row['solution'] ) : '' ),
+					'javascript' => ( isset( $row['javascript'] ) ? $row['javascript'] : '' ),
+					'anchor'     => 'hmwp_tasks_widget',
+				);
+			}
+		}
+
+		// Worst first
+		$order = array( 'critical' => 0, 'important' => 1, 'suggested' => 2 );
+		usort( $items, function ( $a, $b ) use ( $order ) {
+			if ( $order[ $a['severity'] ] === $order[ $b['severity'] ] ) {
+				return 0;
+			}
+
+			return ( $order[ $a['severity'] ] < $order[ $b['severity'] ] ) ? - 1 : 1;
+		} );
+
+		return $items;
+	}
+
+
+	/**
+	 * How many findings sit at each severity.
+	 *
+	 * @param array $items The findings.
+	 *
+	 * @return array
+	 */
+	public function countBySeverity( $items ) {
+
+		$counts = array( 'critical' => 0, 'important' => 0, 'suggested' => 0 );
+
+		foreach ( (array) $items as $item ) {
+			if ( isset( $item['severity'], $counts[ $item['severity'] ] ) ) {
+				$counts[ $item['severity'] ] ++;
+			}
+		}
+
+		return $counts;
+	}
+
+
+	/**
+	 * Probe the website paths and assets to see if the config rules are active.
+	 *
+	 * Read-only on purpose: it performs the HTTP calls and returns what it found,
+	 * it never saves an option. That makes it safe to call repeatedly, which is what
+	 * an automated check-fix-recheck flow needs.
+	 *
+	 * @return array {
+	 *     @type bool  $success       True when every probe passed.
+	 *     @type array $errors        Failed probes. Each: role, label, url, badge.
+	 *     @type array $checks        Every probe performed. Each: role, url, code, ok.
+	 *     @type array $file_mappings Files recorded as loading through WordPress.
+	 *     @type bool  $home_rendered True when the homepage returned a complete HTML document.
+	 * }
+	 */
+	public function runFrontendProbe() {
+
+		$errors     = $checks = $targets = array();
+		$home_body  = '';
+		$filesystem = HMWP_Classes_Tools::initFilesystem();
+		$disable_name = HMWP_Classes_Tools::getOption( 'hmwp_disable_name' );
+
+		//set hmwp_preview and not load the broken paths with WordPress rules
+		$custom_logo_id = get_theme_mod( 'custom_logo' );
+		if ( (int) $custom_logo_id > 0 ) {
+			if ( $logo = wp_get_attachment_image_src( $custom_logo_id, 'full' ) ) {
+				$image = $logo[0];
+
+				if ( $filesystem->exists( str_replace( home_url( '/' ), ABSPATH, $image ) ) ) {
+					$url       = $image . '?hmwp_preview=' . $disable_name;
+					$url       = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
+					$targets[] = array( 'role' => 'logo', 'url' => $url );
+				}
+			}
+		}
+
+		if ( empty( $targets ) ) {
+
+			$image = _HMWP_ASSETS_URL_ . 'img/logo.svg';
+			if ( $filesystem->exists( str_replace( home_url( '/' ), ABSPATH, $image ) ) ) {
+				$url       = _HMWP_ASSETS_URL_ . 'img/logo.svg?hmwp_preview=' . $disable_name;
+				$url       = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
+				$targets[] = array( 'role' => 'logo', 'url' => $url );
+			}
+
+		}
+
+		$url       = home_url( '/' ) . '?hmwp_preview=' . $disable_name;
+		$url       = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
+		$targets[] = array( 'role' => 'home', 'url' => $url );
+
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_hideajax_admin' ) ) {
+			$url = home_url( HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) ) . '?hmwp_preview=' . $disable_name;
+		} else {
+			$url = admin_url( HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) ) . '?hmwp_preview=' . $disable_name;
+		}
+		$url       = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
+		$targets[] = array( 'role' => 'ajax', 'url' => $url );
+
+
+		// Disable REST API Access turns /wp-json away for visitors who are not
+		// logged in, and this probe is a loopback call with cookies off, so it is
+		// exactly the visitor that setting exists to refuse. A 404 here is the
+		// setting working, not the site being broken, so the REST target expects a
+		// block once the matching option is on.
+		//
+		// The preview token is deliberately not used. It does not lift the URL
+		// blocking, and models/compatibility/Others.php empties $_COOKIE when it is
+		// present, which would only make the request more anonymous than it already
+		// is. The target is still probed either way, so a renamed wp-json that has
+		// no working rewrite is still reported.
+		if ( ! HMWP_Classes_Tools::isPHPPermalink() ) {
+			$url         = home_url() . '/' . HMWP_Classes_Tools::getOption( 'hmwp_wp-json' );
+			$rest_closed = (bool) HMWP_Classes_Tools::getOption( 'hmwp_disable_rest_api' );
+		} else {
+			$url         = home_url() . '/index.php?rest_route=/';
+			$rest_closed = (bool) HMWP_Classes_Tools::getOption( 'hmwp_disable_rest_api_param' );
+		}
+		$targets[] = array( 'role' => 'rest', 'url' => $url, 'block_is_ok' => $rest_closed );
+
+		// Text Mapping renames classes/IDs/JS variables in the output and can break a
+		// theme that uses a renamed label as a style hook. When an active mapping exists,
+		// also validate that the homepage actually renders, not just that it returns 200.
+		$text_mapping     = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ), true );
+		$has_text_mapping = ! empty( $text_mapping['from'] );
+
+		foreach ( $targets as $target ) {
+
+			$role = $target['role'];
+			$url  = $target['url'];
+
+			if ( is_ssl() ) {
+				$url = str_replace( 'http://', 'https://', $url );
+			}
+
+			$response = HMWP_Classes_Tools::hmwp_localcall( $url, array(
+				'redirection' => 1,
+				'cookies'     => false
+			) );
+
+			$code = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+			$failed = ( ! is_wp_error( $response ) && in_array( $code, array( 404, 302, 301 ) ) );
+
+			// With REST closed to visitors, both answers are correct and which one
+			// this probe gets depends on the host. The call is a loopback, and WP
+			// Ghost whitelists the site's own address, so on many servers it comes
+			// back 200 because the probe was never treated as a visitor. On hosts
+			// where the loopback arrives from a public address or through a proxy
+			// it is treated as a visitor and correctly refused. Neither means the
+			// site is broken, so only a real error is counted as a failure.
+			if ( ! empty( $target['block_is_ok'] ) && in_array( $code, array( 401, 403, 404 ), true ) ) {
+				$failed = false;
+			}
+
+			$checks[] = array( 'role' => $role, 'url' => $url, 'code' => $code, 'ok' => ! $failed );
+
+			if ( $failed ) {
+				$errors[] = array(
+					'role'  => $role,
+					'label' => wp_remote_retrieve_response_message( $response ),
+					'url'   => $url,
+					'badge' => $code
+				);
+			} elseif ( $role === 'home' && ! is_wp_error( $response ) && $code === 200 ) {
+				// Keep the homepage HTML to validate the render and to probe theme assets below
+				$home_body = wp_remote_retrieve_body( $response );
+
+				// Text Mapping renames classes/IDs and can break a theme that styles a renamed label.
+				// Broken render heuristic: empty body or truncated HTML (no closing tag)
+				if ( $has_text_mapping && ( $home_body === '' || stripos( $home_body, '</html>' ) === false ) ) {
+					$errors[] = array(
+						'role'  => 'render',
+						'label' => esc_html__( 'The page did not render correctly. A renamed Text Mapping label may be used by your theme.', 'hide-my-wp' ),
+						'url'   => $url,
+						'badge' => esc_html__( 'Layout', 'hide-my-wp' )
+					);
+				}
+			}
+		}
+
+		//Test new admin path. Send all cookies to admin path
+		if ( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ) ) {
+
+			$url = admin_url( 'admin.php' );
+			$url = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
+
+			if ( is_ssl() ) {
+				$url = str_replace( 'http://', 'https://', $url );
+			}
+
+			$response = HMWP_Classes_Tools::hmwp_localcall( $url, array(
+				'redirection' => 1,
+				'cookies'     => $_COOKIE
+			) );
+
+			$code   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+			$failed = ( ! is_wp_error( $response ) && in_array( $code, array( 404, 302, 301 ) ) );
+
+			$checks[] = array( 'role' => 'admin', 'url' => $url, 'code' => $code, 'ok' => ! $failed );
+
+			if ( $failed ) {
+				$errors[] = array(
+					'role'  => 'admin',
+					'label' => wp_remote_retrieve_response_message( $response ),
+					'url'   => $url,
+					'badge' => $code
+				);
+			}
+		}
+
+		// Probe a sample of the theme's CSS/JS assets referenced by the homepage. This catches a
+		// broken layout where the page returns 200 but its stylesheets/scripts don't load because
+		// the renamed wp-content/wp-includes paths are not served by the config rules.
+		if ( $home_body !== '' && preg_match_all( '/<(?:link[^>]+href|script[^>]+src)=["\']([^"\']+\.(?:css|js)(?:\?[^"\']*)?)["\']/i', $home_body, $matches ) ) {
+
+			$host   = wp_parse_url( home_url(), PHP_URL_HOST );
+			$assets = array();
+
+			foreach ( $matches[1] as $asset ) {
+				// Normalize protocol-relative URLs
+				if ( strpos( $asset, '//' ) === 0 ) {
+					$asset = ( is_ssl() ? 'https:' : 'http:' ) . $asset;
+				}
+
+				// Only test same-host static assets and skip duplicates
+				if ( wp_parse_url( $asset, PHP_URL_HOST ) === $host && ! in_array( $asset, $assets ) ) {
+					$assets[] = $asset;
+				}
+
+				// Keep the check fast: test up to 4 assets
+				if ( count( $assets ) >= 4 ) {
+					break;
+				}
+			}
+
+			foreach ( $assets as $asset ) {
+				// Bypass the WordPress fallback handler (showFile) so only the server config
+				// rules serve the file. Otherwise a broken rewrite is masked by a 200 response.
+				$test = add_query_arg( 'hmwp_preview', $disable_name, $asset );
+
+				if ( is_ssl() ) {
+					$test = str_replace( 'http://', 'https://', $test );
+				}
+
+				$response = HMWP_Classes_Tools::hmwp_localcall( $test, array(
+					'redirection' => 0,
+					'cookies'     => false
+				) );
+
+				$code   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+				$failed = ( ! is_wp_error( $response ) && in_array( $code, array( 404, 302, 301 ) ) );
+
+				$checks[] = array( 'role' => 'asset', 'url' => $asset, 'code' => $code, 'ok' => ! $failed );
+
+				if ( $failed ) {
+					$errors[] = array(
+						'role'  => 'asset',
+						'label' => esc_html__( 'Theme asset not loading', 'hide-my-wp' ),
+						'url'   => $asset,
+						'badge' => $code
+					);
+				}
+			}
+		}
+
+		// Runtime fallback state: when assets were auto-detected loading through WordPress instead of
+		// the config rules, the plugin temporarily disabled path hiding (prevent_slow_loading).
+		$file_mappings = (array) HMWP_Classes_Tools::getOption( 'file_mappings' );
+
+		// If the paths/assets failed and the safe-fallback already recorded offending files,
+		// list them as context so the user sees exactly which files load through WordPress.
+		if ( ! empty( $errors ) && ! empty( $file_mappings ) ) {
+			foreach ( $file_mappings as $mapping ) {
+				$errors[] = array(
+					'role'  => 'bypass',
+					'label' => esc_html__( 'Loaded through WordPress instead of the config rules', 'hide-my-wp' ),
+					'url'   => $mapping,
+					'badge' => esc_html__( 'Bypass', 'hide-my-wp' )
+				);
+			}
+		}
+
+		return array(
+			'success'       => empty( $errors ),
+			'errors'        => $errors,
+			'checks'        => $checks,
+			'file_mappings' => $file_mappings,
+			'home_rendered' => ( $home_body !== '' && stripos( $home_body, '</html>' ) !== false )
+		);
+	}
+
+
+	/**
 	 * Run the actions on submit
 	 *
 	 * @throws Exception
@@ -686,171 +1046,16 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 			case 'hmwp_frontendcheck':
 
-				$urls       = $error = array();
-				$home_body  = '';
-				$filesystem = HMWP_Classes_Tools::initFilesystem();
-				$disable_name        = HMWP_Classes_Tools::getOption( 'hmwp_disable_name' );
+				// Probe the paths and assets through the shared method. The same code
+				// now answers the Frontend Test and Ghost Doctor, so the two can no
+				// longer disagree about whether the site is serving correctly.
+				$probe         = $this->runFrontendProbe();
+				$file_mappings = $probe['file_mappings'];
 
-				//set hmwp_preview and not load the broken paths with WordPress rules
-				$custom_logo_id = get_theme_mod( 'custom_logo' );
-				if ( (int) $custom_logo_id > 0 ) {
-					if ( $logo = wp_get_attachment_image_src( $custom_logo_id, 'full' ) ) {
-						$image = $logo[0];
-
-						if ( $filesystem->exists( str_replace( home_url( '/' ), ABSPATH, $image ) ) ) {
-							$url    = $image . '?hmwp_preview=' . $disable_name;
-							$url    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
-							$urls[] = $url;
-						}
-					}
-				}
-
-				if ( empty( $urls ) ) {
-
-					$image = _HMWP_ROOT_DIR_ . '/view/assets/img/logo.svg';
-					if ( $filesystem->exists( str_replace( home_url( '/' ), ABSPATH, $image ) ) ) {
-						$url    = _HMWP_URL_ . '/view/assets/img/logo.svg?hmwp_preview=' . $disable_name;
-						$url    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
-						$urls[] = $url;
-					}
-
-				}
-
-				$url      = home_url( '/' ) . '?hmwp_preview=' . $disable_name;
-				$url      = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
-				$home_url = $url;
-				$urls[]   = $url;
-
-				if ( HMWP_Classes_Tools::getOption( 'hmwp_hideajax_admin' ) ) {
-					$url = home_url( HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) ) . '?hmwp_preview=' . $disable_name;
-				} else {
-					$url = admin_url( HMWP_Classes_Tools::getOption( 'hmwp_admin-ajax_url' ) ) . '?hmwp_preview=' . $disable_name;
-				}
-				$url    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
-				$urls[] = $url;
-
-
-				if ( ! HMWP_Classes_Tools::isPHPPermalink() ) {
-					$url    = home_url() . '/' . HMWP_Classes_Tools::getOption( 'hmwp_wp-json' );
-					$urls[] = $url;
-				}else{
-					$url    = home_url() . '/index.php?rest_route=/';
-					$urls[] = $url;
-				}
-
-				// Text Mapping renames classes/IDs/JS variables in the output and can break a
-				// theme that uses a renamed label as a style hook. When an active mapping exists,
-				// also validate that the homepage actually renders, not just that it returns 200.
-				$text_mapping     = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ), true );
-				$has_text_mapping = ! empty( $text_mapping['from'] );
-
-				foreach ( $urls as $url ) {
-
-					$is_home = ( $url === $home_url );
-
-					if ( is_ssl() ) {
-						$url = str_replace( 'http://', 'https://', $url );
-					}
-
-					$response = HMWP_Classes_Tools::hmwp_localcall( $url, array(
-						'redirection' => 1,
-						'cookies'     => false
-					) );
-
-					if ( ! is_wp_error( $response ) && in_array( wp_remote_retrieve_response_code( $response ), array( 404, 302, 301 ) ) ) {
-						$error[] = $this->frontendError( wp_remote_retrieve_response_message( $response ), $url, wp_remote_retrieve_response_code( $response ) );
-					} elseif ( $is_home && ! is_wp_error( $response ) && (int) wp_remote_retrieve_response_code( $response ) === 200 ) {
-						// Keep the homepage HTML to validate the render and to probe theme assets below
-						$home_body = wp_remote_retrieve_body( $response );
-
-						// Text Mapping renames classes/IDs and can break a theme that styles a renamed label.
-						// Broken render heuristic: empty body or truncated HTML (no closing tag)
-						if ( $has_text_mapping && ( $home_body === '' || stripos( $home_body, '</html>' ) === false ) ) {
-							$error[] = $this->frontendError( esc_html__( 'The page did not render correctly. A renamed Text Mapping label may be used by your theme.', 'hide-my-wp' ), $url, esc_html__( 'Layout', 'hide-my-wp' ) );
-						}
-					}
-				}
-
-				//Test new admin path. Send all cookies to admin path
-				if ( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ) ) {
-
-					$url = admin_url( 'admin.php' );
-					$url = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $url );
-
-					if ( is_ssl() ) {
-						$url = str_replace( 'http://', 'https://', $url );
-					}
-
-					$response = HMWP_Classes_Tools::hmwp_localcall( $url, array(
-						'redirection' => 1,
-						'cookies'     => $_COOKIE
-					) );
-
-					if ( ! is_wp_error( $response ) && in_array( wp_remote_retrieve_response_code( $response ), array(
-							404,
-							302,
-							301
-						) ) ) {
-						$error[] = $this->frontendError( wp_remote_retrieve_response_message( $response ), $url, wp_remote_retrieve_response_code( $response ) );
-
-					}
-				}
-
-				// Probe a sample of the theme's CSS/JS assets referenced by the homepage. This catches a
-				// broken layout where the page returns 200 but its stylesheets/scripts don't load because
-				// the renamed wp-content/wp-includes paths are not served by the config rules.
-				if ( $home_body !== '' && preg_match_all( '/<(?:link[^>]+href|script[^>]+src)=["\']([^"\']+\.(?:css|js)(?:\?[^"\']*)?)["\']/i', $home_body, $matches ) ) {
-
-					$host   = wp_parse_url( home_url(), PHP_URL_HOST );
-					$assets = array();
-
-					foreach ( $matches[1] as $asset ) {
-						// Normalize protocol-relative URLs
-						if ( strpos( $asset, '//' ) === 0 ) {
-							$asset = ( is_ssl() ? 'https:' : 'http:' ) . $asset;
-						}
-
-						// Only test same-host static assets and skip duplicates
-						if ( wp_parse_url( $asset, PHP_URL_HOST ) === $host && ! in_array( $asset, $assets ) ) {
-							$assets[] = $asset;
-						}
-
-						// Keep the check fast: test up to 4 assets
-						if ( count( $assets ) >= 4 ) {
-							break;
-						}
-					}
-
-					foreach ( $assets as $asset ) {
-						// Bypass the WordPress fallback handler (showFile) so only the server config
-						// rules serve the file — otherwise a broken rewrite is masked by a 200 response.
-						$test = add_query_arg( 'hmwp_preview', $disable_name, $asset );
-
-						if ( is_ssl() ) {
-							$test = str_replace( 'http://', 'https://', $test );
-						}
-
-						$response = HMWP_Classes_Tools::hmwp_localcall( $test, array(
-							'redirection' => 0,
-							'cookies'     => false
-						) );
-
-						if ( ! is_wp_error( $response ) && in_array( wp_remote_retrieve_response_code( $response ), array( 404, 302, 301 ) ) ) {
-							$error[] = $this->frontendError( esc_html__( 'Theme asset not loading', 'hide-my-wp' ), $asset, wp_remote_retrieve_response_code( $response ) );
-						}
-					}
-				}
-
-				// Runtime fallback state: when assets were auto-detected loading through WordPress instead of
-				// the config rules, the plugin temporarily disabled path hiding (prevent_slow_loading).
-				$file_mappings = (array) HMWP_Classes_Tools::getOption( 'file_mappings' );
-
-				// If the paths/assets failed and the safe-fallback already recorded offending files,
-				// list them as context so the user sees exactly which files load through WordPress.
-				if ( ! empty( $error ) && ! empty( $file_mappings ) ) {
-					foreach ( $file_mappings as $mapping ) {
-						$error[] = $this->frontendError( esc_html__( 'Loaded through WordPress instead of the config rules', 'hide-my-wp' ), $mapping, esc_html__( 'Bypass', 'hide-my-wp' ) );
-					}
+				// runFrontendProbe returns structured rows; this screen renders HTML.
+				$error = array();
+				foreach ( $probe['errors'] as $row ) {
+					$error[] = $this->frontendError( $row['label'], $row['url'], $row['badge'] );
 				}
 
 				if ( HMWP_Classes_Tools::isAjax() ) {
@@ -2227,11 +2432,11 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 			//if the new path is visible in the source code, the paths are changed
 			if ( strpos( $this->html, site_url( '/' . HMWP_Classes_Tools::getOption( 'hmwp_wp-content_url' ) . '/' ) ) === false ) {
 				//check if wp-content is visible in the source code
-				$visible = strpos( $this->html, content_url() );
+				$visible = ( strpos( $this->html, content_url() ) !== false );
 			}
 		} else {
 			//check if wp-content is visible in the source code
-			$visible = strpos( $this->html, content_url() );
+			$visible = ( strpos( $this->html, content_url() ) !== false );
 		}
 
 		return array(
@@ -2385,7 +2590,14 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 	 */
 	public function getSourceCode() {
 		if ( ! isset( $this->html ) && ! isset( $this->htmlerror ) ) {
-			$url      = home_url() . '?hmwp_preview=' . HMWP_Classes_Tools::getOption( 'hmwp_disable_name' );
+			// No preview token here on purpose. The three checks that read this
+			// source ask whether the rendered page still leaks the default paths,
+			// which is a question only the visitor's view can answer. The token
+			// makes calledSafeUrl() true, and initHooks() then returns early with
+			// hmwp_process_init disabled, so the page comes back deliberately
+			// un-hidden and every one of those checks reported a leak on sites
+			// that were hiding their paths perfectly well.
+			$url      = home_url( '/' );
 			$response = HMWP_Classes_Tools::hmwp_localcall( $url, array(
 				'redirection' => 0,
 				'timeout'     => 10,
