@@ -24,8 +24,15 @@
             // The post-change confirmation gate renders inside this same card rather
             // than as a second one above it: both answer "did the path change break
             // the site?", and splitting them only made the screen harder to read.
+            //
+            // The card is tall and there is no way to collapse it, so it belongs on
+            // the first tab only. On every other tab it pushed the settings that tab
+            // exists for below the fold. The one exception is while the confirmation
+            // gate is up: that gate has to be reachable from whatever tab you saved
+            // from, so the card stays pinned until you keep or abort the change.
+            $hmwp_doctor_pinned = ( HMWP_Classes_Tools::getOption( 'test_frontend' ) && HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' );
             ?>
-            <div class="card col-sm-12 p-0 m-0 mb-3">
+            <div class="card col-sm-12 p-0 m-0 mb-3 <?php echo( $hmwp_doctor_pinned ? '' : 'hmwp_tab_only' ); ?>" data-tab="level" style="<?php echo( $hmwp_doctor_pinned || $current_tab === 'level' ? '' : 'display:none;' ); ?>">
                 <h3 class="card-title hmwp_header p-2 m-0">
                     <?php echo esc_html__('Ghost Doctor', 'hide-my-wp'); ?>
                     <a href="<?php echo esc_url(HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/category/errors/'); ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white">

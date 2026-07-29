@@ -708,7 +708,12 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 						(int) $gdreport['remaining']
 					),
 					'why'      => esc_html__( 'Parts of your website are not loading correctly. Ghost Doctor can repair most of these for you.', 'hide-my-wp' ),
-					'link'     => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ),
+					// Relative on purpose. admin_url() returns the renamed admin path,
+					// and this row only exists because the renamed paths are not being
+					// served, so that link would 404. The relative form resolves against
+					// whichever admin URL the browser is already on, which by definition
+					// works.
+					'link'     => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks', true ),
 				);
 			}
 		}

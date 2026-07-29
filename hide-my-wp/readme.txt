@@ -178,10 +178,12 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 == Changelog ==
 = 7.0.08 (27 July 2026) =
 * New - Ghost Doctor: finds what is breaking your paths and repairs it in one click
+* New - Ghost Doctor can switch to protection that needs no server rules when your server will not serve them
 * New - Security Check now opens with one prioritized list of what to fix first
 * New - Change Paths shows one card after a path change instead of three
 * Fix - Security Check no longer reports wp-content, the login path or the admin path as visible on sites that are hiding them correctly
 * Fix - Frontend check no longer reports a failure when Disable REST API Access is on
+* Fix - Open on a failing path check no longer leads to a 404 while the new paths are not working yet
 * Fix - Security Tasks no longer shows an empty table when every task passed
 * Fix - Last check now shows how long ago the scan ran, not a clock time
 

@@ -126,6 +126,20 @@ class HMWP_Models_Ghostdoctor {
 				'risk'    => 'high',
 			),
 
+			// Last resort, and only ever reached because every cheaper repair above
+			// changed nothing. A server that will not serve the rewrites cannot be
+			// talked into it from PHP, so the remaining option is a configuration
+			// that does not need any: the Minimal preset keeps the protections that
+			// work without server rules and drops the ones that do not.
+			'minimal_preset' => array(
+				'label'  => esc_html__( 'Switch to protection that needs no server rules', 'hide-my-wp' ),
+				'type'   => 'preset',
+				'preset' => 1,
+				'roles'  => array( 'home', 'ajax', 'rest', 'admin', 'asset', 'logo' ),
+				'why'    => esc_html__( 'Your server is not serving the renamed paths and will not without a change you have to make by hand. This keeps the protections that work without server rules, so your website stops being broken.', 'hide-my-wp' ),
+				'risk'   => 'high',
+			),
+
 		);
 	}
 
@@ -389,6 +403,25 @@ class HMWP_Models_Ghostdoctor {
 
 			HMWP_Classes_Tools::saveOptions( $fix['option'], $this->getTargetValue( $id ) );
 			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveRules();
+		} elseif ( 'preset' === $fix['type'] ) {
+
+			// The whole option set is kept, not one key, because a preset rewrites
+			// many of them and Undo has to put every one back.
+			$previous['options'] = HMWP_Classes_Tools::getOptions();
+
+			/** @var HMWP_Models_Presets $presets */
+			$presets = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Presets' );
+			$method  = 'getPreset' . (int) $fix['preset'];
+
+			if ( method_exists( $presets, $method ) ) {
+				foreach ( call_user_func( array( $presets, $method ) ) as $key => $value ) {
+					HMWP_Classes_Tools::saveOptions( $key, $value );
+				}
+
+				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveRules();
+				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->flushChanges();
+			}
+
 		} elseif ( 'flush_rules' === $id ) {
 			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveRules();
 			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->flushChanges();
@@ -412,6 +445,18 @@ class HMWP_Models_Ghostdoctor {
 	public function revertFix( $previous ) {
 
 		if ( empty( $previous ) || ! isset( $previous['type'] ) ) {
+			return;
+		}
+
+		if ( 'preset' === $previous['type'] && ! empty( $previous['options'] ) ) {
+
+			foreach ( $previous['options'] as $key => $value ) {
+				HMWP_Classes_Tools::saveOptions( $key, $value );
+			}
+
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveRules();
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->flushChanges();
+
 			return;
 		}
 
