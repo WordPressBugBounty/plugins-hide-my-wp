@@ -738,6 +738,11 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 			}
 		}
 
+		// Replace the built in wording with the explanation written for this site,
+		// where there is one. The built in string stays as the fallback, so a row
+		// is never blank when the account server cannot be reached.
+		$items = $this->mergeAiExplanations( $items );
+
 		// Worst first
 		$order = array( 'critical' => 0, 'important' => 1, 'suggested' => 2 );
 		usort( $items, function ( $a, $b ) use ( $order ) {
@@ -747,6 +752,97 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 			return ( $order[ $a['severity'] ] < $order[ $b['severity'] ] ) ? - 1 : 1;
 		} );
+
+		return $items;
+	}
+
+	/**
+	 * Signature of a set of findings.
+	 *
+	 * The summary describes the whole website at once, so it is only valid while
+	 * the website has the same set of problems. Hashing the sorted ids gives a
+	 * value that changes the moment a finding appears or is fixed, which is what
+	 * decides whether the stored summary may still be shown.
+	 *
+	 * @param array $items The findings.
+	 *
+	 * @return string
+	 */
+	public function getFindingsSignature( $items ) {
+
+		$ids = array();
+
+		foreach ( (array) $items as $item ) {
+			if ( isset( $item['id'] ) ) {
+				$ids[] = $item['id'];
+			}
+		}
+
+		sort( $ids );
+
+		return md5( implode( ',', $ids ) );
+	}
+
+	/**
+	 * Overlay the stored AI explanations onto the findings.
+	 *
+	 * Matching is by id, so an explanation only shows next to the finding it was
+	 * written for. A finding that has been fixed since simply stops appearing, and
+	 * a new one that appeared after the explanation was requested keeps the built
+	 * in wording until the next request.
+	 *
+	 * The severity the model returned is used as well. It judges urgency against
+	 * this site's configuration, which the static rules cannot do.
+	 *
+	 * @param array $items The findings.
+	 *
+	 * @return array
+	 */
+	protected function mergeAiExplanations( $items ) {
+
+		$stored = get_option( HMWP_AI_EXPLAIN );
+
+		if ( ! is_array( $stored ) || empty( $stored['findings'] ) ) {
+			return $items;
+		}
+
+		$levels = array( 'critical', 'important', 'suggested' );
+
+		foreach ( $items as &$item ) {
+
+			if ( ! isset( $item['id'] ) || ! isset( $stored['findings'][ $item['id'] ] ) ) {
+				continue;
+			}
+
+			$ai = $stored['findings'][ $item['id'] ];
+
+			if ( ! empty( $ai['headline'] ) ) {
+				$item['title'] = $ai['headline'];
+			}
+
+			// Kept apart on purpose. The action is the one line shown in the list,
+			// the explanation is what opens underneath when someone wants the
+			// reasoning. Merging them was what turned every row into a paragraph.
+			if ( ! empty( $ai['explanation'] ) ) {
+				// Hold on to the built in advice. It carries the links to the
+				// settings screens and the guides, which the model's prose does
+				// not, so both belong in the panel that opens.
+				$item['detail'] = $item['why'];
+				$item['why']    = $ai['explanation'];
+			}
+
+			if ( ! empty( $ai['action'] ) ) {
+				$item['action_text'] = $ai['action'];
+			}
+
+			// Only accept a level we know about
+			if ( ! empty( $ai['severity'] ) && in_array( $ai['severity'], $levels ) ) {
+				$item['severity'] = $ai['severity'];
+			}
+
+			$item['explained'] = true;
+		}
+		unset( $item );
 
 		return $items;
 	}
@@ -1076,26 +1172,19 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 						$message[] = '<div style="font-weight:600;margin-bottom:6px;">' . esc_html__( 'Great! The new paths are loading correctly.', 'hide-my-wp' ) . '</div>';
 						if ( HMWP_Classes_Tools::getOption( 'prevent_slow_loading' ) ) {
-							$message[] = '<form id="hmwp_fixsettings_form" method="POST">
-                                         ' . wp_nonce_field( 'hmwp_fixsettings', 'hmwp_nonce', false, false ) . '
-                                         <input type="hidden" name="action" value="hmwp_fixsettings"/>
-                                         
-                                         <div class="col-sm-12 p-0 my-2 switch switch-xxs" style="font-size: 0.9rem;">
+							// The action and the nonce live in the #hmwp_fixsettings_form carrier
+							// rendered by view/SecurityCheck.php, which hmwp_fixSettings() reads.
+							// Repeating the form here would duplicate that id in the page.
+							$message[] = '<div class="col-sm-12 p-0 my-2 switch switch-xxs" style="font-size: 0.9rem;">
                                             <input type="checkbox" id="prevent_slow_loading" name="prevent_slow_loading" onChange="jQuery(this).hmwp_fixSettings(\'prevent_slow_loading\',0);" class="switch" ' . ( HMWP_Classes_Tools::getOption( 'prevent_slow_loading' ) ? 'checked="checked"' : '' ) . ' value="1"/>
 											<label for="prevent_slow_loading">' . /* translators: 1: Feature label "Prevent Broken Website Layout". */ sprintf( esc_html__( 'You can now turn off "%1$s" option.', 'hide-my-wp' ), esc_html__( 'Prevent Broken Website Layout', 'hide-my-wp' ) ) . '</label>
-										 </div>
-                                       </form>';
+										 </div>';
 						}
 						if ( HMWP_Classes_Tools::isCachePlugin() && ! HMWP_Classes_Tools::getOption( 'hmwp_change_in_cache' ) ) {
-							$message[] = '<form id="hmwp_fixsettings_form" method="POST">
-                                         ' . wp_nonce_field( 'hmwp_fixsettings', 'hmwp_nonce', false, false ) . '
-                                         <input type="hidden" name="action" value="hmwp_fixsettings"/>
-                                         
-                                         <div class="col-sm-12 p-0 my-2 switch switch-xxs" style="font-size: 0.9rem;">
+							$message[] = '<div class="col-sm-12 p-0 my-2 switch switch-xxs" style="font-size: 0.9rem;">
                                             <input type="checkbox" id="hmwp_change_in_cache" name="hmwp_change_in_cache" onChange="jQuery(this).hmwp_fixSettings(\'hmwp_change_in_cache\',1);" class="switch" ' . ( HMWP_Classes_Tools::getOption( 'hmwp_change_in_cache' ) ? 'checked="checked"' : '' ) . ' value="1"/>
                                             <label for="hmwp_change_in_cache">' . /* translators: 1: Feature label "Change Paths in Cached Files". */ sprintf( esc_html__( 'You can now turn on "%1$s" option.', 'hide-my-wp' ), esc_html__( 'Change Paths in Cached Files', 'hide-my-wp' ) ) . '</label>
-                                         </div>
-                                       </form>';
+                                         </div>';
 						}
 
 						wp_send_json_success( join( '', $message ) );

@@ -2,13 +2,13 @@
 Contributors: johndarrel
 Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.08
+Stable tag: 7.0.09
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Hide and Secure WP paths with the complete WP security suite for Site Hardening. Includes 8G Firewall, Brute Force protection, and Passkeys.
+Hide and Secure WP paths with the 8G Firewall, Brute Force protection and Passkeys. AI security explanations available with a subscription.
 
 == Description ==
 
@@ -32,6 +32,34 @@ Official websites:
 Most WordPress attacks are automated. Bots scan millions of sites per hour looking for default paths like /wp-admin or /wp-login.php to confirm a site is running WordPress. Once confirmed, they launch targeted exploits against known plugin or theme vulnerabilities.
 
 WP Ghost breaks this cycle. By changing and securing common paths, you reduce your attack surface by up to 90%. This isn't "obscurity", it's Site Hardening. We re-engineer the visible structure of your site so it is no longer a low-hanging fruit for global botnets.
+
+### NEW: AI Security Explanations — Your Report, Explained for Your Website
+
+Every security plugin hands you a list of red warnings. Almost none of them tell you what those warnings mean **for your website**.
+
+WP Ghost now does. One click sends your findings for analysis against the way your site is actually configured — your server type, whether your rewrite rules are live, whether your config file is writable, which security mode you run — and returns a security report written for you, not for WordPress in general.
+
+*Requires a WP Ghost subscription, which includes a monthly allowance of AI checks. Everything else on the Security Check page — the scan, the score, the prioritised list, the severity bands and every task detail — is free and works on its own.*
+
+**What you get back:**
+
+* **A plain-language summary of your whole website.** One paragraph that finally answers "so, am I actually secure?"
+* **A headline you can understand.** The technical task name is replaced with what is genuinely at stake.
+* **One clear action per finding.** Not a description of the problem — an instruction telling you what to do.
+* **A security explanation on demand.** Open Details on any finding and you get the reasoning: why it matters on *your* server, what an attacker would do with it, and why it was ranked where it was. This is the part that teaches you WordPress security instead of just flagging it.
+* **Priority based on real exposure.** Findings are re-ranked using your actual configuration, so the item at the top is the one that genuinely puts you at risk — not the one that scores highest in a generic table.
+
+**Built with limits you can check.** Only your findings and a small description of your setup are ever sent — no page content, no user data, no credentials. Your security list, your score, the severity bands and every task detail are generated locally and keep working whether the AI is available or not.
+
+<a href="https://wpghost.com/features/">Read more about AI Security Explanations on wpghost.com</a>
+
+### NEW: Ghost Doctor — Finds and Repairs a Broken Site by Itself
+
+Changing your WordPress paths depends on your server honouring the new rules. When it doesn't — Nginx never reads .htaccess, Apache ignores it without AllowOverride, a host locks the config file — your site can break, and nothing tells you why.
+
+Ghost Doctor diagnoses it and repairs what a plugin is allowed to repair. It checks your homepage, theme files, editor requests and REST API the way a visitor sees them, then works through repairs from the safest to the most invasive. **Every repair is tested immediately and undone automatically if it did not help**, so a run never leaves a setting changed for nothing. Anything that genuinely needs a server change is named plainly, with a guide, instead of leaving you guessing.
+
+<a href="https://wpghost.com/kb/category/errors/">Read the Ghost Doctor troubleshooting guides</a>
 
 ### Key Protections Included
 
@@ -98,11 +126,15 @@ We believe professional security should be accessible to everyone. The free vers
 * **Magic Links**: Log in securely without a password via a one-time email link.
 * **Text & URL Mapping**: Change any class name or URL in your source code dynamically.
 * **CDN & Cache Support**: Works perfectly with WP Rocket, Cloudflare, and Litespeed.
+* **Ghost Doctor**: Diagnoses why your paths stopped working and repairs what it can, testing every repair and undoing anything that did not help.
+* **Prioritized Security Check**: Failing paths and failed hardening tasks arrive as one list, worst first, with bands described in time — "worth fixing this week" — instead of separate tables to reconcile.
+* **AI Security Explanations**: Get every finding explained for your website and ranked by real exposure. Requires a connected WP Ghost account with an active subscription; a monthly allowance applies. <a href="https://wpghost.com/features/">Learn more</a>.
 
 #### Premium Hack-Prevention Features
 
 For agencies and high-traffic sites, WP Ghost Premium adds advanced features focused on Security Intelligence, Automated Response, and Copyright Protection.
 
+* **AI Security Explanations**: Your findings explained for your own website and re-ranked by what actually exposes you, with a monthly allowance of AI checks included in your subscription. <a href="https://wpghost.com/features/">Read more</a>.
 * **Ghost Mode**: Maximum security preset, changes all paths, hides all file extensions, and enables all hiding options in one click.
 * **IP Block Automation**: Automatically block IP addresses that trigger repeated security threats.
 * **AI Copyright Protection**: Block 30+ AI training crawlers (GPTBot, ClaudeBot, PerplexityBot, and others) at the firewall level. List auto-updated with each release. Does not affect Google, Bing, or regular search visibility.
@@ -147,6 +179,12 @@ Step 4. Select the .zip file and click Install Now.
 Step 5. Click Activate Plugin.
 Step 6. Connect the plugin with your email address to activate your security features.
 
+= Reporting a Security Vulnerability =
+
+Found a security issue in WP Ghost itself? Report it privately through our Patchstack managed disclosure programme at <a href="https://patchstack.com/database/report">patchstack.com/database/report</a>, or email security@hidemywpghost.com. We acknowledge reports within 48 hours and coordinate disclosure within 90 days. Please do not post details in the support forum before a fix is released. The full policy ships with the plugin in SECURITY.md, and the third-party components we bundle are listed in sbom.json.
+
+**Support period:** security updates are provided for 5 years from the release of each version. This version, 7.0.09 released August 2026, is supported with security updates until August 2031. Installing a newer release moves the end date forward.
+
 = Resources & Guides =
 For advanced server configurations or detailed walkthroughs, please visit our comprehensive documentation:
 <a href="https://wpghost.com/kb/install-wp-ghost-plugin/">How to Install and Setup WP Ghost</a>
@@ -176,6 +214,16 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 20. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+= 7.0.09 (17 August 2026) =
+* New - AI Security Explanations: every finding on the Security Check page explained for your own website, in plain language
+* New - AI Security Explanations rank your findings by what actually exposes your site, using your server type, your rules and your security mode
+* New - A plain-language summary of your whole website, above the list of what to fix
+* New - Open Details on any finding to read why it matters on your server and what an attacker would do with it
+* Fix - Fix it now works for the Security Check tasks that change a plugin setting, such as Hide Old Paths, Hide Common Files, Hide wp-login and Disable XML-RPC
+* Fix - Fix it no longer answers with "Ajax is not loading correctly. Clear all cache and try again." after the paths have been changed
+* Fix - The Security Check summary now shows whether your paths are working instead of always reporting that they have not been checked
+* Update - Published a coordinated vulnerability disclosure policy (SECURITY.md), a list of the third-party components we bundle (sbom.json), and a declared 5 year security update period
+
 = 7.0.08 (27 July 2026) =
 * New - Ghost Doctor: finds what is breaking your paths and repairs it in one click
 * New - Ghost Doctor can switch to protection that needs no server rules when your server will not serve them
@@ -374,6 +422,15 @@ No. **WP Ghost** utilizes high-performance server rewrite rules (Nginx, Apache, 
 
 = Is WP Ghost a complete standalone solution? =
 For the vast majority of WordPress sites, Yes. By combining Architectural Hardening with an 8G Firewall and Automated IP Blocking, WP Ghost neutralizes the automated reconnaissance and brute-force attempts that account for over 90% of real-world attacks. It provides a foundational defense that is often statistically sufficient on its own, while remaining fully compatible with "Defense in Depth" strategies involving malware scanners or file-integrity monitors.
+
+= What are AI Security Explanations? =
+Security scanners tell you what is wrong. AI Security Explanations tell you what it means **for your website**. WP Ghost sends your findings for analysis together with a short description of how your site is set up — your server type, whether your rewrite rules are active, whether your config file is writable, and your security mode — and returns a plain-language explanation for each finding, one clear action to take, and a priority order based on what genuinely exposes your site. Open Details on any finding to read the reasoning behind it. <a href="https://wpghost.com/features/">Read more on wpghost.com</a>.
+
+= What data is sent when I use AI Security Explanations? =
+Only the findings already on your Security Check page and a small description of your configuration: server type, whether the config file is writable, whether the rules are present, whether a cache plugin is installed, your security mode, and a count of mapped files. **No page content, no user data, no passwords and no database contents are ever sent.** The feature is entirely opt-in — nothing is transmitted until you press the button.
+
+= Does WP Ghost still work without the AI? =
+Completely. The Security Check scan, the 0-100 score, the prioritized list, the severity bands, every task detail and the whole Ghost Doctor diagnosis and repair process run on your own server and need no connection at all. AI Security Explanations only add the wording on top. Using them requires a connected WP Ghost account with an active subscription and a monthly allowance of checks, and the page tells you exactly how many you have left.
 
 = Is it compatible with other WordPress security plugins? =
 Yes! WP Ghost is designed as your **"Outer Perimeter"** defense. It works perfectly alongside malware scanners and reactive security tools like **Wordfence, Sucuri, or Solid Security**. By implementing **Paths Security** first, WP Ghost stops bots before they even get close enough to be scanned by other plugins.
