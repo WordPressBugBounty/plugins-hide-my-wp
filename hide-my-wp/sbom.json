@@ -6,7 +6,7 @@
     "component": {
       "type": "application",
       "name": "WP Ghost",
-      "version": "7.0.09",
+      "version": "7.0.10",
       "description": "WordPress security plugin (free edition). Hides WP paths, firewall, brute-force defence, 2FA, GEO-IP blocking.",
       "publisher": "MINBO QRE SRL",
       "licenses": [ { "license": { "id": "GPL-2.0-or-later" } } ]

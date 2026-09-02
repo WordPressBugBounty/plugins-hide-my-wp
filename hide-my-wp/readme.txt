@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.09
+Stable tag: 7.0.10
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -183,7 +183,7 @@ Step 6. Connect the plugin with your email address to activate your security fea
 
 Found a security issue in WP Ghost itself? Report it privately through our Patchstack managed disclosure programme at <a href="https://patchstack.com/database/report">patchstack.com/database/report</a>, or email security@hidemywpghost.com. We acknowledge reports within 48 hours and coordinate disclosure within 90 days. Please do not post details in the support forum before a fix is released. The full policy ships with the plugin in SECURITY.md, and the third-party components we bundle are listed in sbom.json.
 
-**Support period:** security updates are provided for 5 years from the release of each version. This version, 7.0.09 released August 2026, is supported with security updates until August 2031. Installing a newer release moves the end date forward.
+**Support period:** security updates are provided for 5 years from the release of each version. This version, 7.0.10 released September 2026, is supported with security updates until September 2031. Installing a newer release moves the end date forward.
 
 = Resources & Guides =
 For advanced server configurations or detailed walkthroughs, please visit our comprehensive documentation:
@@ -214,6 +214,13 @@ For advanced server configurations or detailed walkthroughs, please visit our co
 20. **Source Code Proof**: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+= 7.0.10 (2 September 2026) =
+* Update - Security update: hardening for the way the plugin resolves and handles the current request
+* Fix - Static files and the REST API path are now handled correctly when your site is reached on an alias domain
+* Fix - REST API responses handled by the plugin no longer carry compression headers that do not match the returned content
+* Fix - No longer stops with a fatal error on servers where the getallheaders() function is missing
+* New - New hmwp_files_allowed_hosts, hmwp_files_request_headers, hmwp_files_response_headers and hmwp_files_skip_headers filters for developers
+
 = 7.0.09 (17 August 2026) =
 * New - AI Security Explanations: every finding on the Security Check page explained for your own website, in plain language
 * New - AI Security Explanations rank your findings by what actually exposes your site, using your server type, your rules and your security mode

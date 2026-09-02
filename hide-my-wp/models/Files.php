@@ -16,6 +16,8 @@ class HMWP_Models_Files {
 	protected $_safe_files = array();
 	protected $_replace = array();
 	protected $_rewrites = array();
+	protected $_site_url = null;
+	protected $_site_hosts = array();
 
 	public function __construct() {
 		//The list of handled file extensions
@@ -150,9 +152,15 @@ class HMWP_Models_Files {
 	public function getCurrentURL() {
 		$url = '';
 
-		if ( isset( $_SERVER['HTTP_HOST'] ) ) {
+		// Use the site host, the Host header is set by the client
+		if ( ! isset( $this->_site_url ) ) {
+			$home            = wp_parse_url( home_url() );
+			$this->_site_url = ( isset( $home['host'] ) && $home['host'] <> '' ? set_url_scheme( 'http://' . $home['host'] . ( isset( $home['port'] ) && $home['port'] ? ':' . (int) $home['port'] : '' ) ) : '' );
+		}
+
+		if ( $this->_site_url <> '' ) {
 			// build the URL in the address bar
-			$url = set_url_scheme( 'http://' . wp_unslash( $_SERVER['HTTP_HOST'] ) ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$url = $this->_site_url;
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) &&
 			     HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) &&
 			     HMWP_Classes_Tools::getValue( 'hmwp_url' ) ) {
@@ -163,6 +171,161 @@ class HMWP_Models_Files {
 		}
 
 		return $url;
+	}
+
+	/**
+	 * Get the host and the port of an URL in a comparable format
+	 *
+	 * @param  string  $url  The URL to extract the authority from
+	 *
+	 * @return string The lowercase host, with the port appended when it's not the default one
+	 */
+	public function getUrlAuthority( $url ) {
+
+		$parse_url = wp_parse_url( $url );
+
+		if ( ! isset( $parse_url['host'] ) || $parse_url['host'] == '' ) {
+			return '';
+		}
+
+		$authority = strtolower( $parse_url['host'] );
+
+		if ( isset( $parse_url['port'] ) && $parse_url['port'] && ! in_array( (int) $parse_url['port'], array( 80, 443 ), true ) ) {
+			$authority .= ':' . (int) $parse_url['port'];
+		}
+
+		return $authority;
+	}
+
+	/**
+	 * Check if the URL points to the current site
+	 *
+	 * @param  string  $url  The URL to verify
+	 *
+	 * @return bool
+	 */
+	public function isSiteUrl( $url ) {
+
+		$authority = $this->getUrlAuthority( $url );
+
+		if ( $authority == '' ) {
+			return false;
+		}
+
+		// The site hosts can't change during the request
+		if ( empty( $this->_site_hosts ) ) {
+
+			$allowed = array();
+
+			foreach ( array( home_url(), site_url(), network_home_url(), network_site_url() ) as $site_url ) {
+				if ( $site_authority = $this->getUrlAuthority( $site_url ) ) {
+					$allowed[] = $site_authority;
+				}
+			}
+
+			$this->_site_hosts = (array) apply_filters( 'hmwp_files_allowed_hosts', array_unique( $allowed ) );
+		}
+
+		return in_array( $authority, $this->_site_hosts, true );
+	}
+
+	/**
+	 * Get the current request headers which can be forwarded to the site
+	 *
+	 * @return array
+	 */
+	public function getForwardHeaders() {
+
+		$headers = array();
+
+		if ( function_exists( 'getallheaders' ) ) {
+			$headers = (array) getallheaders();
+		} else {
+			foreach ( $_SERVER as $key => $value ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				if ( strpos( $key, 'HTTP_' ) === 0 ) {
+					$name             = str_replace( ' ', '-', ucwords( strtolower( str_replace( '_', ' ', substr( $key, 5 ) ) ) ) );
+					$headers[ $name ] = wp_unslash( $value );
+				}
+			}
+		}
+
+		// Drop the Host header so the client can't pick the vhost of the internal request
+		$skip = array(
+			'host',
+			'connection',
+			'keep-alive',
+			'proxy-authenticate',
+			'proxy-authorization',
+			'te',
+			'trailer',
+			'transfer-encoding',
+			'upgrade',
+			'content-length',
+			'accept-encoding',
+		);
+
+		foreach ( $headers as $name => $value ) {
+			if ( in_array( strtolower( $name ), $skip, true ) ) {
+				unset( $headers[ $name ] );
+			}
+		}
+
+		return apply_filters( 'hmwp_files_request_headers', $headers );
+	}
+
+	/**
+	 * Check if a response header can be sent back to the browser
+	 *
+	 * @param  string  $name  The header name
+	 *
+	 * @return bool
+	 */
+	public function isAllowedHeader( $name ) {
+
+		// The body is already decoded by WordPress so the hop-by-hop headers would break the response
+		$skip = apply_filters( 'hmwp_files_skip_headers', array(
+			'content-encoding',
+			'content-length',
+			'transfer-encoding',
+			'connection',
+			'keep-alive',
+			'te',
+			'trailer',
+			'upgrade',
+			'proxy-authenticate',
+			'proxy-authorization',
+		) );
+
+		return ! in_array( strtolower( $name ), (array) $skip, true );
+	}
+
+	/**
+	 * Get the response headers which can be sent back to the browser
+	 *
+	 * @param  array|WP_Error  $response  The remote response
+	 *
+	 * @return array
+	 */
+	public function getResponseHeaders( $response ) {
+
+		$headers = array();
+
+		foreach ( wp_remote_retrieve_headers( $response ) as $key => $value ) {
+
+			if ( ! $this->isAllowedHeader( $key ) ) {
+				continue;
+			}
+
+			if ( ! is_array( $value ) ) {
+				$headers[] = "$key: $value";
+			} else {
+				foreach ( $value as $v ) {
+					$headers[] = "$key: $v";
+				}
+			}
+		}
+
+		return apply_filters( 'hmwp_files_response_headers', $headers, $response );
 	}
 
 	/**
@@ -217,6 +380,11 @@ class HMWP_Models_Files {
 
 		// Only if there is a path to change
 		if ( ! isset( $parse_url['host'] ) || ! isset( $parse_url['path'] )) {
+			return $url;
+		}
+
+		// Never map an URL which doesn't belong to this site
+		if ( ! $this->isSiteUrl( $url ) ) {
 			return $url;
 		}
 
@@ -550,7 +718,12 @@ class HMWP_Models_Files {
 	public function postRequest( $url ) {
 		$return = array();
 
-		$headers = getallheaders();
+		// Only requests to this site are allowed
+		if ( ! $this->isSiteUrl( $url ) ) {
+			return array();
+		}
+
+		$headers = $this->getForwardHeaders();
 		$options = array(
 			'method'    => 'POST',
 			'headers'   => $headers,
@@ -563,16 +736,8 @@ class HMWP_Models_Files {
 
 		$response = wp_remote_post( $url, $options );
 
-		$return['body'] = wp_remote_retrieve_body( $response );
-		foreach ( wp_remote_retrieve_headers( $response ) as $key => $value ) {
-			if ( ! is_array( $value ) ) {
-				$return['headers'][] = "$key: $value";
-			} else {
-				foreach ( $value as $v ) {
-					$return['headers'][] = "$key: $v";
-				}
-			}
-		}
+		$return['body']    = wp_remote_retrieve_body( $response );
+		$return['headers'] = $this->getResponseHeaders( $response );
 
 		do_action( 'hmwp_files_post_request_after', $url, $return );
 
@@ -589,7 +754,12 @@ class HMWP_Models_Files {
 	public function getRequest( $url ) {
 		$return = array();
 
-		$headers = getallheaders();
+		// Only requests to this site are allowed
+		if ( ! $this->isSiteUrl( $url ) ) {
+			return array();
+		}
+
+		$headers = $this->getForwardHeaders();
 		$options = array(
 			'method'    => 'GET',
 			'headers'   => $headers,
@@ -601,16 +771,8 @@ class HMWP_Models_Files {
 
 		$response = wp_remote_get( $url, $options );
 
-		$return['body'] = wp_remote_retrieve_body( $response );
-		foreach ( wp_remote_retrieve_headers( $response ) as $key => $value ) {
-			if ( ! is_array( $value ) ) {
-				$return['headers'][] = "$key: $value";
-			} else {
-				foreach ( $value as $v ) {
-					$return['headers'][] = "$key: $v";
-				}
-			}
-		}
+		$return['body']    = wp_remote_retrieve_body( $response );
+		$return['headers'] = $this->getResponseHeaders( $response );
 
 		do_action( 'hmwp_files_get_request_after', $url, $return );
 
