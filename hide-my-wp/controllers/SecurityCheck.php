@@ -941,7 +941,8 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 		// is. The target is still probed either way, so a renamed wp-json that has
 		// no working rewrite is still reported.
 		if ( ! HMWP_Classes_Tools::isPHPPermalink() ) {
-			$url         = home_url() . '/' . HMWP_Classes_Tools::getOption( 'hmwp_wp-json' );
+			// The renamed REST path only resolves with the trailing slash
+			$url         = home_url() . '/' . trailingslashit( HMWP_Classes_Tools::getOption( 'hmwp_wp-json' ) );
 			$rest_closed = (bool) HMWP_Classes_Tools::getOption( 'hmwp_disable_rest_api' );
 		} else {
 			$url         = home_url() . '/index.php?rest_route=/';
@@ -1064,7 +1065,16 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 				}
 			}
 
+			// When the text mapping in CSS and JS files is on, the server rules send the
+			// CSS and JS to WordPress on purpose, so those files are expected to be
+			// served by the plugin and must not be probed with the fallback disabled
+			$dynamicfiles = ( ( defined( 'HMW_DYNAMIC_FILES' ) && HMW_DYNAMIC_FILES ) ||
+			                  ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) );
+
 			foreach ( $assets as $asset ) {
+
+				$extension = strtolower( (string) pathinfo( (string) wp_parse_url( $asset, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+
 				// Bypass the WordPress fallback handler (showFile) so only the server config
 				// rules serve the file. Otherwise a broken rewrite is masked by a 200 response.
 				$test = add_query_arg( 'hmwp_preview', $disable_name, $asset );
@@ -1080,6 +1090,22 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 				$code   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
 				$failed = ( ! is_wp_error( $response ) && in_array( $code, array( 404, 302, 301 ) ) );
+
+				// The CSS and JS are sent to WordPress on purpose when the text mapping in
+				// files is on, so ask for the file the way a visitor does before calling it
+				// broken. An asset that answers to a normal request is not broken.
+				if ( $failed && $dynamicfiles && in_array( $extension, array( 'js', 'css', 'scss' ), true ) ) {
+
+					$plain = ( is_ssl() ? str_replace( 'http://', 'https://', $asset ) : $asset );
+
+					$response = HMWP_Classes_Tools::hmwp_localcall( $plain, array(
+						'redirection' => 0,
+						'cookies'     => false
+					) );
+
+					$code   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+					$failed = ( ! is_wp_error( $response ) && in_array( $code, array( 404, 302, 301 ) ) );
+				}
 
 				$checks[] = array( 'role' => 'asset', 'url' => $asset, 'code' => $code, 'ok' => ! $failed );
 

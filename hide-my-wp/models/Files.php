@@ -18,6 +18,8 @@ class HMWP_Models_Files {
 	protected $_rewrites = array();
 	protected $_site_url = null;
 	protected $_site_hosts = array();
+	protected $_fingerprint = null;
+	protected $_cachedir = null;
 
 	public function __construct() {
 		//The list of handled file extensions
@@ -329,6 +331,331 @@ class HMWP_Models_Files {
 	}
 
 	/**
+	 * Fingerprint of everything that changes the mapped file content
+	 *
+	 * @return string
+	 * @throws Exception
+	 */
+	public function getMappingFingerprint() {
+
+		if ( ! isset( $this->_fingerprint ) ) {
+
+			/** @var HMWP_Models_Rewrite $rewriteModel */
+			$rewriteModel = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' );
+
+			// Build the map the same way find_replace_url does it
+			if ( empty( $rewriteModel->_replace ) ) {
+				$rewriteModel->buildRedirect();
+				$rewriteModel->prepareFindReplace();
+			}
+
+			// The map holds the CDN and the third party changes, so it covers more than the plugin options
+			$this->_fingerprint = md5( wp_json_encode( array(
+				$rewriteModel->_replace,
+				HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ),
+				HMWP_Classes_Tools::getOption( 'hmwp_mapping_classes' ),
+				HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ),
+				HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ),
+				HMWP_Classes_Tools::isLoggedInUser(),
+				( is_multisite() ? get_current_blog_id() : 0 ),
+			) ) );
+		}
+
+		return $this->_fingerprint;
+	}
+
+	/**
+	 * Build the cache validator for a file
+	 *
+	 * @param  string  $path  The file path on the server
+	 * @param  bool  $mapped  True when the content is changed before it's sent
+	 *
+	 * @return array The etag and the last modified time
+	 * @throws Exception
+	 */
+	public function getFileValidator( $path, $mapped = false ) {
+
+		// Initialize WordPress Filesystem
+		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
+
+		$mtime = (int) $wp_filesystem->mtime( $path );
+		$size  = (int) $wp_filesystem->size( $path );
+
+		// The mapped content changes with the settings, add them in the validator
+		$fingerprint = ( $mapped ? $this->getMappingFingerprint() : '' );
+
+		return array(
+			'etag'  => md5( $path . '|' . $mtime . '|' . $size . '|' . $fingerprint ),
+			'mtime' => $mtime,
+			'size'  => $size,
+		);
+	}
+
+	/**
+	 * Check if the browser already has the current version of the file
+	 *
+	 * @param  string  $etag  The current etag
+	 * @param  int  $mtime  The last modified time
+	 *
+	 * @return bool
+	 */
+	public function isNotModified( $etag, $mtime ) {
+
+		// The etag has priority over the modified time
+		if ( isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+			$match = trim( wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] ) ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+			if ( $match <> '' ) {
+				// The browser can send more etags and the W/ prefix for the weak validators
+				foreach ( explode( ',', $match ) as $value ) {
+					$value = trim( str_replace( array( 'W/', '"' ), '', $value ) );
+					if ( $value <> '' && $value === $etag ) {
+						return true;
+					}
+				}
+
+				return false;
+			}
+		}
+
+		if ( isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) && $mtime > 0 ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+			$since = strtotime( trim( wp_unslash( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+			if ( $since !== false && $mtime <= $since ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get the compression accepted by the browser
+	 *
+	 * @return string br, gzip or empty when the content is sent as it is
+	 */
+	public function getAcceptedEncoding() {
+
+		// Don't compress twice when the server already does it
+		if ( ini_get( 'zlib.output_compression' ) ) {
+			return '';
+		}
+
+		if ( ! isset( $_SERVER['HTTP_ACCEPT_ENCODING'] ) ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			return '';
+		}
+
+		$accepted = array();
+
+		foreach ( explode( ',', strtolower( wp_unslash( $_SERVER['HTTP_ACCEPT_ENCODING'] ) ) ) as $value ) { //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+			$parts  = explode( ';', $value );
+			$name   = trim( $parts[0] );
+			$weight = 1;
+
+			// Skip the encodings the browser refuses with q=0
+			if ( isset( $parts[1] ) && strpos( $parts[1], 'q=' ) !== false ) {
+				$weight = (float) str_replace( 'q=', '', trim( $parts[1] ) );
+			}
+
+			if ( $name <> '' && $weight > 0 ) {
+				$accepted[] = $name;
+			}
+		}
+
+		if ( in_array( 'br', $accepted, true ) && function_exists( 'brotli_compress' ) ) {
+			return 'br';
+		}
+
+		if ( in_array( 'gzip', $accepted, true ) && function_exists( 'gzencode' ) ) {
+			return 'gzip';
+		}
+
+		return '';
+	}
+
+	/**
+	 * Get the directory where the changed CSS and JS files are kept
+	 *
+	 * It's never under wp-content/cache, that directory is scanned and rewritten
+	 * by checkCacheFiles when no known cache plugin is installed.
+	 *
+	 * @return string The cache directory with trailing slash, empty when it can't be used
+	 */
+	public function getCacheDir() {
+
+		if ( isset( $this->_cachedir ) ) {
+			return $this->_cachedir;
+		}
+
+		$this->_cachedir = '';
+
+		$uploads = wp_upload_dir( null, false );
+
+		if ( ! empty( $uploads['error'] ) || empty( $uploads['basedir'] ) ) {
+			return $this->_cachedir;
+		}
+
+		$dir = trailingslashit( $uploads['basedir'] ) . 'wp-ghost-cache/';
+		$dir = apply_filters( 'hmwp_files_cache_dir', $dir );
+
+		// Initialize WordPress Filesystem
+		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
+
+		if ( ! $wp_filesystem->is_dir( $dir ) ) {
+
+			if ( ! $wp_filesystem->mkdir( $dir, HMW_DIR_PERMISSION ) ) {
+				return $this->_cachedir;
+			}
+
+			// Keep the directory private
+			$wp_filesystem->put_contents( $dir . 'index.php', '<?php // Silence is golden', HMW_FILE_PERMISSION );
+			$deny = "<IfModule mod_authz_core.c>" . PHP_EOL . "Require all denied" . PHP_EOL . "</IfModule>" . PHP_EOL;
+			$deny .= "<IfModule !mod_authz_core.c>" . PHP_EOL . "Order Allow,Deny" . PHP_EOL . "Deny from all" . PHP_EOL . "</IfModule>" . PHP_EOL;
+
+			$wp_filesystem->put_contents( $dir . '.htaccess', $deny, HMW_FILE_PERMISSION );
+		}
+
+		if ( ! $wp_filesystem->is_writable( $dir ) ) {
+			return $this->_cachedir;
+		}
+
+		$this->_cachedir = $dir;
+
+		return $this->_cachedir;
+	}
+
+	/**
+	 * Check if the changed content of a file can be kept on disk
+	 *
+	 * @return bool
+	 */
+	public function isCacheable() {
+
+		// The content is not changed for logged in users, caching it would
+		// send the original paths to the visitors
+		if ( HMWP_Classes_Tools::isLoggedInUser() ) {
+			return false;
+		}
+
+		// A random text mapping is generated on every request by design
+		$mapping = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ), true );
+
+		if ( isset( $mapping['to'] ) && is_array( $mapping['to'] ) ) {
+			foreach ( $mapping['to'] as $value ) {
+				if ( strpos( (string) $value, '{rand}' ) !== false ) {
+					return false;
+				}
+			}
+		}
+
+		return (bool) apply_filters( 'hmwp_files_cache', true );
+	}
+
+	/**
+	 * Get the file which holds the changed content
+	 *
+	 * @param  string  $etag  The validator of the original file
+	 * @param  string  $encoding  The compression used for the content
+	 *
+	 * @return string The path of the cache file, empty when it can't be used
+	 */
+	public function getCacheFile( $etag, $encoding ) {
+
+		if ( ! $dir = $this->getCacheDir() ) {
+			return '';
+		}
+
+		// The extension is never css or js, so the cache rewriting never picks these files up
+		return $dir . md5( $etag . '|' . $encoding ) . '.cache';
+	}
+
+	/**
+	 * Save the changed content so it's not rebuilt on every request
+	 *
+	 * @param  string  $file  The cache file path
+	 * @param  string  $content  The content to save
+	 *
+	 * @return void
+	 */
+	public function saveCacheFile( $file, $content ) {
+
+		// Initialize WordPress Filesystem
+		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
+
+		// Write in a temporary file first so a visitor never reads half a file
+		$temp = $file . '.' . wp_rand( 100000, 999999 ) . '.tmp';
+
+		if ( $wp_filesystem->put_contents( $temp, $content, HMW_FILE_PERMISSION ) ) {
+			if ( ! @rename( $temp, $file ) ) { //phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				$wp_filesystem->delete( $temp );
+			}
+		}
+
+		$this->cleanCacheDir();
+	}
+
+	/**
+	 * Remove the cache files left behind when a file or a setting changed
+	 *
+	 * @return void
+	 */
+	public function cleanCacheDir() {
+
+		if ( ! $dir = $this->getCacheDir() ) {
+			return;
+		}
+
+		// Initialize WordPress Filesystem
+		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
+
+		$marker = $dir . 'last-clean';
+		$lifetime = (int) apply_filters( 'hmwp_files_cache_lifetime', WEEK_IN_SECONDS );
+
+		// Only look through the directory once a day
+		if ( $wp_filesystem->exists( $marker ) && ( time() - (int) $wp_filesystem->mtime( $marker ) ) < DAY_IN_SECONDS ) {
+			return;
+		}
+
+		$wp_filesystem->put_contents( $marker, (string) time(), HMW_FILE_PERMISSION );
+
+		if ( ! function_exists( 'glob' ) ) {
+			return;
+		}
+
+		if ( $files = glob( $dir . '*.cache' ) ) {
+			foreach ( $files as $file ) {
+				if ( ( time() - (int) $wp_filesystem->mtime( $file ) ) > $lifetime ) {
+					$wp_filesystem->delete( $file );
+				}
+			}
+		}
+
+		// Clean up the temporary files left by an interrupted write
+		if ( $files = glob( $dir . '*.tmp' ) ) {
+			foreach ( $files as $file ) {
+				if ( ( time() - (int) $wp_filesystem->mtime( $file ) ) > HOUR_IN_SECONDS ) {
+					$wp_filesystem->delete( $file );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Close all the output buffers before sending a file
+	 *
+	 * @return void
+	 */
+	public function closeBuffers() {
+
+		while ( ob_get_level() ) {
+			ob_end_clean();
+		}
+	}
+
+	/**
 	 * Build the redirects array
 	 *
 	 * @throws Exception
@@ -593,52 +920,111 @@ class HMWP_Models_Files {
 
 					//////////////////////////////////////////////////////////////////////////
 
-					ob_clean(); //clear the buffer
-					$content = $wp_filesystem->get_contents( $new_path );
-					$etag    = md5_file( $new_path );
+					// Only the CSS, JS and SCSS content is changed before it's sent
+					$ismapped = ( strpos( $new_url, '.js' ) || strpos( $new_url, '.css' ) || strpos( $new_url, '.scss' ) );
+
+					// Build the validator before the file is read
+					$validator = $this->getFileValidator( $new_path, $ismapped );
+
+					header( "Cache-Control: max-age=2592000, must-revalidate" );
+					header( "Expires: " . gmdate( 'r', strtotime( "+1 month" ) ) );
+					header( "Vary: Accept-Encoding" );
+					header( "Pragma: public" );
+					header( 'Etag: "' . $validator['etag'] . '"' );
+
+					if ( $validator['mtime'] > 0 ) {
+						header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $validator['mtime'] ) . ' GMT' );
+					}
+
+					// Answer the conditional request without reading the file
+					if ( $this->isNotModified( $validator['etag'], $validator['mtime'] ) ) {
+
+						$this->closeBuffers();
+
+						if ( function_exists( 'http_response_code' ) ) {
+							http_response_code( 304 );
+						}
+
+						header( "HTTP/1.1 304 Not Modified" );
+						exit();
+					}
 
 					if ( function_exists( 'http_response_code' ) ) {
 						http_response_code( 200 );
 					}
 
 					header( "HTTP/1.1 200 OK" );
-					header( "Cache-Control: max-age=2592000, must-revalidate" );
-					header( "Expires: " . gmdate( 'r', strtotime( "+1 month" ) ) );
-					header( "Vary: Accept-Encoding" );
-					header( "Pragma: public" );
-					header( "Etag: \"{$etag}\"" );
 
 					if ( $mime ) {
 						header( 'Content-Type: ' . $mime . '; charset: UTF-8' );
 					}
 
 					//////////////////////////////////////////////////////////////////////////
-					// If CSS, JS or SCSS
-					if ( strpos( $new_url, '.js' ) || strpos( $new_url, '.css' ) || strpos( $new_url, '.scss' ) ) {
+					// The images, fonts and media need no change, send them without loading them in memory
+					if ( ! $ismapped ) {
 
-						// URL Mapping for all css and js files
-						$content = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $content );
-						// Text Mapping for all css and js files
-						$content = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->replaceTextMapping( $content, true );
+						$this->closeBuffers();
 
-						// Cache the CSS and JS files if no cache plugin is installed
-						if ( function_exists( 'brotli_compress' ) ) {
-							// Brotli the CSS, JS
-							header( "Content-Encoding: br" );
-							$content = brotli_compress( $content, 1 );
-						} elseif ( function_exists( 'gzcompress' ) ) {
-							// deflate the  CSS, JS
-							header( "Content-Encoding: deflate" );
-							$content = gzcompress( $content );
-						} elseif ( function_exists( 'gzencode' ) ) {
-							// Gzip the  CSS, JS
-							header( "Content-Encoding: gzip" );
-							$content = gzencode( $content );
+						if ( $validator['size'] > 0 ) {
+							header( 'Content-Length: ' . $validator['size'] );
 						}
 
-						// Show the file html content
-						header( 'Content-Length: ' . strlen( $content ) );
+						if ( readfile( $new_path ) === false ) {
+							echo $wp_filesystem->get_contents( $new_path ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						}
+
+						exit();
 					}
+
+					//////////////////////////////////////////////////////////////////////////
+					// If CSS, JS or SCSS
+					$encoding = $this->getAcceptedEncoding();
+
+					if ( $encoding ) {
+						header( 'Content-Encoding: ' . $encoding );
+					}
+
+					// The changed content is the same for every visitor, build it once
+					$cachefile = ( $this->isCacheable() ? $this->getCacheFile( $validator['etag'], $encoding ) : '' );
+
+					if ( $cachefile && $wp_filesystem->exists( $cachefile ) ) {
+
+						$this->closeBuffers();
+
+						if ( $cachesize = (int) $wp_filesystem->size( $cachefile ) ) {
+							header( 'Content-Length: ' . $cachesize );
+						}
+
+						if ( readfile( $cachefile ) !== false ) {
+							exit();
+						}
+					}
+
+					ob_clean(); //clear the buffer
+					$content = $wp_filesystem->get_contents( $new_path );
+
+					// URL Mapping for all css and js files
+					$content = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->find_replace_url( $content );
+					// Text Mapping for all css and js files
+					$content = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->replaceTextMapping( $content, true );
+
+					// Compress the CSS and JS only with what the browser accepts
+					switch ( $encoding ) {
+						case 'br':
+							$content = brotli_compress( $content, 1 );
+							break;
+						case 'gzip':
+							$content = gzencode( $content );
+							break;
+					}
+
+					// Keep the built content for the next request
+					if ( $cachefile ) {
+						$this->saveCacheFile( $cachefile, $content );
+					}
+
+					// Show the file html content
+					header( 'Content-Length: ' . strlen( $content ) );
 
 					echo $content; //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					exit();

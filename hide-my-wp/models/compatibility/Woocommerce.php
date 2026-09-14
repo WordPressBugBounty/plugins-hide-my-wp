@@ -27,9 +27,11 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
 
 		} else {
 
-			//Check if WooCommerce login support is loaded
-			if ( HMWP_Classes_Tools::getValue( 'woocommerce-login-nonce' ) ) {
-				add_filter( 'hmwp_preauth_check', '__return_false' );
+			//The nonce has to be valid, its presence alone proves nothing
+			if ( function_exists( 'wp_verify_nonce' ) ) {
+				if ( wp_verify_nonce( HMWP_Classes_Tools::getValue( 'woocommerce-login-nonce' ), 'woocommerce-login' ) ) {
+					add_filter( 'hmwp_preauth_check', '__return_false' );
+				}
 			}
 
 		}
@@ -46,39 +48,156 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
             $uri = wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         }
 
-        // WooCommerce AJAX endpoints: skip firewall rules
-        // WooCommerce AJAX actions
-        if (
-             // WooCommerce secure downloads: skip firewall rules
-             ( HMWP_Classes_Tools::getIsset( 'download_file' ) &&
-               HMWP_Classes_Tools::getIsset( 'order' ) &&
-               HMWP_Classes_Tools::getIsset( 'uid' ) &&
-               HMWP_Classes_Tools::getIsset( 'key' ) ) ||
-             // WooCommerce REST API endpoints
-             (
-                     $uri &&
-                     (
-                             strpos( $uri, '/'.HMWP_Classes_Tools::getOption( 'hmwp_wp-json' ).'/wc/' ) !== false ||
-                             strpos( $uri, '/wp-json/wc/' ) !== false ||
-                             strpos( $uri, '/wc-api/' ) !== false ||
-                             strpos( $uri, '/wc-auth/' ) !== false
-                     )
-             ) ||
-             // WooCommerce payment gateways (IPNs, webhooks from payment processors)
-             (
-                     $uri &&
-                     (
-                             strpos( $uri, '/wc-api/v' ) !== false ||
-                             preg_match( '/\/(paypal|stripe|square|authorize_net|braintree)/', $uri )
-                     )
-             )
-        ) {
+        // WooCommerce dedicated routes: REST, gateway callbacks and auth.
+        // These live on their own paths, anchored at the site root, so the plugin stands fully aside.
+        $is_route = HMWP_Classes_Tools::matchRootPath( $uri, array(
+                HMWP_Classes_Tools::getOption( 'hmwp_wp-json' ) . '/wc',
+                HMWP_Classes_Tools::getDefault( 'hmwp_wp-json' ) . '/wc',
+                'wc-api',
+                'wc-auth',
+        ) );
+
+        // WooCommerce REST gateway routes (IPNs, webhooks) carrying a known processor name
+        $is_gateway_route = ( $uri &&
+                HMWP_Classes_Tools::matchRootPath( $uri, array(
+                        HMWP_Classes_Tools::getOption( 'hmwp_wp-json' ),
+                        HMWP_Classes_Tools::getDefault( 'hmwp_wp-json' ),
+                ) ) &&
+                preg_match( '#/[^/]*(paypal|stripe|square|authorize[_-]?net|braintree)#i', $uri ) );
+
+        // WooCommerce secure downloads, all four parameters have to carry a value
+        $is_download = ( HMWP_Classes_Tools::getValue( 'download_file' ) <> '' &&
+                         HMWP_Classes_Tools::getValue( 'order' ) <> '' &&
+                         HMWP_Classes_Tools::getValue( 'uid' ) <> '' &&
+                         HMWP_Classes_Tools::getValue( 'key' ) <> '' );
+
+        // WooCommerce AJAX / legacy API by parameter. A genuine call names a real WooCommerce
+        // action and always arrives on the WooCommerce endpoint at the site root, never on
+        // wp-login.php or any hidden path.
+        $is_ajax = ( $this->isWooRootRequest( $uri ) &&
+                     ( $this->isWooAjaxAction( HMWP_Classes_Tools::getValue( 'wc-ajax' ) ) ||
+                       $this->isWooApiHandler( HMWP_Classes_Tools::getValue( 'wc-api' ) ) ) );
+
+        if ( $is_route || $is_gateway_route || $is_download ) {
 
             add_filter( 'hmwp_process_hide_urls', '__return_false' );
             add_filter( 'hmwp_process_firewall', '__return_false' );
             add_filter( 'hmwp_process_threats', '__return_false' );
+
+        } elseif ( $is_ajax ) {
+
+            // Real WooCommerce AJAX at the WooCommerce endpoint: relax payload scanning only
+            add_filter( 'hmwp_process_firewall', '__return_false' );
+            add_filter( 'hmwp_process_threats', '__return_false' );
         }
 
+	}
+
+	/**
+	 * WooCommerce core AJAX actions, both the unauthenticated frontend set and the admin set
+	 *
+	 * Taken from WC_AJAX::add_ajax_events(). The plugin decides before WordPress init, when
+	 * WooCommerce has not registered its wc_ajax_* handlers yet, so a static list is the only
+	 * reliable proof that a value names a real WooCommerce action. Extendable with the
+	 * hmwp_woocommerce_ajax_actions filter for custom endpoints.
+	 *
+	 * @return array
+	 */
+	private function getWooAjaxActions() {
+
+		$actions = array(
+			// Frontend, unauthenticated
+			'get_refreshed_fragments', 'apply_coupon', 'remove_coupon', 'update_shipping_method',
+			'get_cart_totals', 'update_order_review', 'add_to_cart', 'remove_from_cart', 'checkout',
+			'get_variation', 'get_customer_location',
+			// Admin
+			'feature_product', 'mark_order_status', 'get_order_details', 'add_attribute',
+			'add_new_attribute', 'remove_variations', 'save_attributes', 'add_attributes_and_variations',
+			'add_variation', 'link_all_variations', 'revoke_access_to_download', 'grant_access_to_download',
+			'get_customer_details', 'add_order_item', 'add_order_fee', 'add_order_shipping', 'add_order_tax',
+			'add_coupon_discount', 'remove_order_coupon', 'remove_order_item', 'remove_order_tax',
+			'calc_line_taxes', 'save_order_items', 'load_order_items', 'add_order_note', 'delete_order_note',
+			'json_search_order_metakeys', 'json_search_products', 'json_search_products_and_variations',
+			'json_search_downloadable_products_and_variations', 'json_search_customers', 'json_search_categories',
+			'json_search_categories_tree', 'json_search_taxonomy_terms', 'json_search_product_attributes',
+			'json_search_pages', 'term_ordering', 'product_ordering', 'refund_line_items', 'delete_refund',
+			'rated', 'update_api_key', 'load_variations', 'save_variations', 'bulk_edit_variations',
+			'tax_rates_save_changes', 'shipping_zones_save_changes', 'shipping_zone_add_method',
+			'shipping_zone_remove_method', 'shipping_zone_methods_save_changes', 'shipping_zone_methods_save_settings',
+			'shipping_classes_save_changes', 'shipping_providers_save_changes', 'toggle_gateway_enabled',
+			'load_status_widget', 'load_recent_reviews_widget', 'order_add_meta', 'order_delete_meta',
+		);
+
+		return (array) apply_filters( 'hmwp_woocommerce_ajax_actions', $actions );
+	}
+
+	/**
+	 * Check that a wc-ajax value names a real WooCommerce action
+	 *
+	 * A core action is proof on its own. A custom endpoint is accepted only when WooCommerce
+	 * has actually registered it, never on the strength of the value alone.
+	 *
+	 * @param  mixed  $value  The wc-ajax parameter value
+	 *
+	 * @return bool
+	 */
+	private function isWooAjaxAction( $value ) {
+
+		if ( ! is_string( $value ) || ! preg_match( '/^[A-Za-z0-9_-]{1,64}$/', $value ) ) {
+			return false;
+		}
+
+		if ( in_array( $value, $this->getWooAjaxActions(), true ) ) {
+			return true;
+		}
+
+		return ( function_exists( 'has_action' ) && has_action( 'wc_ajax_' . $value ) );
+	}
+
+	/**
+	 * Check that a wc-api value names a real WooCommerce legacy API handler
+	 *
+	 * Accepted when WooCommerce has registered the handler, or when the value names a known
+	 * payment processor, which is how a gateway IPN identifies itself. A value that is merely
+	 * present is not enough.
+	 *
+	 * @param  mixed  $value  The wc-api parameter value
+	 *
+	 * @return bool
+	 */
+	private function isWooApiHandler( $value ) {
+
+		if ( ! is_string( $value ) || ! preg_match( '/^[A-Za-z0-9_-]{1,64}$/', $value ) ) {
+			return false;
+		}
+
+		if ( function_exists( 'has_action' ) && has_action( 'woocommerce_api_' . strtolower( $value ) ) ) {
+			return true;
+		}
+
+		return (bool) preg_match( '/(paypal|stripe|square|authorize[_-]?net|braintree|klarna|mollie)/i', $value );
+	}
+
+	/**
+	 * Check that the request targets the WooCommerce endpoint at the site root
+	 *
+	 * WooCommerce builds its AJAX endpoint from home_url( '/' ), so a genuine wc-ajax call
+	 * always arrives at the site root, never on wp-login.php or any other entry point.
+	 *
+	 * @param  string  $uri  The request path, already parsed
+	 *
+	 * @return bool
+	 */
+	private function isWooRootRequest( $uri ) {
+
+		if ( ! is_string( $uri ) || $uri == '' ) {
+			return false;
+		}
+
+		$root = wp_parse_url( get_option( 'home' ), PHP_URL_PATH );
+		$root = ( is_string( $root ) ? untrailingslashit( $root ) : '' );
+
+		return ( untrailingslashit( $uri ) === $root );
 	}
 
 	public function hookBruteForce() {
