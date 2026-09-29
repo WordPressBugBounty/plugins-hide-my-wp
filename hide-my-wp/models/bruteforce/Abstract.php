@@ -92,8 +92,11 @@ abstract class HMWP_Models_Bruteforce_Abstract {
 			}
 		}
 
-		// Check the reCaptcha error
-		$user = $this->authenticate( $user, $response );
+		// Check the reCaptcha error.
+		// Can be switched off alone, the IP brute force check above keeps running.
+		if ( apply_filters( 'hmwp_preauth_captcha_check', true ) ) {
+			$user = $this->authenticate( $user, $response );
+		}
 
 		// If there is a login error
 		if ( is_wp_error( $user ) ) {

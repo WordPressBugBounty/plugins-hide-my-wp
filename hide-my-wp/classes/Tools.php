@@ -260,6 +260,7 @@ class HMWP_Classes_Tools {
 			'hmwp_hide_loggedusers'          => 1,
 			'hmwp_hide_version'              => 1,
 			'hmwp_hide_version_random'       => 1,
+			'hmwp_hide_version_type'         => 'file',
 			'hmwp_hide_generator'            => 1,
 			'hmwp_hide_prefetch'             => 1,
 			'hmwp_hide_comments'             => 1,
@@ -849,10 +850,10 @@ class HMWP_Classes_Tools {
 		if ( HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 			// Check if the transient 'hmwp_disable' exists, offering the option to resume security
 			if ( get_transient( 'hmwp_disable' ) ) {
-				$links[] = '<a href="' . esc_url(add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_pause_disable' ), 'action' => 'hmwp_pause_disable' ) ) ). '" class="btn btn-default btn-sm mt-3" />' . esc_html__( "Resume Security", 'hide-my-wp' ) . '</a>';
+				$links[] = '<a href="' . esc_url(add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_pause_disable' ), 'action' => 'hmwp_pause_disable' ) ) ). '">' . esc_html__( "Resume Security", 'hide-my-wp' ) . '</a>';
 			} else {
 				// If 'hmwp_disable' transient does not exist, show the option to pause
-				$links[] = '<a href="' . esc_url(add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_pause_enable' ), 'action' => 'hmwp_pause_enable' ) )) . '" class="btn btn-default btn-sm mt-3" />' . esc_html__( "Pause for 5 minutes", 'hide-my-wp' ) . '</a>';
+				$links[] = '<a href="' . esc_url(add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_pause_enable' ), 'action' => 'hmwp_pause_enable' ) )) . '">' . esc_html__( "Pause for 5 minutes", 'hide-my-wp' ) . '</a>';
 			}
 			// Add a Settings link for easy access to the plugin settings page
 			$links[] = '<a href="' . esc_url(self::getSettingsUrl()) . '">' . esc_html__( 'Settings', 'hide-my-wp' ) . '</a>';

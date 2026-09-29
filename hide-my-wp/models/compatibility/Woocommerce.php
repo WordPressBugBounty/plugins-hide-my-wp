@@ -27,12 +27,34 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
 
 		} else {
 
-			//The nonce has to be valid, its presence alone proves nothing
-			if ( function_exists( 'wp_verify_nonce' ) ) {
-				if ( wp_verify_nonce( HMWP_Classes_Tools::getValue( 'woocommerce-login-nonce' ), 'woocommerce-login' ) ) {
-					add_filter( 'hmwp_preauth_check', '__return_false' );
+			// No captcha is printed on the WooCommerce form, so don't check one there.
+			// Verified late: wp_verify_nonce() only exists once pluggable.php is loaded.
+			add_filter( 'hmwp_preauth_captcha_check', function ( $check ) {
+				global $pagenow;
+
+				// The nonce is public, so it must never switch off the captcha on the
+				// WordPress login endpoint or XML-RPC, where the captcha is printed.
+				if ( in_array( $pagenow, array( 'wp-login.php', 'xmlrpc.php' ), true ) ) {
+					return $check;
 				}
-			}
+
+				// WooCommerce posts its own submit field together with the nonce
+				if ( HMWP_Classes_Tools::getValue( 'login' ) == '' ) {
+					return $check;
+				}
+
+				// wp-login.php signs in with "log" on any login path, WooCommerce with "username"
+				if ( HMWP_Classes_Tools::getValue( 'log' ) <> '' || HMWP_Classes_Tools::getValue( 'username' ) == '' ) {
+					return $check;
+				}
+
+				//The nonce has to be valid, its presence alone proves nothing
+				if ( wp_verify_nonce( HMWP_Classes_Tools::getValue( 'woocommerce-login-nonce' ), 'woocommerce-login' ) ) {
+					return false;
+				}
+
+				return $check;
+			} );
 
 		}
 

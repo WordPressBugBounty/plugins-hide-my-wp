@@ -206,13 +206,33 @@ class HMWP_Models_Bruteforce_Google extends HMWP_Models_Bruteforce_Abstract {
                         });
                     }
 
-                    if (document.getElementsByTagName("form").length > 0) {
-                        var x = document.getElementsByTagName("form");
-                        for (var i = 0; i < x.length; i++) {
-                            // capture phase so token injection happens before most AJAX serializers
-                            x[i].addEventListener("submit", reCaptchaSubmit, true);
+                    // Bind only to the form this script was printed inside, so no other
+                    // form on the page is touched.
+                    (function () {
+                        var script = document.currentScript;
+                        var owner  = (script && script.closest) ? script.closest("form") : null;
+
+                        if (owner) {
+                            if (!owner.__hmwpRecaptchaBound) {
+                                owner.__hmwpRecaptchaBound = true;
+                                // capture phase so token injection happens before most AJAX serializers
+                                owner.addEventListener("submit", reCaptchaSubmit, true);
+                            }
+                            return;
                         }
-                    }
+
+                        // No owning form: printed outside it, or the form is added later.
+                        // Listen on the document once, skipping forms already bound above.
+                        if (!window.__hmwpRecaptchaDelegated) {
+                            window.__hmwpRecaptchaDelegated = true;
+                            document.addEventListener("submit", function (e) {
+                                var form = e.target;
+                                if (form && form.tagName === "FORM" && !form.__hmwpRecaptchaBound) {
+                                    reCaptchaSubmit.call(form, e);
+                                }
+                            }, true);
+                        }
+                    })();
                 </script>
             <?php }
         }
