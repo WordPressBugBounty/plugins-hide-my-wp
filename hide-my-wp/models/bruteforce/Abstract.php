@@ -150,4 +150,40 @@ abstract class HMWP_Models_Bruteforce_Abstract {
 		$bruteForceModel->processIp( 'failed_attempt' );
 	}
 
+	/**
+	 * Ask Google to verify a reCAPTCHA token. A plain request on purpose,
+	 * the licence headers added by hmwp_remote_* must not reach a third party.
+	 *
+	 * @param  string  $secret  The reCAPTCHA secret key
+	 * @param  string  $captcha  The token sent by the form
+	 *
+	 * @return string The JSON body, empty on connection error
+	 */
+	protected function siteVerify( $secret, $captcha ) {
+		$response = wp_remote_post( 'https://www.google.com/recaptcha/api/siteverify', array(
+			'timeout' => 10,
+			'body'    => array(
+				'secret'   => (string) $secret,
+				'response' => (string) $captcha,
+				'remoteip' => isset( $_SERVER['REMOTE_ADDR'] ) ? wp_unslash( $_SERVER['REMOTE_ADDR'] ) : '', //phpcs:ignore
+			),
+		) );
+
+		return is_wp_error( $response ) ? '' : (string) wp_remote_retrieve_body( $response );
+	}
+
+	/**
+	 * Verify a reCAPTCHA token with a given secret and return Google's decoded answer
+	 *
+	 * @param  string  $secret  The reCAPTCHA secret key
+	 * @param  string  $token  The token sent by the form
+	 *
+	 * @return array Empty on connection error
+	 */
+	public function checkToken( $secret, $token ) {
+		$response = json_decode( $this->siteVerify( $secret, $token ), true );
+
+		return is_array( $response ) ? $response : array();
+	}
+
 }

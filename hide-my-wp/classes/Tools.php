@@ -140,6 +140,8 @@ class HMWP_Classes_Tools {
 			'hmwp_fix_relative'              => 1,
 			'hmwp_remove_third_hooks'        => 0,
 			'hmwp_activity_log'              => 0,
+			'hmwp_weekly_digest'             => 1,
+			'hmwp_notification_email'       => '',
 			'hmwp_activity_log_cloud'        => 0,
 			'hmwp_activity_log_roles'        => array(),
 			'hmwp_email_address'             => '',
@@ -172,6 +174,7 @@ class HMWP_Classes_Tools {
 			'hmwp_bruteforce_register'       => 0,
 			'hmwp_bruteforce_lostpassword'   => 0,
 			'hmwp_bruteforce_woocommerce'    => 0,
+			'hmwp_brute_checkout'            => 0,
 			'hmwp_bruteforce_comments'       => 0,
 			'hmwp_bruteforce_username'       => 0,
 			'hmwp_brute_message'             => false,
@@ -1343,7 +1346,7 @@ class HMWP_Classes_Tools {
 			if ( $keep_newlines === false ) {
 
 				// Validate the param based on its type
-				if ( in_array( $key, array( 'hmwp_email_address', 'email', 'user_email', 'hmwp_email', 'whitelist_ip', 'banlist_ip', 'log', 'ip' ) ) ) {
+				if ( in_array( $key, array( 'hmwp_email_address', 'email', 'user_email', 'hmwp_email', 'hmwp_notification_email', 'whitelist_ip', 'banlist_ip', 'log', 'ip' ) ) ) {
 					// Validate email address, logs and ip addresses
 					$ret = preg_replace( '/[^A-Za-z0-9-_.+*#:~@\!\'\/]/', '', $ret );
 				} elseif ( strpos( $key , '_message') !== false || in_array( $key, array_keys( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Translate' )->getStrings() ) ) ) {
@@ -2647,7 +2650,19 @@ class HMWP_Classes_Tools {
 	 * @return bool|string
 	 */
 	public static function generateRandomString( $length = 10 ) {
-		return substr( str_shuffle( str_repeat( $x = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil( $length / strlen( $x ) ) ) ), 1, $length );
+		$chars  = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		$string = '';
+
+		try {
+			for ( $i = 0; $i < (int) $length; $i ++ ) {
+				$string .= $chars[ random_int( 0, strlen( $chars ) - 1 ) ];
+			}
+		} catch ( Exception $e ) {
+			// No secure source available, fall back to the old generator
+			$string = substr( str_shuffle( str_repeat( $chars, (int) ceil( $length / strlen( $chars ) ) ) ), 1, $length );
+		}
+
+		return $string;
 	}
 
 	/**

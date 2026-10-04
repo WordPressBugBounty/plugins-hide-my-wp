@@ -61,7 +61,7 @@ class HMWP_Models_Bruteforce_GoogleV3 extends HMWP_Models_Bruteforce_Abstract {
         $secret  = HMWP_Classes_Tools::getOption( 'brute_captcha_secret_key_v3' );
 
         if ( $secret <> '' ) {
-            $response = json_decode( HMWP_Classes_Tools::hmwp_remote_get( "https://www.google.com/recaptcha/api/siteverify?secret=$secret&response=" . $captcha . "&remoteip=" . wp_unslash( ( $_SERVER['REMOTE_ADDR'] ?? '') ) ), true ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $response = json_decode( $this->siteVerify( $secret, $captcha ), true );
 
             if ( isset( $response['success'] ) && ! $response['success'] ) {
                 //If captcha errors, let the user login and fix the error

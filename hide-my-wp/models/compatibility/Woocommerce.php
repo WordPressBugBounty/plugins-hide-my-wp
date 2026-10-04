@@ -15,6 +15,12 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
 		parent::__construct();
 		add_action( 'admin_url', array( $this, 'admin_url' ), PHP_INT_MAX, 3 );
 
+		// Protect the WooCommerce checkout from card-testing by throttling attempts per IP
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_brute_checkout' ) ) {
+			add_action( 'woocommerce_checkout_process', array( $this, 'checkoutProtection' ) );
+			add_action( 'woocommerce_order_status_failed', array( $this, 'checkoutPaymentFailed' ) );
+		}
+
 		if ( HMWP_Classes_Tools::getValue( 'noredicts' ) ) {
 			add_filter( 'woocommerce_is_rest_api_request', '__return_false' );
 		}
@@ -346,6 +352,65 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
             </script>
 			<?php
 		}
+	}
+
+
+	/**
+	 * Throttle the WooCommerce checkout per IP so a scammer cannot test stolen
+	 * cards by placing many orders in a row from the same address.
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function checkoutProtection() {
+		if ( ! function_exists( 'wc_add_notice' ) ) {
+			return;
+		}
+
+		$ip = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' )->getIp();
+		if ( ! $ip ) {
+			return;
+		}
+
+		$window  = (int) apply_filters( 'hmwp_checkout_window', 600 );
+		$maxTry  = (int) apply_filters( 'hmwp_checkout_max_attempts', 8 );
+		$maxFail = (int) apply_filters( 'hmwp_checkout_max_fails', 3 );
+
+		$tries = (int) get_transient( 'hmwp_wc_try_' . md5( $ip ) ) + 1;
+		set_transient( 'hmwp_wc_try_' . md5( $ip ), $tries, $window );
+
+		$fails = (int) get_transient( 'hmwp_wc_fail_' . md5( $ip ) );
+
+		if ( $tries > $maxTry || $fails >= $maxFail ) {
+			do_action( 'hmwp_threat_detected', array( 'code' => 'WC_CHECKOUT_FLOOD', 'area' => 'checkout' ) );
+			wc_add_notice( esc_html__( 'Too many checkout attempts. Please wait a few minutes and try again.', 'hide-my-wp' ), 'error' );
+		}
+	}
+
+	/**
+	 * Remember a failed payment per IP, the clearest sign of card testing.
+	 *
+	 * @param  int  $order_id  The order that failed to pay.
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function checkoutPaymentFailed( $order_id ) {
+		if ( ! function_exists( 'wc_get_order' ) || ! $order = wc_get_order( $order_id ) ) {
+			return;
+		}
+
+		$ip = $order->get_customer_ip_address();
+		if ( ! $ip ) {
+			$ip = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' )->getIp();
+		}
+		if ( ! $ip ) {
+			return;
+		}
+
+		$window = (int) apply_filters( 'hmwp_checkout_window', 600 );
+		$key    = 'hmwp_wc_fail_' . md5( $ip );
+		set_transient( $key, (int) get_transient( $key ) + 1, $window );
 	}
 
 }

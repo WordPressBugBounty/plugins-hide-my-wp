@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.12
+Stable tag: 7.0.13
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -215,6 +215,20 @@ How to Install and Set Up WP Ghost
 
 == Changelog ==
 
+= 7.0.13 (3 Oct 2026) =
+
+* New - Weekly email summary of blocked threats, logins and blocked IPs. Turn it on or off in Advanced, Notifications.
+* New - Check your reCAPTCHA keys on the Brute Force page without logging out.
+* New - WooCommerce checkout protection limits repeated checkout attempts and failed payments from the same IP, to stop card testing.
+* New - Email alert when the activity log or the threats log is turned off.
+* Update - reCAPTCHA v2 keeps the login button disabled until the box is checked.
+* Update - Right-click, copy and paste protection now skips form fields, so visitors can fill and paste in forms.
+* Update - Firewall and brute force now run on requests with an unverified login cookie, so a forged cookie cannot skip them.
+* Update - 6G firewall now also checks the query string on browser requests.
+* Update - The login math question uses a one time token, so an answer cannot be reused.
+* Fix - Temporary Login and Magic Login links expire correctly on PHP 8.
+* Fix - A corrupted firewall whitelist no longer causes a fatal error.
+
 = 7.0.12 (29 Sept 2026) =
 
 * New - Random Static Number now has a Random Number Type option: a random version for each file that changes when the file version changes
@@ -223,6 +237,7 @@ How to Install and Set Up WP Ghost
 * Fix - With WooCommerce Support turned off, the WooCommerce login is no longer refused with "Invalid ReCaptcha"
 * Fix - CSS and JS files served by the plugin now send a valid Content-Type header
 * Fix - Random Static Number no longer saves a new number in the database on every page view of a logged in user
+* Fix - Hide Source Map no longer cuts off the page when a cache plugin like LiteSpeed Cache minifies the HTML
 
 = 7.0.11 (10 September 2026) =
 

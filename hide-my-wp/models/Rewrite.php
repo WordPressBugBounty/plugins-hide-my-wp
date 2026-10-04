@@ -3126,9 +3126,10 @@ class HMWP_Models_Rewrite {
 
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_source_map' ) ) {
 			// Remove devtools source pragmas (JS)
-			$find[]    = '/^[ \t]*\/\/[@#]\s*sourceMappingURL=.*$(\R)?/mi';
+			// Stop at the URL end, a minified page puts </script> and the rest of the HTML on the same line
+			$find[]    = '/^[ \t]*\/\/[@#][ \t]*sourceMappingURL=[^\s<]*[ \t]*(\R)?/mi';
 			$replace[] = '';
-			$find[]    = '/^[ \t]*\/\/[@#]\s*sourceURL=.*$(\R)?/mi';
+			$find[]    = '/^[ \t]*\/\/[@#][ \t]*sourceURL=[^\s<]*[ \t]*(\R)?/mi';
 			$replace[] = '';
 
 			// Remove devtools source pragmas (CSS)
