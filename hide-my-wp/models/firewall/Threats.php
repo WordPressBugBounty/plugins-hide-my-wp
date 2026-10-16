@@ -106,7 +106,7 @@ class HMWP_Models_Firewall_Threats {
 
 		// Probes and prohibited paths (must run BEFORE fast-exit)
 		$prohibited = $this->matchProhibitedUrl( $path );
-		if ( $prohibited ) {
+		if ( $prohibited && ! $this->isWhitelistedCode( $prohibited['code'] ) ) {
 			return $prohibited;
 		}
 		// Fast exit for non-probe, non-blocked, non-payload requests
@@ -441,6 +441,21 @@ class HMWP_Models_Firewall_Threats {
 	}
 
 	/**
+	 * Check if a threat code is in the whitelist_rules option
+	 *
+	 * @param string $code
+	 *
+	 * @return bool
+	 * @throws Exception
+	 */
+	protected function isWhitelistedCode( $code ) {
+		/** @var HMWP_Models_Firewall_Rules $rules */
+		$rules = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' );
+
+		return $rules->checkWhitelistRule( (string) $code );
+	}
+
+	/**
 	 * Matches the provided input string against a set of predefined threat patterns.
 	 * The method checks the input against multiple regex patterns classified into categories
 	 * and also performs an additional direct check for directory traversal sequences.
@@ -458,6 +473,11 @@ class HMWP_Models_Firewall_Threats {
 
 		$patterns = $this->getThreatPatterns();
 		foreach ( $patterns as $regex => $code ) {
+			//A whitelisted pattern is skipped on its own, the patterns after it still run
+			if ( $this->isWhitelistedCode( $code ) ) {
+				continue;
+			}
+
 			if ( preg_match( $regex, $haystack ) ) {
 				return array(
 					'code'     => (string) $code,
@@ -468,9 +488,10 @@ class HMWP_Models_Firewall_Threats {
 		}
 
 		$traversalRegex = '#(\.\./|%2e%2e%2f|%252e%252e%252f)#i';
-		if ( preg_match( $traversalRegex, $haystack ) ) {
+		$traversalCode  = 'THR_' . strtoupper( (string) $area ) . '_TRAVERSAL_ENCODED';
+		if ( ! $this->isWhitelistedCode( $traversalCode ) && preg_match( $traversalRegex, $haystack ) ) {
 			return array(
-				'code'     => 'THR_' . strtoupper( (string) $area ) . '_TRAVERSAL_ENCODED',
+				'code'     => $traversalCode,
 				'area'     => (string) $area,
 				'pattern'  => $traversalRegex,
 			);

@@ -2,6 +2,23 @@
 
 defined( 'ABSPATH' ) || die( 'Cheating uh?' );
 
+if ( ! function_exists( 'hmwp_login_script_body' ) ) {
+	/**
+	 * Remove the script tags around an inline script, also on WordPress older than 6.4
+	 *
+	 * @param string $html
+	 *
+	 * @return string
+	 */
+	function hmwp_login_script_body( $html ) {
+		if ( function_exists( 'wp_remove_surrounding_empty_script_tags' ) ) {
+			return wp_remove_surrounding_empty_script_tags( $html );
+		}
+
+		return (string) preg_replace( '#^\s*<script[^>]*>\s*|\s*</script>\s*$#i', '', $html );
+	}
+}
+
 /**
  * Outputs the footer for the login page.
  *
@@ -127,7 +144,7 @@ function login_footer( $input_id = '' ) {
             if(typeof wpOnload==='function')wpOnload();
         </script>
         <?php
-        wp_print_inline_script_tag( wp_remove_surrounding_empty_script_tags( ob_get_clean() ) );
+        wp_print_inline_script_tag( hmwp_login_script_body( ob_get_clean() ) );
     }
 
     /**

@@ -879,7 +879,8 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 	 * @return array {
 	 *     @type bool  $success       True when every probe passed.
 	 *     @type array $errors        Failed probes. Each: role, label, url, badge.
-	 *     @type array $checks        Every probe performed. Each: role, url, code, ok.
+	 *     @type array $checks        Every probe performed. Each: role, url, code, ok, and missing
+	 *                                for an asset that failed because the file is not on the server.
 	 *     @type array $file_mappings Files recorded as loading through WordPress.
 	 *     @type bool  $home_rendered True when the homepage returned a complete HTML document.
 	 * }
@@ -1105,6 +1106,18 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 					$code   = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
 					$failed = ( ! is_wp_error( $response ) && in_array( $code, array( 404, 302, 301 ) ) );
+				}
+
+				// A file that is not on the server fails at any path, so it is not a rewrite
+				// problem (e.g. a stale Elementor local font). Don't report it as broken.
+				if ( $failed ) {
+					/** @var HMWP_Models_Files $files */
+					$files = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Files' );
+
+					if ( ! $files->getOriginalPath( $files->getOriginalUrl( $asset ) ) ) {
+						$checks[] = array( 'role' => 'asset', 'url' => $asset, 'code' => $code, 'ok' => false, 'missing' => true );
+						continue;
+					}
 				}
 
 				$checks[] = array( 'role' => 'asset', 'url' => $asset, 'code' => $code, 'ok' => ! $failed );

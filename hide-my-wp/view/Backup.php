@@ -55,7 +55,7 @@ if ( ! isset( $view ) ) {
             </div>
 
             <div class="card col-sm-12 p-0 m-0 mt-3">
-                <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Rollback to version', 'hide-my-wp' ) . ' ' . HMWP_STABLE_VERSION ?></h3>
+                <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Rollback to version', 'hide-my-wp' ) . ' ' . esc_html( HMWP_STABLE_VERSION ) ?></h3>
                 <div class="card-body">
                     <div class="hmwp_settings_rollback">
                         <div class="text-black-50 mb-2"><?php echo esc_html__( 'Install the last stable version of the plugin.', 'hide-my-wp' ); ?></div>

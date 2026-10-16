@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.13
+Stable tag: 7.0.14
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -214,6 +214,15 @@ How to Install and Set Up WP Ghost
 20. Source Code Proof: Core WordPress paths transformed and secured to neutralize bot scans.
 
 == Changelog ==
+
+= 7.0.14 (14 Oct 2026) =
+
+* Update - Security update: Hide Source Map References now removes source map comments only inside inline scripts and styles, so text in a visitor comment can no longer turn a link into JavaScript (CVE-2026-89051).
+* Fix - Firewall level 2 no longer blocks visitors from Facebook, Instagram and Google Ads when the fbclid or gclid token contains x1b, x20 or null.
+* Fix - Firewall level 4 checks its short malware-name list on the URL path only, so random fbclid and gclid tokens no longer match it.
+* Fix - Whitelisting a firewall rule now skips only that rule, and the other rules still check the request.
+* Fix - The two-factor and Magic Login screens no longer stop with a PHP error on WordPress versions before 6.4.
+* Update - Translated the new texts in all bundled languages: Arabic, Chinese, Dutch, Finnish, French, German, Indonesian, Italian, Japanese, Portuguese, Romanian, Russian, Spanish and Turkish.
 
 = 7.0.13 (3 Oct 2026) =
 

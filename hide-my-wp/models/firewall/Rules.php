@@ -20,6 +20,12 @@ class HMWP_Models_Firewall_Rules {
 	protected $ua;
 	/** @var array Request referrer */
 	protected $ref;
+	/** @var string Requested path, without the query string */
+	protected $path;
+	/** @var string|null Raw whitelist_rules option the decoded list was built from */
+	protected $whitelistRaw = null;
+	/** @var array Decoded whitelisted rule codes */
+	protected $whitelist = array();
 
 	public function __construct() {
 
@@ -34,6 +40,10 @@ class HMWP_Models_Firewall_Rules {
 		$this->qs  = isset( $_SERVER['QUERY_STRING'] ) ? (string) $_SERVER['QUERY_STRING'] : ''; //phpcs:ignore
 		$this->ua    =  isset( $_SERVER['HTTP_USER_AGENT'] ) ? (string) $_SERVER['HTTP_USER_AGENT'] : ''; //phpcs:ignore
 		$this->ref    =  isset( $_SERVER['HTTP_REFERER'] ) ? (string) $_SERVER['HTTP_REFERER'] : ''; //phpcs:ignore
+
+		//Path without the query string, as in Apache's REQUEST_URI
+		$pos        = strpos( $this->uri, '?' );
+		$this->path = ( $pos === false ) ? $this->uri : substr( $this->uri, 0, $pos );
 	}
 
 	/**
@@ -81,21 +91,21 @@ class HMWP_Models_Firewall_Rules {
 
 		// Level 1 (Minimal)
 		if ( (int) $level === 1 ) {
-			$hit = $this->matchRules( $this->qs, $this->getRulesL1Query(), 'query' );
+			$hit = $this->matchRules( $this->qs, $this->getRulesL1Query(), 'query', true );
 			return $hit ?: false;
 		}
 
 		// Level 2 (6G)
 		if ( (int) $level === 2 ) {
 			if ( $this->ua !== '' ) {
-				$hit = $this->matchRules( $this->ua, $this->getRulesL2UserAgent(), 'user_agent' );
+				$hit = $this->matchRules( $this->ua, $this->getRulesL2UserAgent(), 'user_agent', true );
 				if ( $hit ) {
 					return $hit;
 				}
 			}
 
 			if ( $this->qs !== '' ) {
-				$hit = $this->matchRules( $this->qs, $this->getRulesL2Query(), 'query' );
+				$hit = $this->matchRules( $this->qs, $this->getRulesL2Query(), 'query', true );
 				if ( $hit ) {
 					return $hit;
 				}
@@ -106,7 +116,7 @@ class HMWP_Models_Firewall_Rules {
 					! HMWP_Classes_Tools::isPluginActive( 'wp-reset/wp-reset.php' ) &&
 					! HMWP_Classes_Tools::isPluginActive( 'wp-statistics/wp-statistics.php' )
 				) {
-					$hit = $this->matchRules( $this->qs, $this->getRulesL2QueryXss(), 'query' );
+					$hit = $this->matchRules( $this->qs, $this->getRulesL2QueryXss(), 'query', true );
 					if ( $hit ) {
 						return $hit;
 					}
@@ -119,21 +129,21 @@ class HMWP_Models_Firewall_Rules {
 		// Level 3 (7G)
 		if ( (int) $level === 3 ) {
 			if ( $this->ua !== '' ) {
-				$hit = $this->matchRules( $this->ua, $this->getRulesL3UserAgent(), 'user_agent' );
+				$hit = $this->matchRules( $this->ua, $this->getRulesL3UserAgent(), 'user_agent', true );
 				if ( $hit ) {
 					return $hit;
 				}
 			}
 
 			if ( $this->qs !== '' ) {
-				$hit = $this->matchRules( $this->qs, $this->getRulesL3Query(), 'query' );
+				$hit = $this->matchRules( $this->qs, $this->getRulesL3Query(), 'query', true );
 				if ( $hit ) {
 					return $hit;
 				}
 			}
 
 			if ( $this->uri !== '' ) {
-				$hit = $this->matchRules( $this->uri, $this->getRulesL3Uri(), 'uri' );
+				$hit = $this->matchRules( $this->uri, $this->getRulesL3Uri(), 'uri', true );
 				if ( $hit ) {
 					return $hit;
 				}
@@ -146,28 +156,36 @@ class HMWP_Models_Firewall_Rules {
 		if ( (int) $level === 4 ) {
 
 			if ( $this->uri !== '' ) {
-				$hit = $this->matchRules( $this->uri, $this->getRulesL4Referer(), 'referer' );
+				$hit = $this->matchRules( $this->uri, $this->getRulesL4Referer(), 'referer', true );
 				if ( $hit ) {
 					return $hit;
 				}
 			}
 
 			if ( $this->ua !== '' ) {
-				$hit = $this->matchRules( $this->ua, $this->getRulesL4UserAgent(), 'user_agent' );
+				$hit = $this->matchRules( $this->ua, $this->getRulesL4UserAgent(), 'user_agent', true );
 				if ( $hit ) {
 					return $hit;
 				}
 			}
 
 			if ( $this->qs !== '' ) {
-				$hit = $this->matchRules( $this->qs, $this->getRulesL4Query(), 'query' );
+				$hit = $this->matchRules( $this->qs, $this->getRulesL4Query(), 'query', true );
 				if ( $hit ) {
 					return $hit;
 				}
 			}
 
 			if ( $this->uri !== '' ) {
-				$hit = $this->matchRules( $this->uri, $this->getRulesL4Uri(), 'uri' );
+				//The 8G marker lists are short path names, random tracking tokens (fbclid, gclid) match them
+				$uriRules    = $this->getRulesL4Uri();
+				$markerRules = array_intersect_key( $uriRules, array_flip( preg_grep( '/^FW_URI_MARKERS_/', array_keys( $uriRules ) ) ) );
+
+				$hit = $this->matchRules( $this->uri, array_diff_key( $uriRules, $markerRules ), 'uri', true );
+				if ( ! $hit && $this->path !== '' ) {
+					$hit = $this->matchRules( $this->path, $markerRules, 'uri', true );
+				}
+
 				if ( $hit ) {
 					return $hit;
 				}
@@ -267,8 +285,8 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_LOCALHOST'         => '/(localhost|loopback|127\.0\.0\.1)/i',
 			'FW_QS_GLOBALS'           => '/GLOBALS(=|\[|%[0-9A-Z]{0,2})/i',
 			'FW_QS_REQUEST'           => '/_REQUEST(=|\[|%[0-9A-Z]{0,2})/i',
-			'FW_QS_CTRL_BYTES'        => '/^.*(x00|x04|x08|x0d|x1b|x20|x3c|x3e|x7f).*/i',
-			'FW_QS_NULL_OUTFILE'      => '/(NULL|OUTFILE|LOAD_FILE)/i',
+			'FW_QS_CTRL_BYTES'        => '/[\x00\x04\x08\x0d\x1b\x20\x3c\x3e\x7f]/',
+			'FW_QS_NULL_OUTFILE'      => '/(^|[^a-z0-9_]|%(25)?[0-9a-f]{2})(null|outfile|load_file)([^a-z0-9_]|%(25)?[0-9a-f]{2}|$)/i',
 			'FW_QS_DOTSLASH_MOTD'     => '/(\.{1,}\/)+(motd|etc|bin)/i',
 			'FW_QS_SQL_KEYWORDS_1'    => '/((\+|%2b)(concat|delete|get|select|union)(\+|%2b))/i',
 			'FW_QS_EVAL_CONCAT'       => '/(concat|eval)(.*)(\(|%28)/i',
@@ -432,7 +450,7 @@ class HMWP_Models_Firewall_Rules {
 		$rules = array(
 			'FW_REF_ORDER_BY'     => '/order(\s|%20)+by(\s|%20)*[0-9]+(--)?/i',
 			'FW_REF_BAD_CHARS'    => '/(&lt;|%0a|%0d|%27|%3c|%3e|%00|0x00)/i',
-			'FW_REF_UNLINK_ASSERT'=> '/(@unlink|assert\(|print_r\(|x00|xbshell)/i',
+			'FW_REF_UNLINK_ASSERT'=> '/(@unlink|assert\(|print_r\(|\x00|xbshell)/i',
 			'FW_REF_SPAM_PHARMA_1'=> '/(100dollars|blue\spill|cocaine|ejaculat|erectile|erections|hoodia|huronriveracres|impotence)/i',
 			'FW_REF_SPAM_PHARMA_2'=> '/(pornhelm|pro[sz]ac|sandyauer|semalt\.com|social-buttions|todaperfeita|tramadol|troyhamby|ultram|unicauca|valium|viagra|vicodin|xanax|ypxaieo)/i',
 		);
@@ -616,15 +634,23 @@ class HMWP_Models_Firewall_Rules {
 	 * @param string $value
 	 * @param array  $rules array('CODE' => '/regex/i', ...)
 	 * @param string $area  query|uri|user_agent|referer
+	 * @param bool   $skipWhitelisted skip the rules in the whitelist_rules option
 	 *
 	 * @return array|false
 	 */
-	protected function matchRules( $value, $rules, $area ) {
+	protected function matchRules( $value, $rules, $area, $skipWhitelisted = false ) {
 		if ( $value === '' || empty( $rules ) ) {
 			return false;
 		}
 
+		$whitelist = $skipWhitelisted ? $this->getWhitelistRules() : array();
+
 		foreach ( $rules as $code => $regex ) {
+			//A whitelisted rule is skipped on its own, the rules after it still run
+			if ( ! empty( $whitelist ) && in_array( (string) $code, $whitelist, true ) ) {
+				continue;
+			}
+
 			if ( preg_match( $regex, $value ) ) {
 				return array(
 					'code'    => (string) $code,
@@ -779,18 +805,30 @@ class HMWP_Models_Firewall_Rules {
 	 */
 	public function checkWhitelistRule( $code ) {
 
-		if ( $code <> '' && $rules = HMWP_Classes_Tools::getOption( 'whitelist_rules' ) ) {
-			// Get the array of urls
-			if ( ! empty( $rules ) ) {
-				$rules = json_decode( $rules, true );
-			}
-
-			if ( is_array( $rules ) && in_array( $code, $rules, true ) ) {
-				return true;
-			}
+		if ( $code <> '' && in_array( $code, $this->getWhitelistRules(), true ) ) {
+			return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Get the whitelisted rule codes, decoded once per option value
+	 *
+	 * @return array
+	 * @throws Exception
+	 */
+	public function getWhitelistRules() {
+
+		$raw = HMWP_Classes_Tools::getOption( 'whitelist_rules' );
+
+		if ( $raw !== $this->whitelistRaw ) {
+			$this->whitelistRaw = $raw;
+			$rules              = ! empty( $raw ) ? json_decode( $raw, true ) : array();
+			$this->whitelist    = is_array( $rules ) ? $rules : array();
+		}
+
+		return $this->whitelist;
 	}
 
     /**

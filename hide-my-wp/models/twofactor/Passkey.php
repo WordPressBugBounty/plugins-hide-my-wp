@@ -302,7 +302,7 @@ class HMWP_Models_Twofactor_Passkey extends HMWP_Models_Twofactor_Abstract {
 
 
         try {
-            $clientJson = base64url_decode( $assert['response']['clientDataJSON'] );
+            $clientJson = hmwp_base64url_decode( $assert['response']['clientDataJSON'] );
             $client     = json_decode( $clientJson, true );
 
             $originHost = wp_parse_url( $client['origin'], PHP_URL_HOST );
@@ -310,8 +310,8 @@ class HMWP_Models_Twofactor_Passkey extends HMWP_Models_Twofactor_Abstract {
                 return false;
             }
 
-            $authData = base64url_decode( $assert['response']['authenticatorData'] );
-            $sig      = base64url_decode( $assert['response']['signature'] );
+            $authData = hmwp_base64url_decode( $assert['response']['authenticatorData'] );
+            $sig      = hmwp_base64url_decode( $assert['response']['signature'] );
 
             $rpHash = substr( $authData, 0, 32 );
             if ( ! hash_equals( $rpHash, hash( 'sha256', $this->rpId, true ) ) ) {
@@ -389,7 +389,7 @@ class HMWP_Models_Twofactor_Passkey extends HMWP_Models_Twofactor_Abstract {
      */
     public function registerCredential( $user_id, $credential ) {
 
-        $attObj   = base64url_decode( $credential['publicKey'] );
+        $attObj   = hmwp_base64url_decode( $credential['publicKey'] );
         $authData = $this->extractAuthDataFromAttestation( $attObj );
         if ( ! $authData ) {
             return false;
@@ -856,8 +856,8 @@ class HMWP_Models_Twofactor_Passkey extends HMWP_Models_Twofactor_Abstract {
 }
 
 
-if ( ! function_exists( 'base64url_decode' ) ) {
-    function base64url_decode( $d ) {
+if ( ! function_exists( 'hmwp_base64url_decode' ) ) {
+    function hmwp_base64url_decode( $d ) {
         $b = strtr( $d, '-_', '+/' );
 
         return base64_decode( str_pad( $b, strlen( $b ) % 4 == 0 ? strlen( $b ) : strlen( $b ) + 4 - strlen( $b ) % 4, '=', STR_PAD_RIGHT ) );

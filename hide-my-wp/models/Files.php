@@ -589,7 +589,8 @@ class HMWP_Models_Files {
 		$temp = $file . '.' . wp_rand( 100000, 999999 ) . '.tmp';
 
 		if ( $wp_filesystem->put_contents( $temp, $content, HMW_FILE_PERMISSION ) ) {
-			if ( ! @rename( $temp, $file ) ) { //phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			//Overwrite: a missing file for a moment is a cache miss, never half a file
+			if ( ! $wp_filesystem->move( $temp, $file, true ) ) {
 				$wp_filesystem->delete( $temp );
 			}
 		}
@@ -969,7 +970,7 @@ class HMWP_Models_Files {
 							header( 'Content-Length: ' . $validator['size'] );
 						}
 
-						if ( readfile( $new_path ) === false ) {
+						if ( readfile( $new_path ) === false ) { //phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streams the file, WP_Filesystem would load it in memory
 							echo $wp_filesystem->get_contents( $new_path ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						}
 
@@ -995,7 +996,7 @@ class HMWP_Models_Files {
 							header( 'Content-Length: ' . $cachesize );
 						}
 
-						if ( readfile( $cachefile ) !== false ) {
+						if ( readfile( $cachefile ) !== false ) { //phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- streams the file, WP_Filesystem would load it in memory
 							exit();
 						}
 					}

@@ -2,6 +2,47 @@
 
 defined( 'ABSPATH' ) || die( 'Cheating uh?' );
 
+if ( ! function_exists( 'hmwp_login_script_body' ) ) {
+	/**
+	 * Remove the script tags around an inline script, also on WordPress older than 6.4
+	 *
+	 * @param string $html
+	 *
+	 * @return string
+	 */
+	function hmwp_login_script_body( $html ) {
+		if ( function_exists( 'wp_remove_surrounding_empty_script_tags' ) ) {
+			return wp_remove_surrounding_empty_script_tags( $html );
+		}
+
+		return (string) preg_replace( '#^\s*<script[^>]*>\s*|\s*</script>\s*$#i', '', $html );
+	}
+}
+
+if ( ! function_exists( 'hmwp_login_notice' ) ) {
+	/**
+	 * Show a login notice, also on WordPress older than 6.4 (no wp_admin_notice)
+	 *
+	 * @param string $message
+	 * @param array $args
+	 *
+	 * @return void
+	 */
+	function hmwp_login_notice( $message, $args ) {
+		if ( function_exists( 'wp_admin_notice' ) ) {
+			wp_admin_notice( $message, $args );
+			return;
+		}
+
+		//Same markup as wp-login.php before WordPress 6.4
+		if ( isset( $args['type'] ) && $args['type'] === 'error' ) {
+			echo '<div id="login_error">' . wp_kses_post( $message ) . "</div>\n";
+		} else {
+			echo '<p class="message" id="login-message">' . wp_kses_post( $message ) . "</p>\n";
+		}
+	}
+}
+
 /**
  * Outputs the login page header.
  *
@@ -112,7 +153,7 @@ function login_header( $title = null, $message = '', $wp_error = null ) {
                 }
                 ;</script>
             <?php
-            wp_print_inline_script_tag( wp_remove_surrounding_empty_script_tags( ob_get_clean() ) );
+            wp_print_inline_script_tag( hmwp_login_script_body( ob_get_clean() ) );
         }
 
         /**
@@ -291,7 +332,7 @@ function login_header( $title = null, $message = '', $wp_error = null ) {
                  */
                 $errors = apply_filters( 'login_errors', $errors );
 
-                wp_admin_notice(
+                hmwp_login_notice(
                         $errors,
                         array(
                                 'type'           => 'error',
@@ -312,7 +353,7 @@ function login_header( $title = null, $message = '', $wp_error = null ) {
                  */
                 $messages = apply_filters( 'login_messages', $messages );
 
-                wp_admin_notice(
+                hmwp_login_notice(
                         $messages,
                         array(
                                 'type'               => 'info',

@@ -385,11 +385,11 @@ class HMWP_Models_EventsLog extends HMWP_Models_Firewall_Threats {
 
 		// Keep the domain out of the subject line, which hurts deliverability. Use the site title.
 		$sitename = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		$subject  = $sitename ? sprintf( esc_html__( '%1$s security logging was turned off', 'hide-my-wp' ), $sitename ) : esc_html__( 'Security logging was turned off', 'hide-my-wp' );
-		$message = sprintf( esc_html__( 'The %1$s on %2$s was turned off.', 'hide-my-wp' ), $label, $site ) . "\n\n"
-		           . sprintf( esc_html__( 'Turned off by: %1$s (%2$s)', 'hide-my-wp' ), $user->user_login, $user->user_email ) . "\n"
-		           . sprintf( esc_html__( 'Time: %1$s', 'hide-my-wp' ), gmdate( 'd M Y H:i', time() ) . ' UTC' ) . "\n"
-		           . sprintf( esc_html__( 'IP address: %1$s', 'hide-my-wp' ), $ip ) . "\n\n"
+		$subject  = $sitename ? sprintf( /* translators: %1$s: site title */ esc_html__( '%1$s security logging was turned off', 'hide-my-wp' ), $sitename ) : esc_html__( 'Security logging was turned off', 'hide-my-wp' );
+		$message = sprintf( /* translators: %1$s: log name, %2$s: site URL */ esc_html__( 'The %1$s on %2$s was turned off.', 'hide-my-wp' ), $label, $site ) . "\n\n"
+		           . sprintf( /* translators: %1$s: username, %2$s: email address */ esc_html__( 'Turned off by: %1$s (%2$s)', 'hide-my-wp' ), $user->user_login, $user->user_email ) . "\n"
+		           . sprintf( /* translators: %1$s: date and time in UTC */ esc_html__( 'Time: %1$s', 'hide-my-wp' ), gmdate( 'd M Y H:i', time() ) . ' UTC' ) . "\n"
+		           . sprintf( /* translators: %1$s: IP address */ esc_html__( 'IP address: %1$s', 'hide-my-wp' ), $ip ) . "\n\n"
 		           . esc_html__( 'If this was not you, sign in, turn it back on, and review the recent changes.', 'hide-my-wp' );
 
 		$to = HMWP_Classes_Tools::getOption( 'hmwp_notification_email' );

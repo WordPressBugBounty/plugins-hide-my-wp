@@ -580,13 +580,13 @@ class HMWP_Models_ThreatsLog extends HMWP_Models_Firewall_Threats {
 		$end   = gmdate( 'd M Y', time() );
 
 		$lines   = array();
-		$lines[] = sprintf( esc_html__( 'Security summary for %1$s', 'hide-my-wp' ), $host );
-		$lines[] = sprintf( esc_html__( 'Week of %1$s to %2$s', 'hide-my-wp' ), $start, $end );
+		$lines[] = sprintf( /* translators: %1$s: site domain */ esc_html__( 'Security summary for %1$s', 'hide-my-wp' ), $host );
+		$lines[] = sprintf( /* translators: %1$s: start date, %2$s: end date */ esc_html__( 'Week of %1$s to %2$s', 'hide-my-wp' ), $start, $end );
 		$lines[] = '';
-		$lines[] = sprintf( esc_html__( 'Threats blocked: %1$d', 'hide-my-wp' ), $blocked );
-		$lines[] = sprintf( esc_html__( 'Threats detected: %1$d', 'hide-my-wp' ), $threats );
-		$lines[] = sprintf( esc_html__( 'Login events recorded: %1$d', 'hide-my-wp' ), $logins );
-		$lines[] = sprintf( esc_html__( 'IP addresses blocked: %1$d', 'hide-my-wp' ), $blockedIps );
+		$lines[] = sprintf( /* translators: %1$d: number of threats */ esc_html__( 'Threats blocked: %1$d', 'hide-my-wp' ), $blocked );
+		$lines[] = sprintf( /* translators: %1$d: number of threats */ esc_html__( 'Threats detected: %1$d', 'hide-my-wp' ), $threats );
+		$lines[] = sprintf( /* translators: %1$d: number of login events */ esc_html__( 'Login events recorded: %1$d', 'hide-my-wp' ), $logins );
+		$lines[] = sprintf( /* translators: %1$d: number of IP addresses */ esc_html__( 'IP addresses blocked: %1$d', 'hide-my-wp' ), $blockedIps );
 
 		if ( ! empty( $top ) ) {
 			$lines[] = '';
@@ -599,10 +599,10 @@ class HMWP_Models_ThreatsLog extends HMWP_Models_Firewall_Threats {
 		}
 
 		$lines[] = '';
-		$lines[] = sprintf( esc_html__( 'See the full log: %1$s', 'hide-my-wp' ), HMWP_Classes_Tools::getSettingsUrl( 'hmwp_log' ) );
+		$lines[] = sprintf( /* translators: %1$s: log page URL */ esc_html__( 'See the full log: %1$s', 'hide-my-wp' ), HMWP_Classes_Tools::getSettingsUrl( 'hmwp_log' ) );
 		$lines[] = '';
 		$lines[] = esc_html__( 'You are receiving this weekly summary from WP Ghost.', 'hide-my-wp' );
-		$lines[] = sprintf( esc_html__( 'Turn it off here: %1$s', 'hide-my-wp' ), HMWP_Classes_Tools::getSettingsUrl( 'hmwp_advanced' ) . '&tab=notifications' );
+		$lines[] = sprintf( /* translators: %1$s: settings page URL */ esc_html__( 'Turn it off here: %1$s', 'hide-my-wp' ), HMWP_Classes_Tools::getSettingsUrl( 'hmwp_advanced' ) . '&tab=notifications' );
 
 		$to = HMWP_Classes_Tools::getOption( 'hmwp_notification_email' );
 		if ( ! $to || ! is_email( $to ) ) {
@@ -611,7 +611,7 @@ class HMWP_Models_ThreatsLog extends HMWP_Models_Firewall_Threats {
 		if ( $to ) {
 			// Keep the domain out of the subject line, which hurts deliverability. Use the site title.
 			$sitename = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-			$subject  = $sitename ? sprintf( esc_html__( '%1$s weekly security summary', 'hide-my-wp' ), $sitename ) : esc_html__( 'Weekly security summary', 'hide-my-wp' );
+			$subject  = $sitename ? sprintf( /* translators: %1$s: site title */ esc_html__( '%1$s weekly security summary', 'hide-my-wp' ), $sitename ) : esc_html__( 'Weekly security summary', 'hide-my-wp' );
 			wp_mail( $to, $subject, implode( "\n", $lines ) );
 		}
 	}

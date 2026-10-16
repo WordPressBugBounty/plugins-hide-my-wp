@@ -28,7 +28,20 @@ if ( ! isset( $type ) ) {
     $hmwp_recaptcha_check_js = true; ?>
     <script>
         jQuery(function ($) {
-            var loaded = {type: '', key: ''};
+            var loaded = {src: ''};
+
+            // Enterprise checkbox keys use the explicit render flow, like v2
+            function enterpriseCheckbox() {
+                return $('#brute_google_checkbox').is(':checked');
+            }
+
+            // The src decides the flow, so a mode switch means a fresh script
+            function scriptSrc(type, key) {
+                if (type === 'enterprise') {
+                    return 'https://www.google.com/recaptcha/enterprise.js?render=' + (enterpriseCheckbox() ? 'explicit' : encodeURIComponent(key));
+                }
+                return 'https://www.google.com/recaptcha/api.js?render=' + (type === 'v3' ? encodeURIComponent(key) : 'explicit');
+            }
 
             // The keys as typed in the form, not the saved ones
             function fields(type) {
@@ -54,10 +67,11 @@ if ( ! isset( $type ) ) {
                 $box.find('.hmwp_recaptcha_result').html(html + '</div>').show();
             }
 
-            // Google binds the site key at script load, so a new key means a fresh script
+            // Google binds the site key at script load, so a new key or mode means a fresh script
             function loadScript(type, key) {
                 return new Promise(function (resolve, reject) {
-                    if (window.grecaptcha && loaded.type === type && loaded.key === key) {
+                    var src = scriptSrc(type, key);
+                    if (window.grecaptcha && loaded.src === src) {
                         resolve();
                         return;
                     }
@@ -66,14 +80,11 @@ if ( ! isset( $type ) ) {
                     try { delete window.grecaptcha; } catch (e) { window.grecaptcha = undefined; }
                     window.___grecaptcha_cfg = undefined;
 
-                    var src = (type === 'enterprise')
-                        ? 'https://www.google.com/recaptcha/enterprise.js?render=' + encodeURIComponent(key)
-                        : 'https://www.google.com/recaptcha/api.js?render=' + (type === 'v3' ? encodeURIComponent(key) : 'explicit');
                     var done = false;
                     var timer = setTimeout(function () { if (!done) { done = true; reject('timeout'); } }, 15000);
 
                     window.hmwpRecaptchaLoaded = function () {
-                        if (!done) { done = true; clearTimeout(timer); loaded = {type: type, key: key}; resolve(); }
+                        if (!done) { done = true; clearTimeout(timer); loaded = {src: src}; resolve(); }
                     };
                     var s = document.createElement('script');
                     s.src = src + '&onload=hmwpRecaptchaLoaded';
@@ -134,6 +145,14 @@ if ( ! isset( $type ) ) {
                                     grecaptcha.execute(f.site_key, {action: 'hmwp_check'}).then(function (t) { verify($box, type, t); }, function (e) { fail($box, e); });
                                 } catch (e) { fail($box, e); }
                             });
+                        } else if (enterpriseCheckbox()) {
+                            grecaptcha.enterprise.render($w[0], {
+                                sitekey: f.site_key,
+                                callback: function (token) { verify($box, type, token); },
+                                'error-callback': function () { fail($box, ''); }
+                            });
+                            show($box, 'info', $box.data('msg-tick'), []);
+                            $btn.prop('disabled', false);
                         } else {
                             grecaptcha.enterprise.ready(function () {
                                 try {

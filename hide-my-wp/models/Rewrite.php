@@ -2889,6 +2889,44 @@ class HMWP_Models_Rewrite {
 	}
 
 	/**
+	 * Remove the devtools source pragmas from the script and style blocks
+	 *
+	 * @param string $content
+	 *
+	 * @return string
+	 */
+	protected function removeSourceMaps( $content ) {
+		$output = '';
+		$offset = 0;
+
+		//Walk the blocks with stripos, a regex over a big inline script hits the PCRE backtrack limit
+		while ( preg_match( '#<(script|style)\b[^>]*>#i', $content, $m, PREG_OFFSET_CAPTURE, $offset ) ) {
+			$start = $m[0][1] + strlen( $m[0][0] );
+
+			//The block ends at the first closing tag, same as in the browser
+			$end = stripos( $content, '</' . $m[1][0], $start );
+			if ( $end === false ) {
+				break;
+			}
+
+			//The URL can't hold quotes, tags or backslashes, so a match never crosses a string boundary
+			if ( strtolower( $m[1][0] ) === 'style' ) {
+				$pattern = '/\/\*[@#][ \t]*source(?:Mapping)?URL=[^\s"\'`<>\\\\*]*\s*\*\//i';
+			} else {
+				$pattern = '/^[ \t]*\/\/[@#][ \t]*source(?:Mapping)?URL=[^\s"\'`<>\\\\]*[ \t]*(\R)?/mi';
+			}
+
+			$code   = substr( $content, $start, $end - $start );
+			$result = preg_replace( $pattern, '', $code );
+
+			$output .= substr( $content, $offset, $start - $offset ) . ( ( null === $result ) ? $code : $result );
+			$offset = $end;
+		}
+
+		return $output . substr( $content, $offset );
+	}
+
+	/**
 	 * Remove the comments from source code
 	 *
 	 * @param $m
@@ -3125,18 +3163,8 @@ class HMWP_Models_Rewrite {
 		}
 
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_source_map' ) ) {
-			// Remove devtools source pragmas (JS)
-			// Stop at the URL end, a minified page puts </script> and the rest of the HTML on the same line
-			$find[]    = '/^[ \t]*\/\/[@#][ \t]*sourceMappingURL=[^\s<]*[ \t]*(\R)?/mi';
-			$replace[] = '';
-			$find[]    = '/^[ \t]*\/\/[@#][ \t]*sourceURL=[^\s<]*[ \t]*(\R)?/mi';
-			$replace[] = '';
-
-			// Remove devtools source pragmas (CSS)
-			$find[]    = '/\/\*[@#]\s*sourceMappingURL=.*?\*\//is';
-			$replace[] = '';
-			$find[]    = '/\/\*[@#]\s*sourceURL=.*?\*\//is';
-			$replace[] = '';
+			// Only inside script and style blocks, the rest of the page holds user text (comments, attributes)
+			$content = $this->removeSourceMaps( $content );
 		}
 
 			//Remove versions
