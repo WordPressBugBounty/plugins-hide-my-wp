@@ -1096,6 +1096,46 @@ class HMWP_Models_Files {
 	}
 
 	/**
+	 * Request a page of this site and follow its redirects only while they stay on this site
+	 *
+	 * wp_safe_remote_request() also refuses loopback and private addresses on any other host.
+	 *
+	 * @param  string  $url  The site URL to request
+	 * @param  array  $options  The request options
+	 *
+	 * @return array|WP_Error
+	 */
+	public function siteRequest( $url, $options ) {
+
+		$options['redirection'] = 0;
+
+		for ( $i = 0; $i <= 5; $i ++ ) {
+
+			if ( ! $this->isSiteUrl( $url ) ) {
+				return new WP_Error( 'hmwp_files_external', 'Only requests to this site are allowed.' );
+			}
+
+			$response = wp_safe_remote_request( $url, $options );
+			$code     = (int) wp_remote_retrieve_response_code( $response );
+			$location = wp_remote_retrieve_header( $response, 'location' );
+
+			if ( $code < 300 || $code > 399 || ! is_string( $location ) || $location === '' ) {
+				return $response;
+			}
+
+			$url = WP_Http::make_absolute_url( $location, $url );
+
+			//A redirected form post continues as a GET, the same as in the browser
+			if ( in_array( $code, array( 301, 302, 303 ), true ) ) {
+				$options['method'] = 'GET';
+				unset( $options['body'] );
+			}
+		}
+
+		return new WP_Error( 'hmwp_files_redirects', 'Too many redirects.' );
+	}
+
+	/**
 	 * Do a Post request
 	 *
 	 * @param  $url
@@ -1121,7 +1161,7 @@ class HMWP_Models_Files {
 
 		do_action( 'hmwp_files_post_request_before', $url, $options );
 
-		$response = wp_remote_post( $url, $options );
+		$response = $this->siteRequest( $url, $options );
 
 		$return['body']    = wp_remote_retrieve_body( $response );
 		$return['headers'] = $this->getResponseHeaders( $response );
@@ -1156,7 +1196,7 @@ class HMWP_Models_Files {
 
 		do_action( 'hmwp_files_get_request_before', $url, $options );
 
-		$response = wp_remote_get( $url, $options );
+		$response = $this->siteRequest( $url, $options );
 
 		$return['body']    = wp_remote_retrieve_body( $response );
 		$return['headers'] = $this->getResponseHeaders( $response );

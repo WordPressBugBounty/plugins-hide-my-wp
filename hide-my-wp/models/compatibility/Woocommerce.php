@@ -248,6 +248,13 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
 						return $errors;
 					}
 
+					// A social login plugin creates the customer after a verified OAuth sign-in, there is no form
+					// Only the captcha is skipped, a locked out or banned IP is still stopped
+					if ( $this->isSocialRegistration() ) {
+						HMWP_Classes_ObjController::getClass( 'HMWP_Models_Brute' )->bruteForceCheck();
+						return $errors;
+					}
+
 					// Get the brute force registration class
 					return HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Registration' )->call( $errors, $sanitizedLogin, $userEmail );
 				}, 99, 3 );
@@ -264,6 +271,35 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
 
 	}
 
+
+	/**
+	 * Check if a social login plugin creates the customer after a verified OAuth sign-in
+	 *
+	 * WoodMart checks the OAuth signature, then calls wc_create_new_customer() on init with the
+	 * opauth parameter and its own username filter attached. A form post never has that filter,
+	 * so a forged opauth parameter alone does not skip the captcha.
+	 *
+	 * @return bool
+	 */
+	private function isSocialRegistration() {
+		global $wp_filter;
+
+		$verified = false;
+		$hook     = 'pre_option_woocommerce_registration_generate_username';
+
+		if ( doing_action( 'init' ) && HMWP_Classes_Tools::getValue( 'opauth' ) <> '' && isset( $wp_filter[ $hook ] ) ) {
+			foreach ( $wp_filter[ $hook ]->callbacks as $callbacks ) {
+				foreach ( $callbacks as $callback ) {
+					if ( is_array( $callback['function'] ) && is_object( $callback['function'][0] ) &&
+					     get_class( $callback['function'][0] ) === 'WOODMART_CORE\\Inc\\Auth' && $callback['function'][1] === 'return_yes' ) {
+						$verified = true;
+					}
+				}
+			}
+		}
+
+		return (bool) apply_filters( 'hmwp_woocommerce_social_registration', $verified );
+	}
 
 	/**
 	 * Fix the admin url if wrong redirect
