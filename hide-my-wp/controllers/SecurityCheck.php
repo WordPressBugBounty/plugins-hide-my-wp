@@ -148,6 +148,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 	public function getRiskTasks() {
 		return array(
 			'checkPHP',
+			'checkPHP2Shell',
 			'checkXmlrpc',
 			'checkOldPlugins',
 			'checkFilePermissions',
@@ -221,6 +222,15 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 				/* translators: 1: Required PHP version number. */
 				'message'  => wp_kses_post( sprintf( __( 'Your server is running an outdated version of PHP. Older PHP versions no longer receive security patches, leaving your site exposed to known vulnerabilities and reducing overall performance. <br /><br />Your website requires <strong>PHP %1$s</strong> or higher.', 'hide-my-wp' ), esc_html( '8.3' ) ) ),
 				'solution' => esc_html__( "Contact your hosting provider and request an upgrade to a supported PHP version, or migrate to a host that offers current PHP releases.", 'hide-my-wp' ),
+			),
+			'checkPHP2Shell'        => array(
+				'name'     => esc_html__( 'PHP2Shell vulnerability in PHP', 'hide-my-wp' ),
+				'value'    => false,
+				'valid'    => false,
+				'warning'  => false,
+				/* translators: 1: Plugin name. */
+				'message'  => wp_kses_post( sprintf( __( 'PHP2Shell (CVE-2026-109618 and CVE-2026-109619) is a critical flaw in PHP itself. Crafted requests can let an attacker run code on the server. The attack runs before WordPress loads, so no WordPress plugin can block it, %1$s included. <br /><br />PHP fixed it on 21 October 2026 in <strong>PHP 8.5.12, 8.4.27, 8.3.36 and 8.2.35</strong>. PHP 8.1 and older get no official update. <br /><br />Some hosts install the fix and keep the old version number. If your host confirms the fix is installed, ignore this task.', 'hide-my-wp' ), esc_html( HMWP_Classes_Tools::getOption( 'hmwp_plugin_name' ) ) ) ),
+				'solution' => wp_kses_post( __( 'Ask your hosting provider to update PHP to 8.5.12, 8.4.27, 8.3.36 or 8.2.35 and restart PHP. Until then, ask them to set <code>session.upload_progress.enabled = 0</code> in php.ini or in the PHP-FPM pool.', 'hide-my-wp' ) ),
 			),
 			'checkMysql'            => array(
 				'name'     => esc_html__( 'MySQL Version', 'hide-my-wp' ),
@@ -463,10 +473,10 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 				'value'      => false,
 				'valid'      => false,
 				'warning'    => false,
-				'message'    => __( "The 7G/8G Firewall is not currently active. Without these rulesets, malicious requests — including SQL injection attempts, script injections, and exploit probes — are not filtered at the server level before they reach your site.", 'hide-my-wp' ),
+				'message'    => __( "The 7G/8G Firewall is not active. Without these rulesets, malicious requests, including SQL injection attempts, script injections and exploit probes, reach your site without being filtered.", 'hide-my-wp' ),
 				/* translators: 1: Opening <a> tag to Firewall settings URL, 2: Plugin menu name, 3: Closing </a> tag. */
 				'solution'   => wp_kses_post( sprintf( __( 'Switch on the 7G or 8G Firewall from %1$s%2$s > Firewall & Headers%3$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_firewall' ) ) . '" >', esc_html( HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ) ), '</a>' ) ),
-				'javascript' => "jQuery(this).hmwp_fixSettings('hmwp_sqlinjection,hmwp_sqlinjection_level','1,4');",
+				'javascript' => "jQuery(this).hmwp_fixSettings('hmwp_sqlinjection,hmwp_sqlinjection_level','1,5');",
 			),
 			'checkFirewallAutomation' => array(
 				'name'       => esc_html__( "Automated IP Blocking Not Active", 'hide-my-wp' ),
@@ -728,7 +738,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 
 				$items[] = array(
 					'id'         => 'task:' . $function,
-					'severity'   => ( in_array( $function, $risktasks ) ? 'important' : 'suggested' ),
+					'severity'   => ( $function == 'checkPHP2Shell' ? 'critical' : ( in_array( $function, $risktasks ) ? 'important' : 'suggested' ) ),
 					'source'     => 'task',
 					'title'      => wp_strip_all_tags( $row['name'] ),
 					'why'        => ( isset( $row['solution'] ) ? wp_kses_post( $row['solution'] ) : '' ),
@@ -1565,6 +1575,34 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 	}
 
 	/**
+	 * Check if PHP has the PHP2Shell fix (CVE-2026-109618, CVE-2026-109619)
+	 * Vendor builds can carry the fix with an older version number
+	 *
+	 * @return array
+	 */
+	public function checkPHP2Shell() {
+		$branch  = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
+		$version = $branch . '.' . PHP_RELEASE_VERSION;
+
+		// First fixed release on each supported branch
+		$fixed = array( '8.2' => '8.2.35', '8.3' => '8.3.36', '8.4' => '8.4.27', '8.5' => '8.5.12' );
+
+		if ( version_compare( $branch, '8.6', '>=' ) ) {
+			$valid = true;
+		} elseif ( isset( $fixed[ $branch ] ) ) {
+			$valid = version_compare( $version, $fixed[ $branch ], '>=' );
+		} else {
+			// No official fix for PHP 8.1 and older
+			$valid = false;
+		}
+
+		return array(
+			'value' => $version,
+			'valid' => (bool) apply_filters( 'hmwp_php2shell_patched', $valid ),
+		);
+	}
+
+	/**
 	 * Check if mysql is up-to-date
 	 *
 	 * @return array
@@ -2227,7 +2265,7 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 		$check = HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' );
 
 		if ( $check ){
-			$check = in_array( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ), array( 3, 4 ), true );
+			$check = in_array( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ), array( 3, 4, 5 ), true );
 		}
 
 		return array(
@@ -2337,7 +2375,6 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 		$args = array(
 			'method'      => 'GET',
 			'timeout'     => 5,
-			'sslverify'   => false,
 			'httpversion' => 1.0,
 			'blocking'    => true,
 			'headers'     => array(),

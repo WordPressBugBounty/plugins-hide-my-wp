@@ -582,7 +582,10 @@ class HMWP_Models_Rules {
                 }
             }
 
-			if ( HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_location' ) == 'file' && HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' ) && (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) > 0 ) {
+			// Only the known levels write rules, an unknown level would leave the final [F] rule blocking every request
+			$level = (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' );
+
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_location' ) == 'file' && HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' ) && in_array( $level, array( 1, 2, 3, 4, 5 ), true ) ) {
 				$rules .= "<IfModule mod_rewrite.c>" . PHP_EOL;
 				$rules .= "RewriteEngine On" . PHP_EOL;
 				$rules .= "RewriteBase $home_root" . PHP_EOL;
@@ -747,7 +750,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_METHOD} ^(connect|debug|move|trace|track) [NC]" . PHP_EOL;
 
 				}
-				if ( (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) == 4 ) {
+				if ( $level == 4 || $level == 5 ) {
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} ([a-z0-9]{2000,}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (&lt;|%0a|%0d|%27|%3c|%3e|%00|0x00) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_USER_AGENT} (oppo\sa33|(c99|php|web)shell|site((.){0,2})copier) [NC,OR]" . PHP_EOL;
@@ -868,12 +871,28 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{HTTP_REFERER} (order(\s|%20)by(\s|%20)1--) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_REFERER} (@unlink|assert\(|print_r\(|x00|xbshell) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{HTTP_REFERER} (100dollars|best-seo|blue\spill|cocaine|ejaculat|erectile|erections|hoodia|huronriveracres|impotence|levitra|libido|lipitor|mopub\.com|phentermin) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{HTTP_REFERER} (pornhelm|pro[sz]ac|sandyauer|semalt\.com|social-buttions|todaperfeita|tramadol|troyhamby|ultram|unicauca|valium|viagra|vicodin|xanax|ypxaieo) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{HTTP_REFERER} (pornhelm|pro[sz]ac|sandyauer|semalt\.com|social-buttions|todaperfeita|tramadol|troyhamby|" . ( $level == 5 ? 'ultram(?![a-z])' : 'ultram' ) . "|unicauca|valium|viagra|vicodin|xanax|ypxaieo) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_METHOD} ^(connect|debug|move|trace|track) [NC]" . PHP_EOL;
 
 				}
 
 				$rules .= "RewriteRule ^(.*)$ - [F]" . PHP_EOL;
+				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
+			}
+
+			// 9G: PHP files never run from the uploads folder, a shell uploaded through a vulnerable form stays harmless
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' ) && $level == 5 ) {
+				$uploads = array_unique( array(
+					HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' ) . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_upload_url' ),
+					HMWP_Classes_Tools::getOption( 'hmwp_upload_url' ),
+				) );
+
+				$rules .= "<IfModule mod_rewrite.c>" . PHP_EOL;
+				$rules .= "RewriteEngine On" . PHP_EOL;
+				$rules .= "RewriteBase $home_root" . PHP_EOL;
+				foreach ( $uploads as $upload ) {
+					$rules .= "RewriteRule ^([_0-9a-zA-Z-]+/)?" . str_replace( '.', '\\.', trim( $upload, '/' ) ) . "/.*\\.(php[0-9]*|phtml|pht|phar|phps)$ - [F,NC]" . PHP_EOL;
+				}
 				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
 			}
 

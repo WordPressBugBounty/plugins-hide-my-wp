@@ -23,7 +23,7 @@ class HMWP_Models_Presets {
 		$presets = array(
 			1 => __( "Minimal (No Config Rewrites)", 'hide-my-wp' ),
 			2 => __( "Lite Mode + Firewall + Compatibility Settings", 'hide-my-wp' ),
-			3 => __( "Lite Mode + 8G Firewall + Brute Force + Events Log + Threats Log + Two factor", 'hide-my-wp' ),
+			3 => __( "Lite Mode + 9G Firewall + Brute Force + Events Log + Threats Log + Two factor", 'hide-my-wp' ),
 		);
 
 		return $presets;
@@ -232,6 +232,8 @@ class HMWP_Models_Presets {
 				return esc_html__( '7G Firewall', 'hide-my-wp' );
 			case 4:
 				return esc_html__( '8G Firewall', 'hide-my-wp' );
+			case 5:
+				return esc_html__( '9G Firewall', 'hide-my-wp' );
 		}
 	}
 
@@ -317,7 +319,7 @@ class HMWP_Models_Presets {
 		$default = HMWP_Classes_Tools::$default;
 		$lite    = @array_merge( $default, HMWP_Classes_Tools::$lite );
 		$presets = array(
-			'hmwp_sqlinjection'        => 1, 'hmwp_sqlinjection_level' => 4, 'hmwp_hide_unsafe_headers' => 1,
+			'hmwp_sqlinjection'        => 1, 'hmwp_sqlinjection_level' => 5, 'hmwp_hide_unsafe_headers' => 1,
 			'hmwp_hide_author'         => 1, 'hmwp_hide_author_enumeration' => 1, 'hmwp_disable_xmlrpc' => 1, 'hmwp_hide_rsd' => 1, 'hmwp_hide_oldpaths' => 1,
 			'hmwp_detectors_block'     => 1, 'hmwp_security_header' => 1, 'hmwp_hide_version' => 1,
 			'hmwp_hide_version_random' => 1, 'hmwp_hide_styleids' => 0, 'hmwp_hide_prefetch' => 1,

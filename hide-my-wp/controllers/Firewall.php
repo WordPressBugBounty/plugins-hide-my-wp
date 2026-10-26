@@ -51,6 +51,14 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 				$this->firewallBlock( 'IP Banned Security' );
 			}
 
+			// The IP ban list applies to every request, also when Brute Force is off
+			if ( HMWP_Classes_Tools::getOption( 'banlist_ip' ) ) {
+				$ip = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' )->getIp();
+				if ( ! $firewallRules->isWhitelistedIP( $ip ) && $firewallRules->isBlacklistedIP( $ip ) ) {
+					$this->firewallBlock( 'IP Banned Security' );
+				}
+			}
+
 			// Check and allow search engine bots
 			/** @var HMWP_Models_Firewall_Bots $bots */
 			$bots = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Bots' );
@@ -93,7 +101,7 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 		}
 
 		if ( HMWP_Classes_Tools::isApi() ) {
-			return false;
+			return $this->isAnonymous9G();
 		}
 
 		//If not admin but logged in
@@ -106,7 +114,23 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 
 		}
 
+		// 9G also checks visitors calling admin-ajax.php and admin-post.php
+		if ( HMWP_Classes_Tools::isAjax() || ( isset( $_SERVER['SCRIPT_NAME'] ) && basename( (string) $_SERVER['SCRIPT_NAME'] ) == 'admin-post.php' ) ) { //phpcs:ignore
+			return $this->isAnonymous9G();
+		}
+
 		return false;
+	}
+
+	/**
+	 * Check if the 9G Firewall is on and the visitor is not logged in
+	 *
+	 * @return bool
+	 */
+	private function isAnonymous9G() {
+		return ( HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' ) &&
+		         (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) === 5 &&
+		         ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cookies' )->isLoggedInRequest() );
 	}
 
 	/**

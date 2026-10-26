@@ -152,11 +152,11 @@ class HMWP_Models_Firewall_Rules {
 			return false;
 		}
 
-		// Level 4 (8G)
-		if ( (int) $level === 4 ) {
+		// Level 4 (8G) and Level 5 (9G, the 8G rules plus the request checks)
+		if ( (int) $level === 4 || (int) $level === 5 ) {
 
-			if ( $this->uri !== '' ) {
-				$hit = $this->matchRules( $this->uri, $this->getRulesL4Referer(), 'referer', true );
+			if ( $this->ref !== '' ) {
+				$hit = $this->matchRules( $this->ref, $this->getRulesL4Referer(), 'referer', true );
 				if ( $hit ) {
 					return $hit;
 				}
@@ -191,10 +191,176 @@ class HMWP_Models_Firewall_Rules {
 				}
 			}
 
+			if ( (int) $level === 5 ) {
+				return $this->detectRules9G();
+			}
+
 			return false;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Level 5 (9G) - checks inside the request: role fields, uploads, serialized objects and SSRF targets
+	 *
+	 * @return array|false
+	 */
+	protected function detectRules9G() {
+
+		$whitelist = $this->getWhitelistRules();
+		$fields    = $this->getRequestFields();
+
+		// A visitor never sets an account role, capabilities or the registration options
+		if ( ! in_array( 'FW_9G_ROLE_ESCALATION', $whitelist, true ) ) {
+			foreach ( $fields as $field ) {
+				list( $key, $value ) = $field;
+				$root = strtolower( (string) strtok( $key, '[' ) );
+
+				if ( in_array( $root, array( 'wp_capabilities', 'wp_user_level', 'default_role', 'users_can_register' ), true ) ||
+				     ( in_array( $root, array( 'role', 'roles', 'user_role', 'new_role' ), true ) && preg_match( '/^(administrator|editor|shop_manager|super_admin)$/i', trim( (string) $value ) ) ) ) {
+					return array( 'code' => 'FW_9G_ROLE_ESCALATION', 'area' => 'request', 'pattern' => $root );
+				}
+			}
+		}
+
+		// No PHP files from visitors, also when the PHP code hides inside an image
+		if ( ! in_array( 'FW_9G_UPLOAD_PHP_SHELL', $whitelist, true ) && ! empty( $_FILES ) ) {
+			foreach ( $this->getUploadedFiles( $_FILES ) as $file ) {
+				list( $name, $tmp ) = $file;
+
+				if ( preg_match( '/(\.(php\d*|phtml|pht|phar|phps|pgif|shtml)$|\.php\d*\.|^\.htaccess$|^\.user\.ini$)/i', basename( (string) $name ) ) ) {
+					return array( 'code' => 'FW_9G_UPLOAD_PHP_SHELL', 'area' => 'upload', 'pattern' => 'extension' );
+				}
+
+				if ( $tmp <> '' && is_uploaded_file( $tmp ) && ( $handle = @fopen( $tmp, 'rb' ) ) ) { //phpcs:ignore
+					$head = (string) fread( $handle, 65536 ); //phpcs:ignore
+					fclose( $handle ); //phpcs:ignore
+
+					if ( stripos( $head, '<?php' ) !== false ) {
+						return array( 'code' => 'FW_9G_UPLOAD_PHP_SHELL', 'area' => 'upload', 'pattern' => 'content' );
+					}
+				}
+			}
+		}
+
+		// Serialized PHP objects, in parameters and cookies
+		if ( ! in_array( 'FW_9G_OBJECT_INJECTION', $whitelist, true ) ) {
+			$values = array();
+			foreach ( $fields as $field ) {
+				$values[] = $field[1];
+			}
+			foreach ( (array) $_COOKIE as $cookie ) { //phpcs:ignore
+				if ( is_string( $cookie ) ) {
+					$values[] = rawurldecode( $cookie );
+				}
+			}
+
+			foreach ( $values as $value ) {
+				if ( preg_match( '/(^|[^a-z0-9_])[oc]:\+?\d+:"[a-z_\\\\][a-z0-9_\\\\]*":\d+:\{/i', (string) $value ) ) {
+					return array( 'code' => 'FW_9G_OBJECT_INJECTION', 'area' => 'request', 'pattern' => 'serialized object' );
+				}
+			}
+		}
+
+		// Cloud metadata addresses and non-web URL schemes used for SSRF
+		if ( ! in_array( 'FW_9G_SSRF', $whitelist, true ) ) {
+			foreach ( $fields as $field ) {
+				if ( preg_match( '/(169\.254\.169\.254|metadata\.google\.internal|100\.100\.100\.200|fd00:ec2::254|\b(gopher|dict|ldap|tftp):\/\/)/i', (string) $field[1] ) ) {
+					return array( 'code' => 'FW_9G_SSRF', 'area' => 'request', 'pattern' => 'ssrf' );
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get the request fields as key and value pairs: query, form fields and JSON body
+	 *
+	 * @return array
+	 */
+	protected function getRequestFields() {
+
+		$fields = array();
+		$this->flattenFields( wp_unslash( (array) $_GET ), '', $fields ); //phpcs:ignore
+		$this->flattenFields( wp_unslash( (array) $_POST ), '', $fields ); //phpcs:ignore
+
+		// REST calls send JSON, so read the body when there are no form fields
+		$type = isset( $_SERVER['CONTENT_TYPE'] ) ? (string) $_SERVER['CONTENT_TYPE'] : ''; //phpcs:ignore
+		$size = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+		if ( empty( $_POST ) && stripos( $type, 'json' ) !== false && $size > 0 && $size <= 65536 ) { //phpcs:ignore
+			$json = json_decode( (string) file_get_contents( 'php://input' ), true );
+			if ( is_array( $json ) ) {
+				$this->flattenFields( $json, '', $fields );
+			}
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * Flatten nested fields into key and value pairs, at most 300 fields and 6 levels deep
+	 *
+	 * @param array $array
+	 * @param string $prefix
+	 * @param array $fields
+	 * @param int $depth
+	 *
+	 * @return void
+	 */
+	protected function flattenFields( $array, $prefix, &$fields, $depth = 0 ) {
+
+		foreach ( $array as $key => $value ) {
+			if ( count( $fields ) >= 300 ) {
+				return;
+			}
+
+			$name = ( $prefix === '' ) ? (string) $key : $prefix . '[' . $key . ']';
+
+			if ( is_array( $value ) ) {
+				if ( $depth < 6 ) {
+					$this->flattenFields( $value, $name, $fields, $depth + 1 );
+				}
+			} elseif ( is_scalar( $value ) ) {
+				$fields[] = array( $name, substr( (string) $value, 0, 8192 ) );
+			}
+		}
+	}
+
+	/**
+	 * Get the uploaded file names and temporary paths, also from multiple file fields
+	 *
+	 * @param array $files
+	 *
+	 * @return array
+	 */
+	protected function getUploadedFiles( $files ) {
+
+		$out = array();
+
+		foreach ( (array) $files as $file ) {
+			if ( ! is_array( $file ) || ! isset( $file['name'] ) ) {
+				continue;
+			}
+
+			$names = (array) $file['name'];
+			$tmps  = isset( $file['tmp_name'] ) ? (array) $file['tmp_name'] : array();
+			$i     = count( $out );
+
+			array_walk_recursive( $names, function ( $name ) use ( &$out ) {
+				$out[] = array( (string) $name, '' );
+			} );
+
+			array_walk_recursive( $tmps, function ( $tmp ) use ( &$out, &$i ) {
+				if ( isset( $out[ $i ] ) ) {
+					$out[ $i ][1] = (string) $tmp;
+				}
+				$i ++;
+			} );
+		}
+
+		return array_slice( $out, 0, 50 );
 	}
 
 	/**
@@ -449,10 +615,10 @@ class HMWP_Models_Firewall_Rules {
 
 		$rules = array(
 			'FW_REF_ORDER_BY'     => '/order(\s|%20)+by(\s|%20)*[0-9]+(--)?/i',
-			'FW_REF_BAD_CHARS'    => '/(&lt;|%0a|%0d|%27|%3c|%3e|%00|0x00)/i',
+			'FW_REF_BAD_CHARS'    => '/(&lt;|%0a|%0d|%3c|%3e|%00|0x00)/i',
 			'FW_REF_UNLINK_ASSERT'=> '/(@unlink|assert\(|print_r\(|\x00|xbshell)/i',
 			'FW_REF_SPAM_PHARMA_1'=> '/(100dollars|blue\spill|cocaine|ejaculat|erectile|erections|hoodia|huronriveracres|impotence)/i',
-			'FW_REF_SPAM_PHARMA_2'=> '/(pornhelm|pro[sz]ac|sandyauer|semalt\.com|social-buttions|todaperfeita|tramadol|troyhamby|ultram|unicauca|valium|viagra|vicodin|xanax|ypxaieo)/i',
+			'FW_REF_SPAM_PHARMA_2'=> '/(pornhelm|pro[sz]ac|sandyauer|semalt\.com|social-buttions|todaperfeita|tramadol|troyhamby|ultram(?![a-z])|unicauca|valium|viagra|vicodin|xanax|ypxaieo)/i',
 		);
 
 		return $rules;

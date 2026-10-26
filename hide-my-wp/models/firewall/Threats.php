@@ -121,6 +121,15 @@ class HMWP_Models_Firewall_Threats {
 			return $match;
 		}
 
+		// Form fields hold visitor text, so patterns that also match normal sentences are skipped
+		if ( strtolower( (string) $method ) == 'post' && ! empty( $params ) ) {
+			$post  = 'post=' . $this->capString( rawurldecode( http_build_query( $this->redactPostArray( $params ) ) ), 4000 );
+			$match = $this->matchThreatPatterns( $post, 'request', array( 'THR_QS_XSS_DOCUMENT_COOKIE', 'THR_QS_FI_FILE_STREAM' ) );
+			if ( $match ) {
+				return $match;
+			}
+		}
+
 		return false;
 
 	}
@@ -424,17 +433,13 @@ class HMWP_Models_Firewall_Threats {
 	 * @return string A concatenated string representing the processed URI, GET, or POST data to be used for threat analysis.
 	 */
 	protected function buildThreatHaystack( $uri, $method, $params ) {
-		$parts = array();
+		$parts  = array();
+		$method = strtolower( (string) $method );
 
 		$parts[] = 'uri=' . rawurldecode( (string) $uri );
 
 		if ( $method == 'get' && ! empty( $params ) ) {
 			$parts[] = 'get=' . $this->capString( rawurldecode( http_build_query( $params ) ), 4000 );
-		}
-
-		if ( $method == 'post' && ! empty( $params ) ) {
-			// Cap POST payload aggressively for performance and privacy
-			$parts[] = 'post=' . $this->capString( rawurldecode( http_build_query( $this->redactPostArray( $params ) ) ), 4000 );
 		}
 
 		return implode( '&', $parts );
@@ -461,10 +466,12 @@ class HMWP_Models_Firewall_Threats {
 	 * and also performs an additional direct check for directory traversal sequences.
 	 *
 	 * @param string $haystack The input string to be analyzed for potential threats.
+	 * @param string $area The request area used in the traversal code.
+	 * @param array $skip Threat codes not checked on this haystack.
 	 *
 	 * @return array|false An array containing threat details if a match is found, or false if no match is detected.
 	 */
-	protected function matchThreatPatterns( $haystack, $area = 'request' ) {
+	protected function matchThreatPatterns( $haystack, $area = 'request', $skip = array() ) {
 
 		$haystack = (string) $haystack;
 		if ( $haystack === '' ) {
@@ -474,7 +481,7 @@ class HMWP_Models_Firewall_Threats {
 		$patterns = $this->getThreatPatterns();
 		foreach ( $patterns as $regex => $code ) {
 			//A whitelisted pattern is skipped on its own, the patterns after it still run
-			if ( $this->isWhitelistedCode( $code ) ) {
+			if ( in_array( $code, $skip, true ) || $this->isWhitelistedCode( $code ) ) {
 				continue;
 			}
 
@@ -515,7 +522,7 @@ class HMWP_Models_Firewall_Threats {
 			'#\binformation_schema\b#i'         => 'THR_QS_SQLI_INFORMATION_SCHEMA',
 			'#\bsleep\s*\(#i'                   => 'THR_QS_SQLI_SLEEP_FUNC',
 			'#\binto\s+outfile\b#i'             => 'THR_QS_SQLI_INTO_OUTFILE',
-			'#(\bor\b|\band\b)\s+1\s*=\s*1\b#i' => 'THR_QS_SQLI_TAUTOLOGY_1EQ1',
+			'#(\bor\b|\band\b)(?:\s|\+)+[\'"]?1[\'"]?\s*=\s*[\'"]?1\b#i' => 'THR_QS_SQLI_TAUTOLOGY_1EQ1',
 			//--
 			'#\bonerror\s*=\s*#i' => 'THR_QS_XSS_ONERROR',
 			'#\bonload\s*=\s*#i'  => 'THR_QS_XSS_ONLOAD',
@@ -555,8 +562,6 @@ class HMWP_Models_Firewall_Threats {
 			return array();
 		}
 
-		$redact = array( 'pwd', 'pass', 'password', 'token', 'nonce', '_wpnonce', 'authorization', 'auth' );
-
 		$out = array();
 		$max = 30;
 
@@ -567,7 +572,7 @@ class HMWP_Models_Firewall_Threats {
 
 			$key = sanitize_key( (string) $k );
 
-			if ( in_array( $key, $redact, true ) ) {
+			if ( $this->isSecretField( $key ) ) {
 				$out[ $key ] = '[redacted]';
 				continue;
 			}
@@ -581,6 +586,18 @@ class HMWP_Models_Firewall_Threats {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * Check if a request field holds a password, key or card detail
+	 * Covers pass1/pass2, password_1, account_password, stripe_token, card_cvc and similar names
+	 *
+	 * @param string $key Field name, already passed through sanitize_key()
+	 *
+	 * @return bool
+	 */
+	protected function isSecretField( $key ) {
+		return (bool) preg_match( '/(pass|pwd|token|nonce|secret|card|cvv|cvc|^auth$|^authorization$|^key$|_key$)/', (string) $key );
 	}
 
 	/**
@@ -677,8 +694,6 @@ class HMWP_Models_Firewall_Threats {
 			return array();
 		}
 
-		$redact = array( 'pwd', 'pass', 'password', 'token', 'nonce', '_wpnonce', 'auth', 'authorization' );
-
 		$out = array();
 		$max = 50;
 
@@ -689,7 +704,7 @@ class HMWP_Models_Firewall_Threats {
 
 			$key = sanitize_key( (string) $k );
 
-			if ( in_array( $key, $redact, true ) ) {
+			if ( $this->isSecretField( $key ) ) {
 				$out[ $key ] = '[hidden]';
 				continue;
 			}

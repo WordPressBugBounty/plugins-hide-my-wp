@@ -54,10 +54,16 @@ class HMWP_Classes_Tools {
 		// Load multilanguage
 		add_action( "init", array( $this, 'loadMultilanguage' ) );
 
-		// Check and download the GeoIP Database
+		// Download the GeoIP Database in the background
+		add_action( 'hmwp_geoip_download_event', function () {
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Geoip_GeoLocator' )->downloadDatabase();
+		} );
+
+		// After a plugin update, the database is downloaded by WP-Cron
 		if ( get_transient( 'hmwp_geoip_download' ) ) {
 			add_action( 'init', function () {
-				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Geoip_GeoLocator' )->downloadDatabase();
+				delete_transient( 'hmwp_geoip_download' );
+				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Geoip_GeoLocator' )->scheduleDownload();
 			} );
 		}
 
@@ -390,7 +396,7 @@ class HMWP_Classes_Tools {
 			//--secure headers
 			'hmwp_sqlinjection'              => 0,
 			'hmwp_sqlinjection_location'     => 'onload',
-			'hmwp_sqlinjection_level'        => 4,
+			'hmwp_sqlinjection_level'        => 5,
 			'hmwp_security_header'           => 0,
 			'hmwp_hide_unsafe_headers'       => 0,
 			'hmwp_security_headers'          => array(
@@ -672,6 +678,12 @@ class HMWP_Classes_Tools {
 					$options['hmwp_mapping_file'] = 1;
 				}
 
+			}
+
+			// Websites that never saved the firewall level keep 8G, the 9G default is for new installs
+			$saved = json_decode( (string) get_option( HMWP_OPTION ), true );
+			if ( is_array( $saved ) && ! isset( $saved['hmwp_sqlinjection_level'] ) ) {
+				self::$options['hmwp_sqlinjection_level'] = 4;
 			}
 
 			// Download the Geo Country database
@@ -1549,19 +1561,27 @@ class HMWP_Classes_Tools {
 	 * Perform a local HTTP GET request with specific options.
 	 *
 	 * @param  string  $url  The URL to be requested.
-	 * @param  array  $options  Additional options for the HTTP request. Defaults include 'sslverify' as false and 'timeout' as 10 seconds.
+	 * @param  array  $options  Additional options for the HTTP request. Defaults include 'sslverify' as true and 'timeout' as 10 seconds. A loopback self-call retries unverified if the server can't validate its own certificate.
 	 *
 	 * @return array|WP_Error    The response received from the HTTP request or a WP_Error object in case of an error.
 	 */
 	public static function hmwp_localcall( $url, $options = array() ) {
-		// Predefined options with default values for SSL verification and request timeout
+		// Verify the SSL certificate by default
 		$options = array_merge( array(
-			'sslverify' => false, // Disable SSL verification by default
-			'timeout'   => 10,    // Set timeout to 10 seconds by default
+			'sslverify' => true,
+			'timeout'   => 10,
 		), $options );
 
 		// Perform a GET request using the WordPress HTTP API with the provided options
 		$response = wp_remote_get( $url, $options );
+
+		// A call to the website's own address may retry without SSL verification when the server
+		// can't validate its own certificate on loopback. An external URL is always verified.
+		if ( is_wp_error( $response ) && ! empty( $options['sslverify'] ) &&
+		     wp_parse_url( $url, PHP_URL_HOST ) === wp_parse_url( home_url(), PHP_URL_HOST ) ) {
+			$options['sslverify'] = false;
+			$response = wp_remote_get( $url, $options );
+		}
 
 		// Check if the response has an error
 		if ( is_wp_error( $response ) ) {
@@ -2295,6 +2315,9 @@ class HMWP_Classes_Tools {
 	 */
 	public function hmwp_activate() {
 		set_transient( 'hmwp_activate', true );
+
+		// Download the Geo Country database in the background
+		set_transient( 'hmwp_geoip_download', 1 );
 
 		//set restore settings option on plugin activate
 		$lastsafeoptions = self::getOptions( true );

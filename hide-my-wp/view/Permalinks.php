@@ -35,7 +35,7 @@
             <div class="card col-sm-12 p-0 m-0 mb-3 <?php echo( $hmwp_doctor_pinned ? '' : 'hmwp_tab_only' ); ?>" data-tab="level" style="<?php echo( $hmwp_doctor_pinned || $current_tab === 'level' ? '' : 'display:none;' ); ?>">
                 <h3 class="card-title hmwp_header p-2 m-0">
                     <?php echo esc_html__('Ghost Doctor', 'hide-my-wp'); ?>
-                    <a href="<?php echo esc_url(HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/category/errors/'); ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white">
+                    <a href="<?php echo esc_url(HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/ghost-doctor/'); ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white">
                         <i class="dashicons dashicons-editor-help" style="vertical-align: top; padding: 5px 0 !important;"></i>
                     </a>
                 </h3>

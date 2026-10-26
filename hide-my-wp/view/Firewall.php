@@ -57,23 +57,11 @@ if ( ! isset( $view ) ) {
                                     <?php echo wp_kses_post(
                                             sprintf(
                                                     /* translators: 1: Opening anchor tag. 2: Closing anchor tag. */
-                                                    __( 'Learn more about %1$s7G firewall%2$s.', 'hide-my-wp' ),
-                                                    '<a href="https://perishablepress.com/7g-firewall/" target="_blank" rel="noopener">',
+                                                    __( 'Learn more about the %1$s9G firewall%2$s.', 'hide-my-wp' ),
+                                                    '<a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/9g-firewall/' ) . '" target="_blank" rel="noopener">',
                                                     '</a>'
                                             )
                                         );
-                                    ?>
-                                </div>
-                                <div class="text-black-50 small">
-                                    <?php
-                                    echo wp_kses_post(
-                                            sprintf(
-                                                    /* translators: 1: Opening anchor tag. 2: Closing anchor tag. */
-                                                    __( 'Learn more about the %1$s8G firewall%2$s.', 'hide-my-wp' ),
-                                                    '<a href="https://perishablepress.com/8g-firewall/" target="_blank" rel="noopener">',
-                                                    '</a>'
-                                            )
-                                    );
                                     ?>
                                 </div>                            </div>
                             <div class="col-sm-8 p-0 input-group mb-1">
@@ -81,9 +69,10 @@ if ( ! isset( $view ) ) {
                                     <option value="1" <?php echo selected( 1, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( 'Minimal', 'hide-my-wp' ); ?></option>
                                     <option value="2" <?php echo selected( 2, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( 'Medium', 'hide-my-wp' ); ?></option>
                                     <option value="3" <?php echo selected( 3, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '7G Firewall', 'hide-my-wp' ); ?></option>
-                                    <option value="4" <?php echo selected( 4, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '8G Firewall', 'hide-my-wp' ); ?> (<?php echo esc_html__( 'recommended', 'hide-my-wp' ); ?>)</option>
+                                    <option value="4" <?php echo selected( 4, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '8G Firewall', 'hide-my-wp' ); ?></option>
+                                    <option value="5" <?php echo selected( 5, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '9G Firewall', 'hide-my-wp' ); ?> (<?php echo esc_html__( 'recommended', 'hide-my-wp' ); ?>)</option>
                                 </select>
-                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/firewall-security/#ghost-8g-firewall' ) ?>" target="_blank" class="position-absolute float-right" style="right: 27px;top: 12%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/9g-firewall/' ) ?>" target="_blank" class="position-absolute float-right" style="right: 27px;top: 12%;"><i class="dashicons dashicons-editor-help"></i></a>
                             </div>
 
                         </div>

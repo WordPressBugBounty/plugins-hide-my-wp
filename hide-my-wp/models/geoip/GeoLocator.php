@@ -8,6 +8,7 @@ class HMWP_Models_Geoip_GeoLocator {
 	private $database;
 	private static $instances = array();
 	private static $cache = array();
+	private static $directory;
 
 	/**
 	 * @param $database
@@ -68,14 +69,119 @@ class HMWP_Models_Geoip_GeoLocator {
 		return $value;
 	}
 
-	private function getDatabaseDirectory() {
-		return __DIR__;
+	/**
+	 * Get the folder of the Geo Country database
+	 *
+	 * The uploads folder survives the plugin updates, the plugin folder is replaced on every update.
+	 *
+	 * @return string
+	 */
+	public function getDatabaseDirectory() {
+
+		if ( isset( self::$directory ) ) {
+			return self::$directory;
+		}
+
+		self::$directory = __DIR__;
+
+		// One database for the whole network, in the main site uploads
+		$switched = false;
+		if ( is_multisite() && ! is_main_site() ) {
+			switch_to_blog( get_main_site_id() );
+			$switched = true;
+		}
+
+		$uploads = wp_upload_dir( null, false );
+
+		if ( $switched ) {
+			restore_current_blog();
+		}
+
+		if ( ! empty( $uploads['error'] ) || empty( $uploads['basedir'] ) ) {
+			return self::$directory;
+		}
+
+		$dir = untrailingslashit( apply_filters( 'hmwp_geoip_database_dir', trailingslashit( $uploads['basedir'] ) . 'wp-ghost' ) );
+
+		// Initialize WordPress Filesystem
+		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
+
+		if ( ! $wp_filesystem->is_dir( $dir ) && ! wp_mkdir_p( $dir ) ) {
+			return self::$directory;
+		}
+
+		if ( ! $wp_filesystem->is_writable( $dir ) ) {
+			return self::$directory;
+		}
+
+		if ( ! $wp_filesystem->exists( $dir . '/index.php' ) ) {
+			$wp_filesystem->put_contents( $dir . '/index.php', "<?php\n// Silence is golden.\n", HMW_FILE_PERMISSION );
+		}
+
+		// Move the database an older version saved in the plugin folder
+		$old = __DIR__ . '/' . self::DATABASE_FILE_NAME;
+		$new = $dir . '/' . self::DATABASE_FILE_NAME;
+		if ( $wp_filesystem->exists( $old ) && ! $wp_filesystem->exists( $new ) && $wp_filesystem->copy( $old, $new, true, HMW_FILE_PERMISSION ) ) {
+			$wp_filesystem->delete( $old );
+		}
+
+		self::$directory = $dir;
+
+		return self::$directory;
+	}
+
+	/**
+	 * Get the full path of the Geo Country database
+	 *
+	 * @return string
+	 */
+	public function getDatabasePath() {
+		return $this->getDatabaseDirectory() . '/' . $this->getDatabaseFilename();
+	}
+
+	/**
+	 * Check if an active feature needs the Geo Country database
+	 *
+	 * @return bool
+	 */
+	public function isDatabaseNeeded() {
+		return (bool) ( HMWP_Classes_Tools::getOption( 'hmwp_geoblock' ) || HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) || HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ) );
+	}
+
+	/**
+	 * Check if the last download failed less than an hour ago
+	 * or WP-Cron didn't run the download for over an hour
+	 *
+	 * @return bool
+	 */
+	public function isDownloadFailed() {
+		$scheduled = wp_next_scheduled( 'hmwp_geoip_download_event' );
+
+		return get_transient( 'hmwp_geoip_failed' ) || ( $scheduled && $scheduled < time() - HOUR_IN_SECONDS );
+	}
+
+	/**
+	 * Download the database in the background when a feature needs it and it's missing
+	 *
+	 * WP-Cron runs the download in its own request, so no page waits for the 10MB file.
+	 *
+	 * @return void
+	 */
+	public function scheduleDownload() {
+
+		if ( ! $this->isDatabaseNeeded() || file_exists( $this->getDatabasePath() ) || $this->isDownloadFailed() ) {
+			return;
+		}
+
+		if ( ! wp_next_scheduled( 'hmwp_geoip_download_event' ) ) {
+			wp_schedule_single_event( time(), 'hmwp_geoip_download_event' );
+		}
 	}
 
 	private function initializeDatabase() {
 
 		try {
-			$path = $this->getDatabaseDirectory() . '/' . $this->getDatabaseFilename();
+			$path = $this->getDatabasePath();
 
 			if ( file_exists( $path ) ) {
 				return HMWP_Classes_ObjController::getClass( 'HMWP_Models_Geoip_Database' )->open( $path );
@@ -127,13 +233,18 @@ class HMWP_Models_Geoip_GeoLocator {
 	public function downloadDatabase( $forced = false) {
 
 		$database = $this->getDatabaseFilename();
-		HMWP_Classes_ObjController::initFilesystem();
+		$path     = $this->getDatabasePath();
+		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
 
 		// Delete the transient on download
 		delete_transient( 'hmwp_geoip_download' );
 
+		if ( ! function_exists( 'download_url' ) && file_exists( ABSPATH . 'wp-admin/includes/file.php' ) ) {
+			include_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+
 		// If the file does not exist, download it
-		if ( function_exists( 'download_url' ) && ( $forced || ! file_exists( _HMWP_MODEL_DIR_ . 'geoip/' . $database ) ) ) {
+		if ( function_exists( 'download_url' ) && ( $forced || ! file_exists( $path ) ) ) {
 
 			// Get database from Cloud
 			if( ! function_exists('wp_generate_password') ){
@@ -143,18 +254,27 @@ class HMWP_Models_Geoip_GeoLocator {
 			try{
 				$tmp_file = download_url( esc_url( _HMWP_ACCOUNT_SITE_ . '/downloads/' . $database ) );
 
-				// If there is an error, return false
+				// If there is an error, try again in an hour
 				if ( is_wp_error( $tmp_file ) ) {
+					set_transient( 'hmwp_geoip_failed', 1, HOUR_IN_SECONDS );
 					return false;
 				}
 
 				// Copy the file locally
-				copy( $tmp_file, _HMWP_MODEL_DIR_ . 'geoip/' . $database );
+				$copied = $wp_filesystem->copy( $tmp_file, $path, true, HMW_FILE_PERMISSION );
 				wp_delete_file( $tmp_file );
+
+				if ( ! $copied ) {
+					set_transient( 'hmwp_geoip_failed', 1, HOUR_IN_SECONDS );
+					return false;
+				}
 			} catch ( Exception $e ){
+				set_transient( 'hmwp_geoip_failed', 1, HOUR_IN_SECONDS );
 				return false;
 			}
 
+			delete_transient( 'hmwp_geoip_failed' );
+			wp_clear_scheduled_hook( 'hmwp_geoip_download_event' );
 		}
 
 		return true;

@@ -1108,6 +1108,9 @@ class HMWP_Models_Files {
 	public function siteRequest( $url, $options ) {
 
 		$options['redirection'] = 0;
+		if ( ! isset( $options['sslverify'] ) ) {
+			$options['sslverify'] = true;
+		}
 
 		for ( $i = 0; $i <= 5; $i ++ ) {
 
@@ -1116,6 +1119,13 @@ class HMWP_Models_Files {
 			}
 
 			$response = wp_safe_remote_request( $url, $options );
+
+			// The site proxies to itself, so retry once without SSL verification when the
+			// server can't validate its own certificate on loopback
+			if ( is_wp_error( $response ) && ! empty( $options['sslverify'] ) ) {
+				$options['sslverify'] = false;
+				$response = wp_safe_remote_request( $url, $options );
+			}
 			$code     = (int) wp_remote_retrieve_response_code( $response );
 			$location = wp_remote_retrieve_header( $response, 'location' );
 
@@ -1156,7 +1166,7 @@ class HMWP_Models_Files {
 			'headers'   => $headers,
 			'body'      => $_POST, //phpcs:ignore WordPress.Security.NonceVerification.Missing
 			'timeout'   => 30,
-			'sslverify' => false,
+			'sslverify' => true,
 		);
 
 		do_action( 'hmwp_files_post_request_before', $url, $options );
@@ -1191,7 +1201,7 @@ class HMWP_Models_Files {
 			'method'    => 'GET',
 			'headers'   => $headers,
 			'timeout'   => 30,
-			'sslverify' => false,
+			'sslverify' => true,
 		);
 
 		do_action( 'hmwp_files_get_request_before', $url, $options );

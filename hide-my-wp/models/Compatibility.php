@@ -653,11 +653,17 @@ class HMWP_Models_Compatibility {
 		}
 
 		// Check if the Geo Country database is downloaded correctly
-		$database = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Geoip_GeoLocator' )->getDatabaseFilename();
+		/** @var HMWP_Models_Geoip_GeoLocator $geoLocator */
+		$geoLocator = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Geoip_GeoLocator' );
 
-		if ( ( HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ) || HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) )&& ! file_exists( _HMWP_MODEL_DIR_ . 'geoip/' . $database ) ) {
-			$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_geo_download' ), 'action' => 'hmwp_geo_download' ) ) ) . '" class="btn btn-default btn-sm ml-3" />' . esc_html__( "Click to retry the download", 'hide-my-wp' ) . '</a>';
-			HMWP_Classes_Error::setNotification( esc_html__( 'The Country database has not been downloaded, preventing the User Events Log and Security Threats Log features from working properly.', 'hide-my-wp' ) . $restoreLink );
+		if ( $geoLocator->isDatabaseNeeded() && ! file_exists( $geoLocator->getDatabasePath() ) ) {
+			// Show the notice only when a download failed, otherwise download it in the background
+			if ( $geoLocator->isDownloadFailed() ) {
+				$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_geo_download' ), 'action' => 'hmwp_geo_download' ) ) ) . '" class="btn btn-default btn-sm ml-3" />' . esc_html__( "Click to retry the download", 'hide-my-wp' ) . '</a>';
+				HMWP_Classes_Error::setNotification( esc_html__( 'The Country database has not been downloaded, preventing the User Events Log and Security Threats Log features from working properly.', 'hide-my-wp' ) . $restoreLink );
+			} else {
+				$geoLocator->scheduleDownload();
+			}
 		}
 
 		// Announce the plugin name change

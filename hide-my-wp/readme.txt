@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.14
+Stable tag: 7.0.15
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,208 +12,307 @@ Hide My WP Ghost is a WordPress security plugin that hides WP paths and protects
 
 == Description ==
 
-**WP Ghost (formerly Hide My WP Ghost) is a professional, comprehensive hack-prevention security solution for WordPress. Built for speed and maximum defense, it provides a multi-tiered security architecture that blocks hacker bots, neutralizes automated scanners, and stops hacks before reconnaissance begins.**
+**WP Ghost (formerly Hide My WP Ghost)** is a **WordPress security plugin focused on hack prevention** that changes and secures default paths, **filters requests through the 9G Firewall**, and **helps block automated scanners probing default WordPress URLs**.
 
-While traditional security tools focus on Detection (scanning for malware after a breach) or Signature-Filtering (blocking known exploits), WP Ghost focuses on Architecture. It implements Paths Security and Site Hardening to remove digital footprints that make your site a target for automated botnets. This provides an active foundation for securing your site before it can be identified as a target.
+Paths Security changes public URLs such as `wp-login.php` and restricts access to their default addresses. WP Ghost also includes two-factor authentication (2FA) and a Security Check with tasks for your site's settings.
+
+= WordPress security problems WP Ghost can help with =
+
+* **Repeated failed logins**: set attempt limits and lockout durations under Brute Force protection.
+* Bots requesting `wp-login.php`: use a custom login URL and block the default address.
+* **Visible plugin folders**: change the public paths used in your site's HTML.
+* **Suspicious requests**: use the 9G Firewall to filter supported attack patterns.
+* **Unclear security settings**: run Security Check and review its prioritized tasks.
+* **Repeated WooCommerce payment attempts**: set checkout attempt limits for each IP address.
+
+WP Ghost focuses on attack prevention and WordPress hardening. Keep WordPress and its plugins updated, maintain backups, and use malware scanning when you need to check for infected files.
 
 [youtube https://youtu.be/QMdoSN8dk1c]
 
-**WP Ghost Global Stats:**
+**Official websites:** <a href="https://wpghost.com">WP Ghost</a> and <a href="https://hidemywpghost.com">Hide My WP Ghost</a>.
 
-* **10 Million+** Monthly Brute-Force Attempts Blocked
-* **100 Million+** Monthly Security Threats Prevented
+= How Paths Security changes public URLs =
 
-**Official websites:**
-<a href="https://wpghost.com">WP Ghost (wpghost.com)</a>
-<a href="https://hidemywpghost.com">Hide My WP Ghost (hidemywpghost.com)</a>
+WP Ghost **changes and secures over 30 default WordPress paths**, including `wp-admin`, `wp-login.php`, `wp-content`, `wp-includes`, `admin-ajax.php`, `/wp-json`, plugin directories, and theme folders.
 
-= Hide WordPress with Path Security and Reduce Your Attack Surface =
+Paths Security rewrites public routes and can block requests to their old addresses. Changing a URL does not fix vulnerable plugin code or replace login authentication.
 
-Hide WordPress paths that attackers commonly scan, including `wp-admin`, `wp-login.php`, `wp-content`, `wp-includes`, plugin paths, and theme paths.
+= 9G Firewall in version 7.0.15 =
 
-Most WordPress attacks are automated. Bots scan millions of sites per hour looking for default paths like `/wp-admin` or `/wp-login.php` to confirm a site is running WordPress. Once confirmed, they launch targeted exploits against known plugin or theme vulnerabilities.
+Version 7.0.15 adds the 9G Firewall as the default filter on new installs. Choose it under **WP Ghost > Firewall & Headers > Firewall Strength**.
 
-WP Ghost breaks this cycle. By changing and securing common paths, you reduce your attack surface by up to **90%**. This isn't “obscurity”; it is site hardening. We re-engineer your site's visible structure so it is no longer low-hanging fruit for global botnets.
+WP Ghost uses server rules and application checks, depending on the request and configuration. Test forms and checkout after changing firewall settings.
 
-= NEW: AI Security Explanations - Your Report, Explained for Your Website =
+= What the 9G Firewall checks =
 
-Every security plugin hands you a list of red warnings. Almost none of them tell you what those warnings mean for your website.
+* **SQL injection, cross-site scripting (XSS), directory traversal, and scanner probes** in URLs and query strings
+* **Unauthenticated exploit payloads** sent to `admin-ajax.php` and the `/wp-json` REST API
+* **File uploads containing PHP shells** or scripts disguised as images
+* **Visitor comment and form submissions** on firewall levels 3 and 4
+* **Privilege-escalation attempts** on user registration endpoints
+* **PHP object injection and Server-Side Request Forgery (SSRF)** requests
 
-WP Ghost now does. One click sends your findings for analysis based on your site’s actual configuration: server type, rewrite rules status, config file writability, and security mode. It then returns a security report written specifically for you, not for WordPress in general.
+Read the <a href="https://wpghost.com/kb/9g-firewall/">9G Firewall documentation</a>.
 
-Requires a WP Ghost subscription, which includes a monthly allowance of AI checks. Everything else on the Security Check page - the scan, the score, the prioritized list, the severity bands, and every task detail - is free and works on its own.
+= Ghost Doctor path checks and repairs =
 
-**What you get back:**
+Nginx needs rewrite rules outside `.htaccess`. Apache and managed hosts can also restrict rewrite settings. Cached CSS URLs can leave a page unstyled after path changes.
 
-* A plain-language summary of your whole website. One paragraph that finally answers “so, am I actually secure?”
-* A headline you can understand. We replace the technical task name with what is truly at stake.
-* One definite action per finding. Not a description of the problem - an instruction telling you what to do.
-* A security explanation on demand. Open Details on any finding and you get the reasoning: why it matters on your server, what an attacker would do with it, and why it was ranked where it was. This is the part that teaches you WordPress security instead of just pointing it out.
-* Priority based on real exposure. Findings are re-ranked using your actual configuration, so the item at the top is the one that actually puts you at risk - not the one that scores highest in a generic table.
+**Ghost Doctor** runs from **WP Ghost > Level of Security** and tests the site the way a logged-out visitor loads it. It checks the homepage HTML, theme CSS and JS files, `admin-ajax.php`, the REST API, and the custom admin path.
 
-Built with limits you can check. Only your findings and a small description of your setup are ever sent - no page content, no user data, no credentials. Your security list, your score, the severity bands, and every task detail are generated locally and keep working whether the AI is available or not.
+= How Ghost Doctor repairs a broken path =
 
-= NEW: Ghost Doctor - Finds and Repairs a Broken Site by Itself =
+* **Reads your server type** (Nginx, Apache, LiteSpeed, or IIS), checks whether rewrite rules are written to the server config file, and detects active cache plugins
+* **Applies repairs from least invasive to fallback**, such as serving CSS and JS through WordPress while a cache clears or switching to a mode that needs no server rewrites
+* **Tests each repair right after applying it and reverts the change if the check still fails**
+* **Saves a configuration snapshot before changing anything**, so clicking **Undo All Changes** restores your previous setup
+* **Links to the exact hosting panel guide** when a step requires a server reload outside WordPress
 
-Changing your WordPress paths depends on your server honoring the new rules. When it doesn’t - Nginx never reads `.htaccess`, Apache ignores it without AllowOverride, a host locks the config file - your site can break, and nothing tells you why.
+Read the <a href="https://wpghost.com/kb/ghost-doctor/">Ghost Doctor guide</a> and the <a href="https://wpghost.com/kb/wp-ghost-paths-not-working-ghost-doctor/">troubleshooting steps</a>.
 
-Ghost Doctor diagnoses issues and repairs what a plugin can. It checks your homepage, theme files, editor requests, and REST API the way a visitor would. Then it applies repairs from safest to most invasive. Every repair is tested immediately and automatically undone if it doesn't help, so no settings change unnecessarily. Anything requiring a server change is clearly named with a guide so that you can avoid guesswork.
+= AI Security Explanations =
 
-**Read the <a href="https://wpghost.com/kb/wp-ghost-paths-not-working-ghost-doctor/">Ghost Doctor</a> troubleshooting guides.**
+Security Check runs locally and provides a free score from 0 to 100, with prioritized tasks.
 
-= Key Protections Included =
+Clicking **AI Security Explanations** sends those findings and setup details to generate a report for your configuration.
 
-WP Ghost is loaded with advanced defensive mechanisms to protect your site against:
+**AI Security Explanations require a connected WP Ghost account with an active subscription** and use a **monthly allowance of checks**.
 
-* **Brute Force Attacks:** Blocks automated password guessing at the source.
-* **SQL Injection & XSS:** Neutralizes malicious query strings and script injections.
-* **Zero-Day Exploits:** Secures paths for plugins before patches are even released.
-* **XML-RPC & REST API Attacks:** Shuts down common remote-access entry points.
-* **Bot Reconnaissance:** Prevents “fingerprinting” that hackers use to map your site.
-* **Spam & Scrapers:** Filters malicious traffic, saving bandwidth and server load.
+= What the report returns =
 
-= Over 115 Free Security Features Included =
+* **One summary paragraph** at the top answering whether your current configuration is exposed
+* **Plain headlines** that replace internal task names with the actual risk on your server
+* **One instruction per finding** telling you which setting or file to change
+* **An on-demand Details panel** explaining what an attacker can do with that finding on your server type
+* **A re-ordered task list** ranked by what exposes your site right now
 
-We believe professional security ought to be accessible to everyone. The free version of WP Ghost includes a large collection of tools to harden your WordPress architecture.
+Only the findings on your Security Check screen and six setup parameters (server type, config writability, rewrite presence, cache plugin presence, security mode, and mapped file count) are sent. This AI request excludes page content, user records, passwords and database rows. Premium cloud event retention is a separate feature.
 
-= 1. Change and Secure Paths (Paths Security) =
+= Requests and activity covered by WP Ghost controls =
 
-* **Change wp-admin & wp-login.php:** Move your login to a unique URL and show a 404 error to intruders.
-* **Change Lost Password & Register URLs:** Secure all authentication entry points.
-* **Change wp-content & wp-includes:** Secure your core system folders from direct access.
-* **Anonymize Plugins & Themes:** Change visible plugin/theme paths so hackers can’t identify your software version.
-* **Secure admin-ajax.php & REST API:** Change the `/wp-json` path to prevent data scraping.
-* **Security Presets:** One-click activation with three preset levels from minimal to full protection including Firewall, Brute Force, Logs, and 2FA your site loads correctly after changing paths before confirming settings.
-* **Custom Redirects:** Set unique login/logout redirects based on user roles.
-* **Login Page Designer:** Customize your secured login page with your logo, colors, background, and 10 color schemes.
+* **Brute force login and credential stuffing** on `wp-login.php`, custom login forms, WooCommerce accounts, and REST API Application Passwords
+* **SQL injection (SQLi) and cross-site scripting (XSS)** in URLs, query strings, and form submissions
+* Plugin and theme probes that rely on default `/wp-content/plugins/` folder names
+* **XML-RPC pingback amplification** and unauthenticated `/wp-json` user scraping
+* **Automated bot reconnaissance** looking for WordPress version tags, generator meta tags, and source map comments
+* **WooCommerce checkout card testing** from repeated IP requests
 
-= 2. WordPress Firewall Protection & WordPress Login Security =
+= Features in the free plugin =
 
-* **8G & 7G Firewall Filters:** High-speed, lightweight server-edge filtering to block bad bots.
-* **Passkey Authentication (Passwordless 2FA):** Use Face ID, Touch ID, or Windows Hello for un-phishable, device-based logins.
-* **Standard 2FA (Code & Email):** Add an extra verification layer to all user accounts.
-* **Security Headers:** Automatically implement CSP, HSTS, X-Frame-Options, and more.
-* **IP & User Agent Blocking:** Manually block suspicious traffic or referrers.
-* **Security Threats Log:** Track blocked attacks and malicious requests directly in your dashboard (limited view).
-* **User Events Log:** Monitor login activity, role changes, and user actions (limited view).
-* **GEO Threats Map:** Visualize where attacks originate with an interactive world map showing the top 5 threat countries.
-* **Security Optimization Score:** Real-time 0-100 score showing exactly how hardened your site is, featuring actionable recommendations.
-* **Temporary Logins:** Create time-limited access links for developers and clients without sharing passwords.
+= 1. Change and secure paths (Paths Security) =
 
-= 3. Deep Hiding & Footprint Removal =
+* Change `wp-admin` and `wp-login.php` to custom names and return a 404 or custom redirect on the default URLs
+* Change the **lost password, registration, and logout paths**
+* Rename `wp-content`, `wp-includes`, and the uploads path in public HTML
+* Change `admin-ajax.php` and the `/wp-json` REST API route
+* **Activate** protection in one click with **3 security presets**: Minimal, Lite Mode + Firewall, or Lite Mode + Firewall + Brute Force + Logs + 2FA
+* Verify your homepage, theme assets, and API routes with **Frontend Check and Ghost Doctor** before saving path changes
+* Set **role-based login and logout redirect URLs**
+* Style your custom login URL with the **Login Page Designer** using a custom logo, background, 12 layouts, and 10 color schemes
 
-* **Scrub Meta Tags:** Remove WordPress version numbers and generator tags.
-* **Clean HTML Comments:** Strip identifiable comments that reveal your tech stack.
-* **Hide Admin Toolbar:** Remove the toolbar for designated roles to hide backend indicators.
-* **Disable Emoticons & RSD:** Remove unnecessary header links that bloat code and reveal info.
+= 2. 9G Firewall and login security =
 
-= 4. Advanced Disable Options =
+* Filter requests with the **9G, 8G, or 7G Firewall rules**
+* Log in without passwords using **Passkey 2FA** (Face ID, Touch ID, Windows Hello, or hardware keys)
+* Enable Authenticator app codes, email 2FA codes, backup codes, browser trust, and **forced 2FA setup by user role**
+* Send **HTTP security headers:** Content-Security-Policy (CSP), HSTS, X-Frame-Options, and X-Content-Type-Options
+* Block specific **IP addresses, User-Agents, and referrers**
+* View blocked requests in the **Security Threats Log** with password and payment fields masked
+* Track logins, role updates, and admin actions in the **User Events Log**
+* Check the top 5 attack origin countries on the **Overview GEO Threats Map**
+* Track your **0 to 100 Security Optimization Score** on the Overview and Security Check screens
+* Create expiring **Temporary Logins** and one-time **Magic Login** email links capped at the creator's permission level
 
-* **Disable XML-RPC:** Shut down the most common vector for DDoS and brute force.
-* **Disable REST API Access:** Restrict API access to authenticated users only.
-* **Frontend Lockdown:** Disable right-click, “View Source,” and text selection to prevent manual reconnaissance.
-* **Disable Directory Browsing:** Ensure your server folders are never visible to the public.
+= 3. Footprint removal =
 
-= 5. Brute Force Protection =
+* Strip **WordPress version numbers and meta generator tags** from the HTML head
+* Remove **source map references** inside inline scripts and styles and strip HTML comments
+* Block `?author=1` queries and **unauthenticated REST API user enumeration**
+* Hide the **top admin toolbar** on the frontend for selected roles
+* Disable `wp-emoji` scripts, RSD links, and `wp-admin` prefetch hints
 
-* **Integrated ReCaptcha:** Supports Google V2, V3, Enterprise, and Math ReCaptcha.
-* **Targeted Protection:** Enable brute force defense on Login, Signup, and WooCommerce pages.
-* **Custom Throttling:** Define your own lockout times and attempt limits.
+= 4. Access and endpoint controls =
 
-= 6. Extra Tools & Integrations =
+* Disable `xmlrpc.php` requests when your site does not need XML-RPC integrations
+* Restrict `/wp-json` REST API access to logged-in users; test integrations that use public endpoints
+* Disable right-click and selected copy shortcuts on public pages; these controls do not prevent downloading page content
+* Turn off **directory browsing** across WordPress folders
 
-* **Magic Links:** Log in securely without a password via a one-time email link.
-* **Text & URL Mapping:** Change any class name or URL in your source code dynamically.
-* **CDN & Cache Support:** Works perfectly with WP Rocket, Cloudflare, and Litespeed.
-* **Ghost Doctor:** Diagnoses why your paths stopped working and repairs what it can. It tests every repair and undoes anything that does not help.
-* **Prioritized Security Check:** Failing paths and failed hardening tasks appear as one list, worst first, with time-based bands such as “worth fixing this week” instead of separate tables to reconcile.
-* **AI Security Explanations:** Get every finding explained for your website and ranked by real exposure. Requires a connected WP Ghost account with an active subscription; a monthly allowance applies. Learn more.
+= 5. Brute force and checkout protection =
 
-= Premium Hack-Prevention Features =
+* Add **Google reCAPTCHA v2, v3, Enterprise**, or **one-time tokenized Math CAPTCHA** to login and signup forms, with a built-in key tester
+* Protect standard logins, Elementor and page-builder login widgets, and WooCommerce login screens
+* Limit repeated **WooCommerce checkout submissions and failed payment attempts** from the same IP address
+* Set **custom attempt thresholds, lockout durations, and IP whitelists**
 
-For agencies and high-traffic sites, WP Ghost Premium adds advanced features focused on Security Intelligence, Automated Response, and Copyright Protection.
+= 6. Diagnostics and extra tools =
 
-* **AI Security Explanations:** Your findings explained for your own website and re-ranked by what actually exposes you, with a monthly allowance of AI checks included in your subscription. Read more.
-* **Ghost Mode:** Maximum security preset, changes all paths, hides all file extensions, and enables all hiding options in one click.
-* **IP Block Automation:** Automatically block IP addresses that trigger repeated security threats.
-* **AI Copyright Protection:** Block 30+ AI training crawlers (GPTBot, ClaudeBot, PerplexityBot, and others) at the firewall level. List auto-updated with each release. Does not affect Google, Bing, or regular search visibility.
-* **Full Security Threats Log:** Unlimited entries with filters by threat type, status, country, and time range, full-text search, pagination, and CSV export.
-* **Full User Events Log:** Unlimited entries with filters, search, pagination, and CSV export.
-* **Cloud Event Storage:** 30-day cloud retention for audits and incident reports.
-* **Real-time Email Alerts:** Get notified instantly of brute-force attempts or suspicious activity.
-* **Geo-Security (Country Blocking):** Block entire countries or specific paths by country.
-* **Advanced File Hardening:** Hide file extensions (PHP, CSS, JS, JSON), secure `wp-config.php`, `php.ini`, and `debug.log`.
-* **Database & Server Hardening:** Fix file permissions, change database prefix, regenerate SALT keys.
-* **Priority Support:** Direct access to our security experts and founder-led assistance.
+* Repair broken path or cache setups with **Ghost Doctor** and revert any test using saved snapshots
+* Work through a single **prioritized Security Check task list** grouped into action bands like "worth fixing this week"
+* Rewrite specific CSS class names, IDs, or URLs in page output with **Text & URL Mapping**
+* Log in with one click from **Softaculous** (cPanel, Plesk, DirectAdmin, Webuzo, CentOS Web Panel) and **aaPanel WP Toolkit**
 
-**<a href="https://wpghost.com/features/">Hide My WP Premium Feature</a>**
+= WP Ghost Premium features =
 
-== Technical Compatibility ==
+* **Ghost Mode preset:** turns on all path changes, hides file extensions, and enables full footprint removal in one click
+* Monthly allowance of **AI Security Explanations** included with your subscription
+* **Automated IP blocking** when an address triggers repeated firewall or brute-force blocks
+* **AI Copyright Protection:** crawler controls at the firewall and in `robots.txt`, including rules for `GPTBot`, `ClaudeBot`, `PerplexityBot`, `CCBot` and `Bytespider`
+* **Unlimited Security Threats Log and User Events Log entries** with country, status, and threat filters, search, and CSV export
+* **30-day cloud event retention** for audit history
+* **Instant email alerts** on brute-force lockouts or disabled logs, plus optional weekly threat summary emails
+* **Country blocking (Geo-Security)** for the whole site or specific paths
+* **File extension hiding** for `.php`, `.css`, `.js`, and `.json` URLs
+* **One-click database prefix rename, file permission repair, and SALT key regeneration**
 
-WP Ghost is designed for the modern WordPress ecosystem:
+PerplexityBot supports AI search discovery, not foundation model training. Review crawler rules before enabling **AI Copyright Protection**; blocking a search crawler can limit visibility in that service.
 
-* **Hosting Support:** Optimized for WP Engine, Inmotion Hosting, Hostgator Hosting, Godaddy Hosting, Host1plus, Payperhost, Fastcomet, Dreamhost, Bitnami Apache, Bitnami Nginx, Google Cloud Hosting, Amazon AWS Lightsail, Litespeed Hosting, Flywheels Hosting, Kinsta Hosting, Ploi.io, CloudPanel, RunCloud, Rocket Domain, Yunohost.
-* **Server Support:** Fully compatible with Nginx, Apache, LiteSpeed, and IIS.
-* **Plugin Support:** Effortless integration with Woocommerce, WPML, WPMUDEV, W3 Total Cache, Gravity, WP Super Cache, WP Fastest Cache, Hummingbird Cache, Cachify Cache, Litespeed Cache, SiteGround Optimizer, Nitropack, Cache Enabler, CDN Enabler, WOT Cache, Autoptimize, Jetpack by WordPress, Contact Form 7, bbPress, Manage WP, All In One SEO, Rank Math, Yoast SEO, Squirrly SEO, WP-Rocket, Minify HTML, Solid Security, Sucuri Security, Really Simple SSL, WordFence Security, WP Cerber Security, BBQ Firewall, Anti-Malware Security, Back-Up WordPress, Elementor Page Builder, Divi Builder, Weglot Translate, AddToAny Share Btn, Limit Login Attempts Reloaded, Loginizer, Shield Security, Asset CleanUp, WP Hide & Security Enhancer, and more.
+See all <a href="https://wpghost.com/features/">WP Ghost Premium features</a>.
 
-**Stop the hack before it starts. Join over 100,000 users who trust WP Ghost to secure their digital profile.**
+== Technical compatibility ==
+
+* **Hosting environments:** WP Engine, Kinsta, Flywheel, SiteGround, InMotion Hosting, HostGator, GoDaddy, DreamHost, FastComet, Bitnami Apache, Bitnami Nginx, Google Cloud, AWS Lightsail, LiteSpeed Hosting, Ploi.io, CloudPanel, RunCloud, **Softaculous**, aaPanel, Rocket.net, and YunoHost.
+* **Web servers:** Nginx, Apache, LiteSpeed, and IIS.
+* **Plugins and builders:** WooCommerce, Elementor, Divi, Bricks Builder, Blocksy, Avada, Nicepage, Riode, Gutenberg Block Editor, WPML, Polylang, Weglot, WP Rocket, LiteSpeed Cache (QUIC.cloud), W3 Total Cache, WP Super Cache, WP Fastest Cache, SiteGround Optimizer, NitroPack, Autoptimize, Hummingbird, Cachify, Cache Enabler, CDN Enabler, Asset CleanUp, Debloat, Wordfence Security, Sucuri Security, Solid Security, Defender Security, WP Cerber, Shield Security, BBQ Firewall, Really Simple SSL, Yoast SEO, Rank Math, All in One SEO, Squirrly SEO, Contact Form 7, Gravity Forms, Jetpack, bbPress, MainWP, ManageWP, FluentSMTP, Limit Login Attempts Reloaded, Loginizer, and WP Social.
 
 == Installation ==
 
-= From your WordPress Dashboard =
+= From your WordPress dashboard =
 
-Step 1. Navigate to Plugins > Add New.
-Step 2. Search for “WP Ghost”.
-Step 3. Click Install Now and then Activate.
-Step 4. Go to the WP Ghost menu in your sidebar.
-Step 5. Enter your email address to receive your instant Free Access Token.
-Step 6. Follow the built-in Setup Wizard to begin hardening your paths.
+1. Open **Plugins > Add New** in your WordPress admin area.
+2. Search for **"WP Ghost"**.
+3. Click **Install Now**, then click **Activate**.
+4. Open the **WP Ghost menu** in the left sidebar.
+5. Enter your email address to activate your **free access token**.
+6. Save the recovery file containing your **Safe URL** before changing login paths.
+7. Select a preset on the **Level of Security** screen and run Frontend Check or **Ghost Doctor** to confirm your paths load.
 
-= Manual Installation =
+= Manual installation =
 
-Step 1. Download the `hide-my-wp.zip` file from the WordPress repository or your WP Ghost account.
-Step 2. Log in to your WordPress dashboard as an Administrator.
-Step 3. Navigate to Plugins > Add New > Upload Plugin.
-Step 4. Select the .zip file and click Install Now.
-Step 5. Click Activate Plugin.
-Step 6. Connect the plugin using your email address to activate your security features.
+1. Download `hide-my-wp.zip` from WordPress.org or your WP Ghost account.
+2. Log in to `/wp-admin` as an Administrator.
+3. Open **Plugins > Add New > Upload Plugin**.
+4. Choose `hide-my-wp.zip` and click **Install Now**.
+5. Click **Activate Plugin** and enter your email address to connect your free token.
 
-= Reporting a Security Vulnerability =
+= Reporting a security vulnerability =
 
-Found a security issue in WP Ghost? Report it privately through our Patchstack managed disclosure program at patchstack.com/database/report or email security@hidemywpghost.com. We acknowledge reports within 48 hours and coordinate disclosure within 90 days. Please do not post details in the support forum before we release a fix. The full policy is included in the plugin's SECURITY.md, and third-party components are listed in sbom.json.
+**Report security issues in WP Ghost privately** through our Patchstack disclosure program at `patchstack.com/database/report` or email `security@hidemywpghost.com`. We acknowledge reports within 48 hours and coordinate disclosure within 90 days. **Please do not post vulnerability details in the public support forum before a fix ships.**
 
-Support period: We provide security updates for 5 years from each version’s release. Version 7.0.11, released September 2026, is supported until September 2031. Installing a newer release extends the end date.
+The full policy is in the plugin's `SECURITY.md` file, and bundled third-party components are listed in `sbom.json`.
 
-= Resources & Guides =
-For advanced server arrangements and detailed walkthroughs, please visit our full documentation:
-How to Install and Set Up WP Ghost
+**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.15, released October 26, 2026, is supported until October 2031.
 
-**WP Ghost Knowledge Base:**
+= Documentation and guides =
+
+* <a href="https://wpghost.com/kb/">WP Ghost Knowledge Base</a>
+* <a href="https://wpghost.com/kb/9g-firewall/">9G Firewall guide</a>
+* <a href="https://wpghost.com/kb/ghost-doctor/">Ghost Doctor self-check and repair guide</a>
+* <a href="https://wpghost.com/kb/wp-ghost-paths-not-working-ghost-doctor/">Troubleshooting paths with Ghost Doctor</a>
 
 == Screenshots ==
 
-1. WP Ghost Overview: Choose your Level of Security to harden your site architecture instantly.
-2. Admin Security: Change and secure the wp-admin path to block unauthorized dashboard access.
+1. WP Ghost Overview: Choose your **Level of Security** to harden your site architecture.
+2. Admin Security: Change and secure the wp-admin path and manage access to the default URL.
 3. Paths Security: Customize and secure your login and registration entry points.
 4. Core Security: Harden your system paths (wp-content, uploads, includes) against bot reconnaissance.
-5. API & AJAX Security: Secure the REST API and admin-ajax paths to prevent data scraping.
-6. 8G Firewall Engine: High-performance, server-edge threat filtering for proactive hack prevention.
-7. Brute Force Defense: Integrated Google reCAPTCHA and Math protection for all authentication paths.
-8. Modern Authentication: Secure logins with 2FA and future-proof Passkey (Passwordless) support.
-9. Text Mapping: Dynamically change class names and IDs in your source code to prevent fingerprinting.
-10. URL Mapping: Re-engineer internal URLs and paths for elite-level site hardening.
-11. Hardening Tweaks: Deep hide options to remove WordPress version tags and identifiable metadata.
+5. API & AJAX Security: Secure the REST API and admin-ajax paths and set access restrictions.
+6. 9G Firewall Engine: Request filtering settings.
+7. Brute Force Defense: Integrated Google reCAPTCHA and Math protection for authentication paths.
+8. Modern Authentication: Secure logins with 2FA and Passkey (Passwordless) support.
+9. Text Mapping: Change class names and IDs in your source code in page output.
+10. URL Mapping: Rewrite internal URLs and asset paths.
+11. Hardening Tweaks: Remove WordPress version tags and metadata.
 12. Redirect Logic: Custom 404 and role-based redirect options for secured paths.
-13. Safe Access: Manage Temporary Logins and Magic Links for secure developer access.
-14. Security Threats Log: Activate Security Threats Log to track blocked attacks and malicious requests.
-15. Security Threats Log: The list of recent threats prevented by WP Ghost.
-16. Overview Dashboard: An overview of the last 7 days of security events.
-17. Front-end View: Example of a custom, secured login path (`/newlogin`).
-18. Attack Blocked: Default `wp-login.php` now returns a 404 error to confuse hacker bots.
-19. Access Denied: Default `wp-admin` path is fully secured and hidden from public view.
-20. Source Code Proof: Core WordPress paths transformed and secured to neutralize bot scans.
+13. Safe Access: Manage **Temporary Logins** and Magic Links for developer access.
+14. **Security Threats Log**: **Activate** the **Security Threats Log** to track blocked requests.
+15. **Security Threats Log**: Recent threats blocked by WP Ghost.
+16. Overview Dashboard: 7-day summary of security events.
+17. Front-end View: Example of a custom login path (`/newlogin`).
+18. Attack Blocked: Default `wp-login.php` returns a 404 error to bots.
+19. Access Denied: Default `wp-admin` path is hidden from public requests.
+20. Page source: Core WordPress paths rewritten in HTML output.
+
+== Frequently Asked Questions ==
+
+= What does WP Ghost do for WordPress security? =
+WP Ghost provides request filtering, login protection and path controls, with Security Check tasks for WordPress hardening.
+
+= Is WP Ghost a free WordPress security plugin? =
+The free plugin includes the 9G Firewall, Brute Force protection, 2FA and Security Check; Premium adds features such as automated IP blocking and cloud event retention.
+
+= Can I reduce repeated WordPress login attempts? =
+WP Ghost lets you set login attempt limits and lockouts, add CAPTCHA, and require 2FA for selected user roles.
+
+= Can I change wp-login.php without moving WordPress files? =
+WP Ghost rewrites public URLs while leaving WordPress files in their existing directories.
+
+= Is hiding the WordPress login page enough to secure my site? =
+A custom login URL reduces exposure at the default address, but WordPress still needs updates, strong authentication and backups.
+
+= Does WP Ghost remove malware from an infected site? =
+WP Ghost focuses on prevention and configuration checks; use a malware scanner and a cleanup process for an existing infection.
+
+= Do I still need WordPress security controls if my host has a firewall? =
+Check which protections your host provides, then use WP Ghost for missing controls such as custom login paths or role-based 2FA.
+
+= Can WP Ghost help with WooCommerce card testing? =
+WP Ghost can limit repeated checkout submissions and failed payment attempts from the same IP address; distributed attacks may need controls from your payment provider or host.
+
+= What does the free 9G Firewall check? =
+From version 7.0.15, WP Ghost includes 9G checks for injection patterns, AJAX and REST requests, and malicious uploads, with comment and form checks on levels 3 and 4.
+
+= How does Ghost Doctor fix broken paths? =
+**Ghost Doctor** tests the homepage and asset URLs as a logged-out visitor, applies supported repairs, and reverts changes that fail its follow-up check.
+
+= Will Ghost Doctor change my settings automatically? =
+**Ghost Doctor** starts when you click **Start Diagnosis** under **WP Ghost > Level of Security** and saves a snapshot for **Undo All Changes**.
+
+= What are AI Security Explanations? =
+**AI Security Explanations** turn Security Check findings into instructions for your configuration and require an **active subscription** with a monthly check allowance.
+
+= What data does AI Security Explanations send? =
+The request contains Security Check findings and six setup fields: server type, config writability, rewrite presence, cache plugin presence, security mode and mapped file count.
+
+= Does WP Ghost work without AI Security Explanations? =
+WP Ghost's local Security Check, firewall, path controls and **Ghost Doctor** work without using **AI Security Explanations**.
+
+= Can I use WP Ghost alongside Wordfence, Sucuri or Solid Security? =
+WP Ghost supports use alongside these security plugins; review overlapping login, firewall and URL settings, then test your site's forms.
+
+= Will changing WordPress paths affect SEO? =
+WP Ghost path changes target system URLs rather than post permalinks, but blocked assets or crawler rules can affect search access. Run Frontend Check and verify public pages after changes.
+
+= My theme CSS is broken after saving new paths. What should I do? =
+Open **WP Ghost > Level of Security** and click **Start Diagnosis** so **Ghost Doctor** can test asset URLs and supported repairs.
+
+= I forgot my custom login URL. How do I get back in? =
+Use the **Safe URL** in your saved recovery file, or rename `/wp-content/plugins/hide-my-wp` through FTP/SFTP to deactivate WP Ghost and restore its default login route.
+
+= Does WP Ghost support WordPress Multisite and Nginx? =
+WP Ghost supports Multisite and generates Nginx rewrite rules, which may need your host to apply them.
+
+= Can my host restrict custom WordPress paths? =
+Managed hosts can restrict rewrite rules, so check your host's requirements before changing `wp-admin` or `wp-login.php`.
+
+= How do I change paths inside the wp-admin dashboard too? =
+Add `define('HMW_ALWAYS_CHANGE_PATHS', true);` to `wp-config.php` and save your WP Ghost settings after backing up the configuration file.
+
+= Can I block AI crawlers and still appear in AI search? =
+WP Ghost Premium includes crawler controls, but blocking search crawlers such as PerplexityBot can limit discovery in their services. Review the selected rules before enabling **AI Copyright Protection**.
+
 
 == Changelog ==
+
+= 7.0.15 (26 Oct 2026) =
+
+* New - 9G Firewall: the new firewall generation with the latest 2026 threat protection, covering admin-ajax, the REST API, file uploads and more
+* Update - The plugin verifies the SSL certificate on its own path and security check requests
+* Update - Firewall checks comment and form submissions on levels 3 and 4
+* Update - Password and payment fields stay private in the threat log
+* Update - Country database saved in the uploads folder and downloaded in the background
+* Update - Security Check warns about PHP2Shell (CVE-2026-109618)
+* Update - Translated the new texts in all bundled languages
 
 = 7.0.14 (14 Oct 2026) =
 
@@ -273,7 +372,7 @@ How to Install and Set Up WP Ghost
 * Fix - Ghost Doctor now checks the REST API path the way WordPress answers it, instead of reporting a working REST API as missing
 * Fix - Changing the REST API path takes effect on save, without having to open Settings > Permalinks and save again
 * Fix - No longer stops with a fatal error on servers where the getallheaders() function is missing
-* Fix - Frontend Check no longer shows the word “undefined” at the end of the results when a path or an asset fails
+* Fix - Frontend Check no longer shows the word "undefined" at the end of the results when a path or an asset fails
 * New - New hmwp_files_allowed_hosts, hmwp_files_request_headers, hmwp_files_response_headers, hmwp_files_skip_headers, hmwp_files_cache, hmwp_files_cache_dir and hmwp_files_cache_lifetime filters for developers
 
 = 7.0.09 (17 August 2026) =
@@ -283,7 +382,7 @@ How to Install and Set Up WP Ghost
 * New - A plain-language summary of your whole website, above the list of what to fix
 * New - Open Details on any finding to read why it matters on your server and what an attacker would do with it
 * Fix - Fix it now works for the Security Check tasks that change a plugin setting, such as Hide Old Paths, Hide Common Files, Hide wp-login and Disable XML-RPC
-* Fix - Fix it no longer answers with “Ajax is not loading correctly. Clear all cache and try again.” after the paths have been changed
+* Fix - Fix it no longer answers with "Ajax is not loading correctly. Clear all cache and try again." after the paths have been changed
 * Fix - The Security Check summary now shows whether your paths are working instead of always reporting that they have not been checked
 * Update - Published a coordinated vulnerability disclosure policy (SECURITY.md), a list of the third-party components we bundle (sbom.json), and a declared 5 year security update period
 
@@ -310,7 +409,7 @@ How to Install and Set Up WP Ghost
 = 7.0.06 (15 July 2026) =
 
 * Fix - Editing a custom post type that uses the built-in Categories/Tags taxonomy no longer crashes the Block Editor
-* Fix - Block Editor no longer crashes with “Cannot read properties of undefined” when Hide User Enumeration is on
+* Fix - Block Editor no longer crashes with "Cannot read properties of undefined" when Hide User Enumeration is on
 * Fix - Settings page navigation menu no longer loses its layout on sites where another plugin or theme restricts the allowed HTML tags
 
 = 7.0.05 (08 July 2026) =
@@ -318,12 +417,12 @@ How to Install and Set Up WP Ghost
 * New - Force 2FA Setup: require selected user roles to set up Two-Factor Authentication before they can access the dashboard, with a guided setup screen shown right after login
 * Fix - Temporary Login page no longer triggers a fatal error when opened for a user that was deleted or expired
 * Fix - Two-Factor email setup and Magic Login no longer emit PHP warnings when the requested user no longer exists
-* Fix - WP-CLI commands no longer emit a PHP 8.5 “Undefined array key hostname” warning
-* Fix - Settings page navigation menu no longer loses its layout on sites where another plugin or theme restricts the allowed HTML tags; the menu now keeps its own classes and attributes regardless of the site’s wp_kses filters
+* Fix - WP-CLI commands no longer emit a PHP 8.5 "Undefined array key hostname" warning
+* Fix - Settings page navigation menu no longer loses its layout on sites where another plugin or theme restricts the allowed HTML tags; the menu now keeps its own classes and attributes regardless of the site's wp_kses filters
 
 = 7.0.04 (29 June 2026) =
 
-* New - Frontend Check now also verifies the theme’s CSS and JS files load, catching a broken layout on pages that still return 200
+* New - Frontend Check now also verifies the theme's CSS and JS files load, catching a broken layout on pages that still return 200
 * New - Detects when CSS/JS/font files load through WordPress instead of the server config, falls back to safe paths and warns you on the settings page
 * Update - Redesigned the Frontend Check results into clear, uniform rows that stay readable with long URLs
 
@@ -331,7 +430,7 @@ How to Install and Set Up WP Ghost
 
 * Fix - WPML/Polylang with a custom or renamed REST API path: WPML Advanced Translation Editor and other REST API calls no longer fail with a network error in the admin
 * Fix - REST API requests made through the ?rest_route= form are no longer mistakenly treated as normal page requests and blocked
-* Fix - Renamed REST API path: legacy, cached and external clients still calling the default wp-json path are now recognized correctly instead of being 404’d
+* Fix - Renamed REST API path: legacy, cached and external clients still calling the default wp-json path are now recognized correctly instead of being 404'd
 * Fix - Compatibility module for WPML: the Advanced Translation Editor sync routes and WPML/ICL admin-ajax requests are no longer rewritten with the active language prefix
 * Fix - Some sites could show a blank page when source code optimization was enabled; the header/tag find & replace is now fail-safe and never blanks the output on a regex error
 * Fix - Prefetch/speculation rules cleanup now removes the wp-admin and wp-*.php entries without leaving the rules JSON invalid
@@ -341,7 +440,7 @@ How to Install and Set Up WP Ghost
 
 = 7.0.02 (11 May 2026) =
 
-* Fix - Compatibility with WPML and Polylang: static asset URLs (wp-content, wp-includes) no longer get the language prefix prepended (e.g. /en/wp-content/…) when “Change Relative URLs to Absolute URLs” is enabled
+* Fix - Compatibility with WPML and Polylang: static asset URLs (wp-content, wp-includes) no longer get the language prefix prepended (e.g. /en/wp-content/...) when "Change Relative URLs to Absolute URLs" is enabled
 * Fix - Password-protected pages (built-in WordPress post password) now submit correctly on Nginx and other servers without server-level rewrites when the login URL is customized
 * Fix - Refreshed knowledge base links across admin notices to point to the new documentation
 * Fix - Minor bugs and typos
@@ -363,7 +462,7 @@ Major Release: Security Score, Login Page Designer, Passkey 2FA, Security Threat
 * New - Country filter in Security Threats Log and User Events Log
 * New - Login Page Designer with custom logo, background image, colors, and color scheme presets
 * New - Security Presets for one-click activation: Minimal, Lite Mode + Firewall + Compatibility, and Lite Mode + Firewall + Brute Force + Logs + Two Factor
-* New - Contextual upgrade suggestions based on your site’s actual threat data
+* New - Contextual upgrade suggestions based on your site's actual threat data
 * New - Two-Factor Authentication by Passkey (Face ID, Touch ID, Windows Hello)
 * New - Each user can pick their preferred 2FA method from their profile
 * New - Trust current browser option for 2FA, skip verification on trusted devices
@@ -481,78 +580,3 @@ UI & Experience:
 * Fix - Paths changed in cache files when CSS and JS files are loaded dynamically
 * Fix - Hide the new login on registration redirect when the registration is deactivated
 * Fix - Remove newlines from the rewrite rules
-
-Security:
-Ocultar Mi WP - Plugin de seguridad de WordPress
-Ocultar meu WP - Segurança do WordPress
-Cacher mon WordPress - Plugin de sécurité WordPress
-Verstecken Sie mein WordPress - WordPress Sicherheits-Plugin
-
-== Frequently Asked Questions ==
-
-= Does WP Ghost physically move or rename my WordPress files? =
-No. WP Ghost uses high-performance server rewrite rules (Nginx, Apache, IIS) to change visible paths in your source code. Your actual WordPress files and directories stay exactly where they are, providing no risk to your site’s stability or core updates.
-
-= Is WP Ghost a complete standalone solution? =
-For most WordPress sites, yes. By combining Architectural Hardening with an 8G Firewall and Automated IP Blocking, WP Ghost neutralizes automated reconnaissance and brute-force attempts that account for over 90% of real-world attacks. It delivers a foundational defense often sufficient on its own, while remaining fully compatible with “Defense in Depth” strategies involving malware scanners or file-integrity monitors.
-
-= What are AI Security Explanations? =
-Security scanners tell you what is wrong. AI Security Explanations tell you what it means for your website. WP Ghost sends your findings for analysis along with a short description of your site setup: server type, whether rewrite rules are active, if your config file is writable, and your security mode. It returns a plain-language explanation for each finding, one definite action to take, and a priority order based on what genuinely exposes your site. Open Details on any finding to read the reasoning behind it. Read more on wpghost.com.
-
-= What data is sent when I use AI Security Explanations? =
-Only the findings already on your Security Check page and a small description of your configuration are sent: server type, whether the config file is writable, whether rules are present, if a cache plugin is installed, your security mode, and a count of mapped files. No page content, user data, passwords, or database contents are ever sent. The feature is entirely opt-in; nothing is transmitted until you press the button.
-
-= Does WP Ghost still work without the AI? =
-Completely. The Security Check scan, 0-100 score, prioritized list, severity bands, every task detail, and the entire Ghost Doctor diagnosis and repair process run on your server and need no connection. AI Security Explanations only add wording on top. Using them requires a connected WP Ghost account, an active subscription, and a monthly allowance of checks. The page shows exactly how many you have left.
-
-= Is it compatible with other WordPress security plugins? =
-Yes. WP Ghost is designed as your “Outer Perimeter” defense. It works perfectly alongside malware scanners and reactive security tools like Wordfence, Sucuri, or Solid Security. By implementing Paths Security first, WP Ghost stops bots before they get close enough to be scanned by other plugins.
-
-= Will changing my paths affect my SEO or Google rankings? =
-Not at all. WP Ghost handles Sitemap.xml and Robots.txt mapping automatically. This ensures Google and other search engines can index your content perfectly, while malicious bots receive a 404 error when probing your system paths.
-
-= What is the difference between Paths Security and “Security through Obscurity”? =
-Obscurity is simply hiding a key under a mat. Paths Security is an architectural hardening strategy, like moving the door to a secure, unique location and changing the lock. It is a recognized technical hardening standard used by enterprise-grade sites to prevent Bot Reconnaissance.
-
-= Does WP Ghost work on WP Multisite and different server types? =
-Yes. The plugin is fully compatible with WP Multisite (Network-wide configuration) and supports Apache, Nginx, IIS, and LiteSpeed servers.
-
-= How do I configure WP Ghost on an Nginx Server? =
-WP Ghost fully supports Nginx. Because Nginx does not use .htaccess, you will be guided to add the generated rewrite rules manually to your nginx.conf file. We provide specific tutorials for Kinsta, RunCloud, CloudPanel, CWP7, AAPanel, and Ploi.io.
-
-= My theme is not loading correctly after changing paths. What should I do? =
-This usually happens when the server rewrite rules aren't active yet.
-
-* Purge Cache: Clear your WordPress cache and any server-side caching (Varnish, Nginx FastCGI).
-* Manual Rewrites: If your server config file is not writable, copy the rules from WP Ghost and add them manually to your .htaccess or nginx.conf.
-* Restart Nginx: If on Nginx, you must reload/restart the service after saving settings.
-* Free Support: If the problem continues, contact us and we will set up the plugin for you for free.
-
-= I am locked out or forgot my custom login URL. How do I get back in? =
-
-* Safe URL: Use the “Safe URL” text file automatically generated and downloaded when you saved your settings.
-* Manual Reset: Access your server via FTP/SFTP and rename the folder /wp-content/plugins/hide-my-wp to something else. This temporarily disables the path changes so you can log in via the default wp-login.php.
-
-= Does WP Ghost work for WordPress.com websites? =
-Because of the restricted infrastructure of WordPress.com managed hosting, you can't change administrative and login paths. However, you can still use WP Ghost for Site Hardening, the 8G Firewall, Passkey Authentication, and other Hack Prevention features.
-
-= Is the WP Ghost plugin free of charge? =
-Yes. The Lite version of WP Ghost is always free and includes essential WordPress Security updates. To unlock advanced features like IP Block Automation, Geo-Security, and Cloud Monitoring, you can upgrade to WP Ghost Premium.
-
-= How can I hide my site from WordPress Theme Detectors? =
-By using Paths Security to change common directories (plugins, themes, wp-content), you can successfully neutralize most automated detectors. For a deep dive on total anonymity, read our guide: How to Hide Your Site From WordPress Theme Detectors.
-
-= Is this plugin enough to protect my website from all hackers? =
-WP Ghost provides an elite proactive defense by neutralizing the Reconnaissance phase of an attack. While the Free version blocks most bot traffic, we recommend the Premium version for advanced Brute Force Protection and Automated Danger Intelligence.
-
-= How do I change the WordPress paths in the Admin Dashboard area? =
-By default, WP Ghost only changes paths on the frontend to ensure maximum compatibility. To harden the admin dashboard as well, add define('HMW_ALWAYS_CHANGE_PATHS', true); to your wp-config.php file and re-save your settings.
-
-= Does WP Ghost include a security score? =
-Yes. WP Ghost 7.0 includes a Security Optimization Score from 0 to 100 that shows exactly how hardened your site is. The score updates automatically as you enable features and complete security tasks. It appears on the Overview dashboard and the Security Check page as both a visual gauge and a numeric value.
-
-= Can I customize the WordPress login page with WP Ghost? =
-Yes. WP Ghost includes a Login Page Designer that lets you add your custom logo, background image, and brand colors to your secured login page. It includes 12 layout presets and 10 color scheme presets. The designer works with your custom login URL, so your branded page is served at your hidden path instead of the default wp-login.php.
-
-= Does WP Ghost protect my content from AI training bots? =
-WP Ghost Premium includes an AI Copyright Protection feature that blocks 30+ AI training crawlers, including GPTBot, ClaudeBot, PerplexityBot, CCBot, and Bytespider at the firewall level. It also automatically adds Disallow rules to your robots.txt. This protects your licensed content from being used to train AI models without affecting your regular Google, Bing, or Yahoo search visibility. The crawler list is automatically updated with each plugin release.

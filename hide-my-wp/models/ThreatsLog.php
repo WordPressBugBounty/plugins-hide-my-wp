@@ -365,7 +365,12 @@ class HMWP_Models_ThreatsLog extends HMWP_Models_Firewall_Threats {
 		// Exact overrides (special cases)
 		$exact = array(
 			// XML-RPC is better understood separately than "prohibited URL"
-			'THR_URI_XMLRPC_PROBE' => 'Request to XML-RPC API denied',
+			'THR_URI_XMLRPC_PROBE'   => 'Request to XML-RPC API denied',
+			// 9G request checks
+			'FW_9G_ROLE_ESCALATION'  => 'Privilege Escalation',
+			'FW_9G_UPLOAD_PHP_SHELL' => 'Malicious File Upload',
+			'FW_9G_OBJECT_INJECTION' => 'PHP Object Injection',
+			'FW_9G_SSRF'             => 'Server-Side Request Forgery',
 		);
 		if ( isset( $exact[ $code ] ) ) {
 			return (string) apply_filters( 'hmwp_threats_category_from_code', $exact[ $code ], $code );
