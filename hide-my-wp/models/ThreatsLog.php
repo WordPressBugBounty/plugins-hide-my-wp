@@ -362,15 +362,18 @@ class HMWP_Models_ThreatsLog extends HMWP_Models_Firewall_Threats {
 		// Backward compatibility: FW1_ / FW2_ / FW3_ / FW4_ -> FW_
 		$code = preg_replace( '/^FW[0-9]_/', 'FW_', $code );
 
+		// Keep labels for rows logged under the old FW_9G_ codes
+		$code = str_replace( 'FW_9G_', 'FW_GHOST_', (string) $code );
+
 		// Exact overrides (special cases)
 		$exact = array(
 			// XML-RPC is better understood separately than "prohibited URL"
 			'THR_URI_XMLRPC_PROBE'   => 'Request to XML-RPC API denied',
-			// 9G request checks
-			'FW_9G_ROLE_ESCALATION'  => 'Privilege Escalation',
-			'FW_9G_UPLOAD_PHP_SHELL' => 'Malicious File Upload',
-			'FW_9G_OBJECT_INJECTION' => 'PHP Object Injection',
-			'FW_9G_SSRF'             => 'Server-Side Request Forgery',
+			// 2026 Ghost Firewall request checks
+			'FW_GHOST_ROLE_ESCALATION'  => 'Privilege Escalation',
+			'FW_GHOST_UPLOAD_PHP_SHELL' => 'Malicious File Upload',
+			'FW_GHOST_OBJECT_INJECTION' => 'PHP Object Injection',
+			'FW_GHOST_SSRF'             => 'Server-Side Request Forgery',
 		);
 		if ( isset( $exact[ $code ] ) ) {
 			return (string) apply_filters( 'hmwp_threats_category_from_code', $exact[ $code ], $code );

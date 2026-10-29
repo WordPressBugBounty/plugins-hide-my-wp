@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Ghost Lite 7.0.15\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/hide-my-wp\n"
+"Project-Id-Version: WP Ghost Lite 7.0.16\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/hide-my-wp\n\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-23T17:08:34+00:00\n"
+"POT-Creation-Date: 2026-10-29T12:45:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: hide-my-wp\n"
@@ -39,16 +39,16 @@ msgstr ""
 msgid "https://wpghost.com"
 msgstr ""
 
-#: classes/Tools.php:868
+#: classes/Tools.php:871
 msgid "Resume Security"
 msgstr ""
 
-#: classes/Tools.php:871
+#: classes/Tools.php:874
 msgid "Pause for 5 minutes"
 msgstr ""
 
 #. translators: 1: Opening <a> tag to Custom Register URL settings, 2: Plugin menu name, 3: Closing </a> tag, 4: Opening <a> tag to Brute Force settings, 5: Plugin menu name, 6: Closing </a> tag, 7: Opening <strong> tag with Settings label, 8: General label, 9: Anyone can register label with closing </strong> tag.
-#: classes/Tools.php:874
+#: classes/Tools.php:877
 #: controllers/SecurityCheck.php:313
 #: models/Menu.php:238
 #: models/Menu.php:248
@@ -57,7 +57,7 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: classes/Tools.php:878
+#: classes/Tools.php:881
 msgid "Go PRO"
 msgstr ""
 
@@ -184,43 +184,43 @@ msgstr ""
 msgid "activity log"
 msgstr ""
 
-#: controllers/Firewall.php:243
+#: controllers/Firewall.php:265
 msgid "This request was blocked for security reasons"
 msgstr ""
 
-#: controllers/Firewall.php:244
+#: controllers/Firewall.php:266
 msgid "firewall stopped this request to protect the website from suspicious behavior."
 msgstr ""
 
-#: controllers/Firewall.php:362
+#: controllers/Firewall.php:384
 msgid "Blocked by"
 msgstr ""
 
-#: controllers/Firewall.php:363
+#: controllers/Firewall.php:385
 msgid "Requested path"
 msgstr ""
 
-#: controllers/Firewall.php:368
+#: controllers/Firewall.php:390
 msgid "Request ID"
 msgstr ""
 
-#: controllers/Firewall.php:369
+#: controllers/Firewall.php:391
 msgid "HTTP status"
 msgstr ""
 
-#: controllers/Firewall.php:373
+#: controllers/Firewall.php:395
 msgid "If you believe this was a mistake, please contact the website owner and include the Request ID shown above."
 msgstr ""
 
-#: controllers/Firewall.php:376
+#: controllers/Firewall.php:398
 msgid "Go to homepage"
 msgstr ""
 
-#: controllers/Firewall.php:377
+#: controllers/Firewall.php:399
 msgid "Go back"
 msgstr ""
 
-#: controllers/Firewall.php:381
+#: controllers/Firewall.php:403
 msgid "IP detected"
 msgstr ""
 
@@ -347,7 +347,7 @@ msgstr ""
 #: controllers/Overview.php:159
 #: models/Menu.php:57
 #: models/Menu.php:254
-#: view/Firewall.php:34
+#: view/Firewall.php:46
 msgid "Firewall"
 msgstr ""
 
@@ -356,12 +356,12 @@ msgid "Block malicious requests, SQL injections, and exploit attempts before the
 msgstr ""
 
 #: controllers/Overview.php:173
-#: view/Firewall.php:434
+#: view/Firewall.php:484
 msgid "Country Blocking"
 msgstr ""
 
 #: controllers/Overview.php:174
-#: view/Firewall.php:437
+#: view/Firewall.php:487
 msgid "Block traffic from high-risk countries to reduce hacking attempts, spam, and unwanted access."
 msgstr ""
 
@@ -439,7 +439,7 @@ msgid "See real attacks blocked on your site, including brute force attempts, in
 msgstr ""
 
 #: controllers/Overview.php:278
-#: view/Firewall.php:103
+#: view/Firewall.php:115
 msgid "Automate IP Blocking"
 msgstr ""
 
@@ -466,7 +466,7 @@ msgstr ""
 
 #: controllers/Overview.php:318
 #: models/Menu.php:258
-#: view/Firewall.php:233
+#: view/Firewall.php:270
 msgid "Header Security"
 msgstr ""
 
@@ -1049,17 +1049,17 @@ msgid "Switch on %1$s > Change Paths > Hide WordPress Common Files from %2$sHide
 msgstr ""
 
 #: controllers/SecurityCheck.php:472
-msgid "7G/8G Firewall Not Loaded"
+msgid "Firewall Not Loaded"
 msgstr ""
 
 #: controllers/SecurityCheck.php:476
-msgid "The 7G/8G Firewall is not active. Without these rulesets, malicious requests, including SQL injection attempts, script injections and exploit probes, reach your site without being filtered."
+msgid "The firewall is not active. Without these rulesets, malicious requests, including SQL injection attempts, script injections and exploit probes, reach your site without being filtered."
 msgstr ""
 
 #. translators: 1: Opening <a> tag to Firewall settings URL, 2: Plugin menu name, 3: Closing </a> tag.
 #: controllers/SecurityCheck.php:478
 #, php-format
-msgid "Switch on the 7G or 8G Firewall from %1$s%2$s > Firewall & Headers%3$s"
+msgid "Switch on the 2026 Ghost Firewall from %1$s%2$s > Firewall & Headers%3$s"
 msgstr ""
 
 #: controllers/SecurityCheck.php:482
@@ -2012,7 +2012,7 @@ msgstr ""
 #. translators: 1: Line break and opening <strong><a> tag to Firewall settings URL, 2: Closing </a></strong> tag.
 #: models/Compatibility.php:852
 #, php-format
-msgid "Your site is currently logging security threats, but advanced firewall filtering is not fully enabled. %1$s Activate 7G or 8G Firewall %2$s to automatically block malicious patterns before they reach WordPress."
+msgid "Your site is currently logging security threats, but advanced firewall filtering is not fully enabled. %1$s Activate the 2026 Ghost Firewall %2$s to automatically block malicious patterns before they reach WordPress."
 msgstr ""
 
 #: models/compatibility/Woocommerce.php:422
@@ -2536,18 +2536,18 @@ msgid "2FA Logins"
 msgstr ""
 
 #: models/Menu.php:262
-#: view/Firewall.php:402
+#: view/Firewall.php:452
 msgid "Geo Security"
 msgstr ""
 
 #: models/Menu.php:266
-#: view/Firewall.php:519
+#: view/Firewall.php:569
 #: view/Permalinks.php:223
 msgid "Whitelist"
 msgstr ""
 
 #: models/Menu.php:270
-#: view/Firewall.php:642
+#: view/Firewall.php:692
 msgid "Blacklist"
 msgstr ""
 
@@ -2604,7 +2604,7 @@ msgid "Lite Mode + Firewall + Compatibility Settings"
 msgstr ""
 
 #: models/Presets.php:26
-msgid "Lite Mode + 9G Firewall + Brute Force + Events Log + Threats Log + Two factor"
+msgid "Lite Mode + 2026 Ghost Firewall + Brute Force + Events Log + Threats Log + Two factor"
 msgstr ""
 
 #: models/Presets.php:42
@@ -2709,27 +2709,27 @@ msgid "Hide WordPress Common Files"
 msgstr ""
 
 #: models/Presets.php:87
-#: view/Firewall.php:44
+#: view/Firewall.php:56
 msgid "Firewall Against Script Injection"
 msgstr ""
 
 #: models/Presets.php:89
-#: view/Firewall.php:55
+#: view/Firewall.php:67
 msgid "Firewall Strength"
 msgstr ""
 
 #: models/Presets.php:91
-#: view/Firewall.php:184
+#: view/Firewall.php:280
 msgid "Remove Unsafe Headers"
 msgstr ""
 
 #: models/Presets.php:93
-#: view/Firewall.php:197
+#: view/Firewall.php:196
 msgid "Block Theme Detectors Crawlers"
 msgstr ""
 
 #: models/Presets.php:95
-#: view/Firewall.php:243
+#: view/Firewall.php:293
 msgid "Add Security Headers against XSS and Injection Attacks"
 msgstr ""
 
@@ -2794,29 +2794,29 @@ msgid "Wrong Username Protection"
 msgstr ""
 
 #: models/Presets.php:228
-#: view/Firewall.php:69
+#: view/Firewall.php:81
 msgid "Minimal"
 msgstr ""
 
 #: models/Presets.php:230
-#: view/Firewall.php:70
+#: view/Firewall.php:82
 #: view/Tweaks.php:939
 msgid "Medium"
 msgstr ""
 
 #: models/Presets.php:232
-#: view/Firewall.php:71
+#: view/Firewall.php:83
 msgid "7G Firewall"
 msgstr ""
 
 #: models/Presets.php:234
-#: view/Firewall.php:72
+#: view/Firewall.php:84
 msgid "8G Firewall"
 msgstr ""
 
 #: models/Presets.php:236
-#: view/Firewall.php:73
-msgid "9G Firewall"
+#: view/Firewall.php:85
+msgid "2026 Ghost Firewall"
 msgstr ""
 
 #: models/Rewrite.php:776
@@ -2937,70 +2937,76 @@ msgstr ""
 msgid "There has been a critical error on your website."
 msgstr ""
 
-#: models/Settings.php:100
+#: models/Settings.php:104
 msgid "You can't set both ADMIN and LOGIN with the same name. Please use different names"
 msgstr ""
 
+#. translators: 1: Duplicated name wrapped in <strong> tags.
+#: models/Settings.php:124
+#, php-format
+msgid "Two custom paths can't use the same name: %1$s. Please use a different name for each path."
+msgstr ""
+
 #. translators: 1: Config file path wrapped in <strong> tags, 2: Preformatted rules block wrapped in <pre><strong> tags.
-#: models/Settings.php:283
+#: models/Settings.php:307
 #, php-format
 msgid "Config file is not writable. Create the file if not exists or copy to %1$s file with the following lines: %2$s"
 msgstr ""
 
 #. translators: 1: Global class name wrapped in <strong> tags, 2: Opening <a> tag with article link, 3: Closing </a> tag.
-#: models/Settings.php:340
+#: models/Settings.php:364
 #, php-format
 msgid "Global class name detected: %1$s. Read this article first: %2$sHiding plugins like WooCommerce and Elementor%3$s"
 msgstr ""
 
-#: models/Settings.php:350
+#: models/Settings.php:374
 msgid "Error: You entered the same text twice in the Text Mapping. We removed the duplicates to prevent any redirect errors."
 msgstr ""
 
-#: models/Settings.php:423
+#: models/Settings.php:447
 msgid "Error: You entered the same URL twice in the URL Mapping. We removed the duplicates to prevent any redirect errors."
 msgstr ""
 
 #. translators: 1: Invalid name wrapped in <strong> tags.
-#: models/Settings.php:472
+#: models/Settings.php:496
 #, php-format
 msgid "Invalid name detected: %1$s. You need to use another name to avoid WordPress errors."
 msgstr ""
 
 #. translators: 1: Short name wrapped in <strong> tags.
-#: models/Settings.php:500
+#: models/Settings.php:524
 #, php-format
 msgid "Short name detected: %1$s. You need to use unique paths with more than 4 chars to avoid WordPress errors."
 msgstr ""
 
 #. translators: 1: Invalid name wrapped in <strong> tags.
-#: models/Settings.php:507
+#: models/Settings.php:531
 #, php-format
 msgid "Invalid name detected: %1$s. Add only the final path name to avoid WordPress errors."
 msgstr ""
 
 #. translators: 1: Invalid name wrapped in <strong> tags.
-#: models/Settings.php:514
+#: models/Settings.php:538
 #, php-format
 msgid "Invalid name detected: %1$s. The name can't start with / to avoid WordPress errors."
 msgstr ""
 
 #. translators: 1: Invalid name wrapped in <strong> tags.
-#: models/Settings.php:521
+#: models/Settings.php:545
 #, php-format
 msgid "Invalid name detected: %1$s. The name can't end with / to avoid WordPress errors."
 msgstr ""
 
 #. translators: 1: Invalid name wrapped in <strong> tags.
-#: models/Settings.php:530
+#: models/Settings.php:554
 #, php-format
 msgid "Invalid name detected: %1$s. The paths can't end with . to avoid WordPress errors."
 msgstr ""
 
 #. translators: 1: Weak name wrapped in <strong> tags.
-#: models/Settings.php:561
+#: models/Settings.php:594
 #, php-format
-msgid "Weak name detected: %1$s. You need to use another name to increase your website security."
+msgid "Weak name detected: %1$s. Please use a less predictable name to keep the path hidden."
 msgstr ""
 
 #: models/Templogin.php:37
@@ -3197,69 +3203,69 @@ msgid "Blocked"
 msgstr ""
 
 #. translators: %1$s: site domain
-#: models/ThreatsLog.php:588
+#: models/ThreatsLog.php:591
 #, php-format
 msgid "Security summary for %1$s"
 msgstr ""
 
 #. translators: %1$s: start date, %2$s: end date
-#: models/ThreatsLog.php:589
+#: models/ThreatsLog.php:592
 #, php-format
 msgid "Week of %1$s to %2$s"
 msgstr ""
 
 #. translators: %1$d: number of threats
-#: models/ThreatsLog.php:591
+#: models/ThreatsLog.php:594
 #, php-format
 msgid "Threats blocked: %1$d"
 msgstr ""
 
 #. translators: %1$d: number of threats
-#: models/ThreatsLog.php:592
+#: models/ThreatsLog.php:595
 #, php-format
 msgid "Threats detected: %1$d"
 msgstr ""
 
 #. translators: %1$d: number of login events
-#: models/ThreatsLog.php:593
+#: models/ThreatsLog.php:596
 #, php-format
 msgid "Login events recorded: %1$d"
 msgstr ""
 
 #. translators: %1$d: number of IP addresses
-#: models/ThreatsLog.php:594
+#: models/ThreatsLog.php:597
 #, php-format
 msgid "IP addresses blocked: %1$d"
 msgstr ""
 
-#: models/ThreatsLog.php:598
+#: models/ThreatsLog.php:601
 msgid "Top countries by threats:"
 msgstr ""
 
 #. translators: %1$s: log page URL
-#: models/ThreatsLog.php:607
+#: models/ThreatsLog.php:610
 #, php-format
 msgid "See the full log: %1$s"
 msgstr ""
 
-#: models/ThreatsLog.php:609
+#: models/ThreatsLog.php:612
 msgid "You are receiving this weekly summary from WP Ghost."
 msgstr ""
 
 #. translators: %1$s: settings page URL
-#: models/ThreatsLog.php:610
+#: models/ThreatsLog.php:613
 #, php-format
 msgid "Turn it off here: %1$s"
 msgstr ""
 
 #. translators: %1$s: site title
-#: models/ThreatsLog.php:619
+#: models/ThreatsLog.php:622
 #, php-format
 msgid "%1$s weekly security summary"
 msgstr ""
 
 #. translators: %1$s: site title
-#: models/ThreatsLog.php:619
+#: models/ThreatsLog.php:622
 msgid "Weekly security summary"
 msgstr ""
 
@@ -3574,8 +3580,8 @@ msgstr ""
 
 #: view/Advanced.php:148
 #: view/Advanced.php:206
-#: view/Firewall.php:73
-#: view/Firewall.php:88
+#: view/Firewall.php:85
+#: view/Firewall.php:100
 #: view/Tweaks.php:396
 msgid "recommended"
 msgstr ""
@@ -3647,7 +3653,7 @@ msgstr ""
 
 #: view/Advanced.php:222
 #: view/Brute.php:506
-#: view/Firewall.php:744
+#: view/Firewall.php:794
 #: view/Log.php:181
 #: view/Mapping.php:303
 #: view/Permalinks.php:1381
@@ -4100,8 +4106,8 @@ msgid "Unnamed device"
 msgstr ""
 
 #: view/blocks/Passkey.php:29
-#: view/Firewall.php:313
-#: view/Firewall.php:343
+#: view/Firewall.php:363
+#: view/Firewall.php:393
 #: view/Mapping.php:80
 #: view/Mapping.php:93
 #: view/Mapping.php:216
@@ -4269,7 +4275,7 @@ msgid "Threats Passed (7d)"
 msgstr ""
 
 #: view/blocks/ThreatsCount.php:115
-msgid "Activate 7G or 8G Firewall to block these threats"
+msgid "Activate the 2026 Ghost Firewall to block these threats"
 msgstr ""
 
 #: view/blocks/ThreatsCount.php:123
@@ -4754,21 +4760,21 @@ msgid "15 minutes"
 msgstr ""
 
 #: view/Brute.php:398
-#: view/Firewall.php:135
+#: view/Firewall.php:147
 #: view/Permalinks.php:781
 #: view/Twofactor.php:158
 msgid "30 minutes"
 msgstr ""
 
 #: view/Brute.php:401
-#: view/Firewall.php:138
+#: view/Firewall.php:150
 #: view/Permalinks.php:784
 #: view/Twofactor.php:161
 msgid "1 hour"
 msgstr ""
 
 #: view/Brute.php:404
-#: view/Firewall.php:141
+#: view/Firewall.php:153
 #: view/Permalinks.php:787
 #: view/Twofactor.php:164
 msgid "1 day"
@@ -4945,114 +4951,111 @@ msgstr ""
 msgid "Urgent Security Actions Required"
 msgstr ""
 
-#: view/Firewall.php:47
+#: view/Firewall.php:59
 msgid "Intelligent rules that block exploit attempts and malicious bots while keeping search engines and AI crawlers accessible."
 msgstr ""
 
-#: view/Firewall.php:48
+#: view/Firewall.php:60
 msgid "Designed to stop attacks without impacting SEO or AI indexing."
 msgstr ""
 
 #. translators: 1: Opening anchor tag. 2: Closing anchor tag.
-#: view/Firewall.php:60
+#: view/Firewall.php:72
 #, php-format
-msgid "Learn more about the %1$s9G firewall%2$s."
+msgid "Learn more about the %1$s2026 Ghost firewall%2$s."
 msgstr ""
 
-#: view/Firewall.php:83
+#: view/Firewall.php:95
 msgid "Firewall Location"
 msgstr ""
 
-#: view/Firewall.php:84
+#: view/Firewall.php:96
 msgid "Where to add the firewall rules."
 msgstr ""
 
-#: view/Firewall.php:88
+#: view/Firewall.php:100
 msgid "On website initialization"
 msgstr ""
 
-#: view/Firewall.php:89
+#: view/Firewall.php:101
 msgid "In .htaccess file"
 msgstr ""
 
-#: view/Firewall.php:106
+#: view/Firewall.php:118
 msgid "Automatically block IP addresses that trigger repeated security threats."
 msgstr ""
 
-#: view/Firewall.php:115
+#: view/Firewall.php:127
 msgid "When"
 msgstr ""
 
-#: view/Firewall.php:121
+#: view/Firewall.php:133
 msgid "Similar attacks"
 msgstr ""
 
-#: view/Firewall.php:124
+#: view/Firewall.php:136
 msgid "Identical attacks"
 msgstr ""
 
-#: view/Firewall.php:128
+#: view/Firewall.php:140
 msgid "within"
 msgstr ""
 
-#: view/Firewall.php:132
+#: view/Firewall.php:144
+#: view/Firewall.php:251
 msgid "1 minute"
 msgstr ""
 
-#: view/Firewall.php:148
+#: view/Firewall.php:160
 msgid "Then"
 msgstr ""
 
-#: view/Firewall.php:152
+#: view/Firewall.php:164
 msgid "Permanently blacklist IP"
 msgstr ""
 
-#: view/Firewall.php:155
+#: view/Firewall.php:167
 msgid "Temporarily block for 1 hour"
 msgstr ""
 
-#: view/Firewall.php:158
+#: view/Firewall.php:170
 msgid "Temporarily block for 1 day"
 msgstr ""
 
-#: view/Firewall.php:161
+#: view/Firewall.php:173
 msgid "Temporarily block for 1 week"
 msgstr ""
 
-#: view/Firewall.php:164
+#: view/Firewall.php:176
 msgid "Temporarily block for 1 month"
 msgstr ""
 
-#: view/Firewall.php:171
+#: view/Firewall.php:183
 msgid "Whitelist IP addresses are never blocked."
 msgstr ""
 
-#: view/Firewall.php:187
-msgid "Remove PHP version, Server info, Server Signature from header."
-msgstr ""
-
-#: view/Firewall.php:200
+#: view/Firewall.php:199
 msgid "Block known Users-Agents from popular Theme Detectors."
 msgstr ""
 
-#: view/Firewall.php:210
+#: view/Firewall.php:209
 msgid "Block AI Crawler Bots"
 msgstr ""
 
-#: view/Firewall.php:213
+#: view/Firewall.php:212
 msgid "Block AI training and scraping bots at the firewall level and add them to robots.txt automatically."
 msgstr ""
 
-#: view/Firewall.php:214
+#: view/Firewall.php:213
 msgid "Covers GPTBot, ClaudeBot, PerplexityBot, CCBot, Bytespider, and 30+ other known AI crawlers."
 msgstr ""
 
-#: view/Firewall.php:217
+#: view/Firewall.php:216
 msgid "The AI crawler list is automatically updated with each plugin release as new bots appear."
 msgstr ""
 
-#: view/Firewall.php:222
-#: view/Firewall.php:385
+#: view/Firewall.php:221
+#: view/Firewall.php:435
 #: view/Mapping.php:143
 #: view/Permalinks.php:1078
 #: view/Permalinks.php:1273
@@ -5062,203 +5065,247 @@ msgstr ""
 msgid "Important:"
 msgstr ""
 
-#: view/Firewall.php:223
+#: view/Firewall.php:222
 msgid "Only block AI bots if your content is sensitive or you want to protect it from being used for AI training without permission. If you rely on AI search visibility (ChatGPT, Perplexity, etc.), blocking these bots will remove your content from those ecosystems. AI crawlers are how your content gets cited in AI-generated answers."
 msgstr ""
 
-#: view/Firewall.php:247
-msgid "Add Strict-Transport-Security header"
+#: view/Firewall.php:231
+msgid "Throttle AI Training Crawler Bots"
 msgstr ""
 
-#: view/Firewall.php:248
-#: view/Firewall.php:251
-#: view/Firewall.php:254
-#: view/Firewall.php:257
-msgid "more details"
+#: view/Firewall.php:234
+msgid "When many AI bots crawl at once, serve the extra ones a temporary 503 instead of loading the full page, so a crawl spike cannot exhaust the server."
 msgstr ""
 
-#: view/Firewall.php:250
-msgid "Add Content-Security-Policy header"
+#: view/Firewall.php:235
+msgid "Never affects visitors, logged-in users or search engines like Google and Bing. Recommended with the 2026 Ghost Firewall."
+msgstr ""
+
+#: view/Firewall.php:244
+msgid "Concurrent AI bots"
+msgstr ""
+
+#: view/Firewall.php:246
+msgid "how many AI bots can crawl at the same time"
+msgstr ""
+
+#: view/Firewall.php:249
+msgid "Then ask the rest to come back after"
+msgstr ""
+
+#: view/Firewall.php:252
+msgid "2 minutes"
 msgstr ""
 
 #: view/Firewall.php:253
+msgid "5 minutes"
+msgstr ""
+
+#: view/Firewall.php:254
+msgid "10 minutes"
+msgstr ""
+
+#: view/Firewall.php:258
+msgid "Visitors, logged-in users and search engines are never throttled."
+msgstr ""
+
+#: view/Firewall.php:283
+msgid "Remove PHP version, Server info, Server Signature from header."
+msgstr ""
+
+#: view/Firewall.php:297
+msgid "Add Strict-Transport-Security header"
+msgstr ""
+
+#: view/Firewall.php:298
+#: view/Firewall.php:301
+#: view/Firewall.php:304
+#: view/Firewall.php:307
+msgid "more details"
+msgstr ""
+
+#: view/Firewall.php:300
+msgid "Add Content-Security-Policy header"
+msgstr ""
+
+#: view/Firewall.php:303
 msgid "Add X-XSS-Protection header"
 msgstr ""
 
-#: view/Firewall.php:256
+#: view/Firewall.php:306
 msgid "Add X-Content-Type-Options header"
 msgstr ""
 
-#: view/Firewall.php:317
-#: view/Firewall.php:347
+#: view/Firewall.php:367
+#: view/Firewall.php:397
 msgid "default"
 msgstr ""
 
-#: view/Firewall.php:367
+#: view/Firewall.php:417
 msgid "Add Security Header"
 msgstr ""
 
-#: view/Firewall.php:386
+#: view/Firewall.php:436
 msgid "Changing the predefined security headers may affect the website functionality. Make sure you know what you are doing when modifying these values."
 msgstr ""
 
-#: view/Firewall.php:388
+#: view/Firewall.php:438
 msgid "Test your website headers with"
 msgstr ""
 
-#: view/Firewall.php:444
+#: view/Firewall.php:494
 msgid "Block Countries"
 msgstr ""
 
-#: view/Firewall.php:445
+#: view/Firewall.php:495
 msgid "Choose the countries where access to the website should be restricted."
 msgstr ""
 
-#: view/Firewall.php:467
+#: view/Firewall.php:517
 msgid "Select all"
 msgstr ""
 
-#: view/Firewall.php:475
+#: view/Firewall.php:525
 msgid "Block Specific Paths"
 msgstr ""
 
-#: view/Firewall.php:476
+#: view/Firewall.php:526
 msgid "Add paths that will be blocked for the selected countries."
 msgstr ""
 
-#: view/Firewall.php:477
+#: view/Firewall.php:527
 msgid "Leave it blank to block all paths for the selected countries."
 msgstr ""
 
-#: view/Firewall.php:487
+#: view/Firewall.php:537
 msgid "e.g. /post-type/ will block all path starting with /post-type/"
 msgstr ""
 
-#: view/Firewall.php:495
+#: view/Firewall.php:545
 msgid "Selected Countries"
 msgstr ""
 
-#: view/Firewall.php:496
+#: view/Firewall.php:546
 msgid "Here is the list of select counties where your website will be restricted.."
 msgstr ""
 
-#: view/Firewall.php:525
+#: view/Firewall.php:575
 #: view/Permalinks.php:229
 msgid "Whitelist IPs"
 msgstr ""
 
-#: view/Firewall.php:526
+#: view/Firewall.php:576
 #: view/Permalinks.php:230
 msgid "Whitelist trusted IP addresses that should bypass firewall and security checks."
 msgstr ""
 
-#: view/Firewall.php:528
-#: view/Firewall.php:577
-#: view/Firewall.php:653
-#: view/Firewall.php:676
-#: view/Firewall.php:700
-#: view/Firewall.php:720
+#: view/Firewall.php:578
+#: view/Firewall.php:627
+#: view/Firewall.php:703
+#: view/Firewall.php:726
+#: view/Firewall.php:750
+#: view/Firewall.php:770
 #: view/Permalinks.php:232
 #: view/Permalinks.php:281
 msgid "Examples:"
 msgstr ""
 
 #. translators: %s: Link to a website where the user can find their public IP address.
-#: view/Firewall.php:548
+#: view/Firewall.php:598
 #: view/Permalinks.php:252
 #, php-format
 msgid "You can white-list a single IP address like 192.168.0.1 or a range of 245 IPs like 192.168.0.*. Find your IP with %s"
 msgstr ""
 
 #. translators: %s: IP address wrapped in <strong> tags.
-#: view/Firewall.php:562
+#: view/Firewall.php:612
 #: view/Permalinks.php:266
 #, php-format
 msgid "To whitelist your website IP address, add: %s"
 msgstr ""
 
-#: view/Firewall.php:574
+#: view/Firewall.php:624
 #: view/Permalinks.php:278
 msgid "Whitelist Paths"
 msgstr ""
 
-#: view/Firewall.php:575
+#: view/Firewall.php:625
 #: view/Permalinks.php:279
 msgid "Add URL paths that should never be blocked by the firewall."
 msgstr ""
 
-#: view/Firewall.php:592
+#: view/Firewall.php:642
 #: view/Permalinks.php:296
 msgid "Example: /cart/ will exempt all requests beginning with /cart/ from firewall rules."
 msgstr ""
 
-#: view/Firewall.php:604
+#: view/Firewall.php:654
 #: view/Permalinks.php:308
 msgid "Whitelist Rules"
 msgstr ""
 
-#: view/Firewall.php:605
+#: view/Firewall.php:655
 #: view/Permalinks.php:309
 msgid "Add firewall rules codes that can pass plugin security."
 msgstr ""
 
-#: view/Firewall.php:609
+#: view/Firewall.php:659
 #: view/Permalinks.php:313
 #: view/Tweaks.php:117
 #: view/Tweaks.php:147
 msgid "e.g."
 msgstr ""
 
-#: view/Firewall.php:616
+#: view/Firewall.php:666
 #: view/Permalinks.php:320
 msgid "Whitelist Options"
 msgstr ""
 
-#: view/Firewall.php:618
+#: view/Firewall.php:668
 #: view/Permalinks.php:322
 msgid "Choose how the plugin should behave for whitelisted IP addresses and paths."
 msgstr ""
 
-#: view/Firewall.php:624
+#: view/Firewall.php:674
 #: view/Permalinks.php:328
 msgid "Allow access to hidden paths only"
 msgstr ""
 
-#: view/Firewall.php:627
+#: view/Firewall.php:677
 #: view/Permalinks.php:331
 msgid "Show default WordPress paths and allow hidden paths"
 msgstr ""
 
-#: view/Firewall.php:630
+#: view/Firewall.php:680
 #: view/Permalinks.php:334
 msgid "Show default WordPress paths and disable all hiding"
 msgstr ""
 
-#: view/Firewall.php:648
+#: view/Firewall.php:698
 msgid "Blacklist IPs"
 msgstr ""
 
-#: view/Firewall.php:650
+#: view/Firewall.php:700
 msgid "Add IP addresses that should always be blocked from accessing your website."
 msgstr ""
 
-#: view/Firewall.php:668
+#: view/Firewall.php:718
 msgid "You can ban a single IP address like 192.168.0.1 or a range of 245 IPs like 192.168.0.*. These IPs will not be able to access the login page."
 msgstr ""
 
-#: view/Firewall.php:674
+#: view/Firewall.php:724
 msgid "Block User-Agents"
 msgstr ""
 
-#: view/Firewall.php:698
+#: view/Firewall.php:748
 msgid "Block Referrer"
 msgstr ""
 
-#: view/Firewall.php:718
+#: view/Firewall.php:768
 msgid "Block Hostnames"
 msgstr ""
 
-#: view/Firewall.php:733
+#: view/Firewall.php:783
 msgid "Resolving hostnames may affect the website loading speed."
 msgstr ""
 

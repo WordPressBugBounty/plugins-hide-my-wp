@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.15
+Stable tag: 7.0.16
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Hide My WP Ghost is a WordPress security plugin that hides WP paths and protects
 
 == Description ==
 
-**WP Ghost (formerly Hide My WP Ghost)** is a **WordPress security plugin focused on hack prevention** that changes and secures default paths, **filters requests through the 9G Firewall**, and **helps block automated scanners probing default WordPress URLs**.
+**WP Ghost (formerly Hide My WP Ghost)** is a **WordPress security plugin focused on hack prevention** that changes and secures default paths, **filters requests through the Firewall**, and **helps block automated scanners probing default WordPress URLs**.
 
 Paths Security changes public URLs such as `wp-login.php` and restricts access to their default addresses. WP Ghost also includes two-factor authentication (2FA) and a Security Check with tasks for your site's settings.
 
@@ -21,7 +21,7 @@ Paths Security changes public URLs such as `wp-login.php` and restricts access t
 * **Repeated failed logins**: set attempt limits and lockout durations under Brute Force protection.
 * Bots requesting `wp-login.php`: use a custom login URL and block the default address.
 * **Visible plugin folders**: change the public paths used in your site's HTML.
-* **Suspicious requests**: use the 9G Firewall to filter supported attack patterns.
+* **Suspicious requests**: use the 2026 Ghost Firewall to filter supported attack patterns.
 * **Unclear security settings**: run Security Check and review its prioritized tasks.
 * **Repeated WooCommerce payment attempts**: set checkout attempt limits for each IP address.
 
@@ -37,13 +37,13 @@ WP Ghost **changes and secures over 30 default WordPress paths**, including `wp-
 
 Paths Security rewrites public routes and can block requests to their old addresses. Changing a URL does not fix vulnerable plugin code or replace login authentication.
 
-= 9G Firewall in version 7.0.15 =
+= 2026 Ghost Firewall in version 7.0.15 =
 
-Version 7.0.15 adds the 9G Firewall as the default filter on new installs. Choose it under **WP Ghost > Firewall & Headers > Firewall Strength**.
+Version 7.0.15 adds the 2026 Ghost Firewall as the default filter on new installs. Choose it under **WP Ghost > Firewall & Headers > Firewall Strength**.
 
 WP Ghost uses server rules and application checks, depending on the request and configuration. Test forms and checkout after changing firewall settings.
 
-= What the 9G Firewall checks =
+= What the 2026 Ghost Firewall checks =
 
 * **SQL injection, cross-site scripting (XSS), directory traversal, and scanner probes** in URLs and query strings
 * **Unauthenticated exploit payloads** sent to `admin-ajax.php` and the `/wp-json` REST API
@@ -52,7 +52,7 @@ WP Ghost uses server rules and application checks, depending on the request and 
 * **Privilege-escalation attempts** on user registration endpoints
 * **PHP object injection and Server-Side Request Forgery (SSRF)** requests
 
-Read the <a href="https://wpghost.com/kb/9g-firewall/">9G Firewall documentation</a>.
+Read the <a href="https://wpghost.com/kb/2026-ghost-firewall/">2026 Ghost Firewall documentation</a>.
 
 = Ghost Doctor path checks and repairs =
 
@@ -110,9 +110,9 @@ Only the findings on your Security Check screen and six setup parameters (server
 * Set **role-based login and logout redirect URLs**
 * Style your custom login URL with the **Login Page Designer** using a custom logo, background, 12 layouts, and 10 color schemes
 
-= 2. 9G Firewall and login security =
+= 2. Firewall and login security =
 
-* Filter requests with the **9G, 8G, or 7G Firewall rules**
+* Filter requests with the **2026 Ghost, 8G, or 7G Firewall rules**
 * Log in without passwords using **Passkey 2FA** (Face ID, Touch ID, Windows Hello, or hardware keys)
 * Enable Authenticator app codes, email 2FA codes, backup codes, browser trust, and **forced 2FA setup by user role**
 * Send **HTTP security headers:** Content-Security-Policy (CSP), HSTS, X-Frame-Options, and X-Content-Type-Options
@@ -201,12 +201,12 @@ See all <a href="https://wpghost.com/features/">WP Ghost Premium features</a>.
 
 The full policy is in the plugin's `SECURITY.md` file, and bundled third-party components are listed in `sbom.json`.
 
-**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.15, released October 26, 2026, is supported until October 2031.
+**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.16, released October 2026, is supported until October 2031.
 
 = Documentation and guides =
 
 * <a href="https://wpghost.com/kb/">WP Ghost Knowledge Base</a>
-* <a href="https://wpghost.com/kb/9g-firewall/">9G Firewall guide</a>
+* <a href="https://wpghost.com/kb/2026-ghost-firewall/">2026 Ghost Firewall guide</a>
 * <a href="https://wpghost.com/kb/ghost-doctor/">Ghost Doctor self-check and repair guide</a>
 * <a href="https://wpghost.com/kb/wp-ghost-paths-not-working-ghost-doctor/">Troubleshooting paths with Ghost Doctor</a>
 
@@ -217,7 +217,7 @@ The full policy is in the plugin's `SECURITY.md` file, and bundled third-party c
 3. Paths Security: Customize and secure your login and registration entry points.
 4. Core Security: Harden your system paths (wp-content, uploads, includes) against bot reconnaissance.
 5. API & AJAX Security: Secure the REST API and admin-ajax paths and set access restrictions.
-6. 9G Firewall Engine: Request filtering settings.
+6. 2026 Ghost Firewall Engine: Request filtering settings.
 7. Brute Force Defense: Integrated Google reCAPTCHA and Math protection for authentication paths.
 8. Modern Authentication: Secure logins with 2FA and Passkey (Passwordless) support.
 9. Text Mapping: Change class names and IDs in your source code in page output.
@@ -239,7 +239,7 @@ The full policy is in the plugin's `SECURITY.md` file, and bundled third-party c
 WP Ghost provides request filtering, login protection and path controls, with Security Check tasks for WordPress hardening.
 
 = Is WP Ghost a free WordPress security plugin? =
-The free plugin includes the 9G Firewall, Brute Force protection, 2FA and Security Check; Premium adds features such as automated IP blocking and cloud event retention.
+The free plugin includes the 2026 Ghost Firewall, Brute Force protection, 2FA and Security Check; Premium adds features such as automated IP blocking and cloud event retention.
 
 = Can I reduce repeated WordPress login attempts? =
 WP Ghost lets you set login attempt limits and lockouts, add CAPTCHA, and require 2FA for selected user roles.
@@ -259,8 +259,8 @@ Check which protections your host provides, then use WP Ghost for missing contro
 = Can WP Ghost help with WooCommerce card testing? =
 WP Ghost can limit repeated checkout submissions and failed payment attempts from the same IP address; distributed attacks may need controls from your payment provider or host.
 
-= What does the free 9G Firewall check? =
-From version 7.0.15, WP Ghost includes 9G checks for injection patterns, AJAX and REST requests, and malicious uploads, with comment and form checks on levels 3 and 4.
+= What does the free 2026 Ghost Firewall check? =
+From version 7.0.15, WP Ghost includes checks for injection patterns, AJAX and REST requests, and malicious uploads, with comment and form checks on levels 3 and 4.
 
 = How does Ghost Doctor fix broken paths? =
 **Ghost Doctor** tests the homepage and asset URLs as a logged-out visitor, applies supported repairs, and reverts changes that fail its follow-up check.
@@ -304,9 +304,17 @@ WP Ghost Premium includes crawler controls, but blocking search crawlers such as
 
 == Changelog ==
 
+= 7.0.16 (28 Oct 2026) =
+
+* Update - Whitelisted IPs are trusted across all firewall rules
+* Update - Firewall path checks respect custom admin and login paths
+* Update - Path settings reject weak or duplicate custom names so every path stays safe and unique
+* Update - Remove Unsafe Headers moved to the Header Security section
+* Update - Cleaner firewall settings layout on mobile
+
 = 7.0.15 (26 Oct 2026) =
 
-* New - 9G Firewall: the new firewall generation with the latest 2026 threat protection, covering admin-ajax, the REST API, file uploads and more
+* New - 2026 Ghost Firewall: the new firewall generation with the latest 2026 threat protection, covering admin-ajax, the REST API, file uploads and more
 * Update - The plugin verifies the SSL certificate on its own path and security check requests
 * Update - Firewall checks comment and form submissions on levels 3 and 4
 * Update - Password and payment fields stay private in the threat log

@@ -691,16 +691,13 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (php)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (e|%65|%45)(v|%76|%56)(a|%61|%31)(l|%6c|%4c)(.*)(\(|%28)(.*)(\)|%29) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)(=|%3d|$&|_mm|inurl(:|%3a)(/|%2f)|(mod|path)(=|%3d)(\.|%2e)) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (\+|%2b|%20)(d|%64|%44)(e|%65|%45)(l|%6c|%4c)(e|%65|%45)(t|%74|%54)(e|%65|%45)(\+|%2b|%20) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (\+|%2b|%20)(i|%69|%49)(n|%6e|%4e)(s|%73|%53)(e|%65|%45)(r|%72|%52)(t|%74|%54)(\+|%2b|%20) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (\+|%2b|%20)(s|%73|%53)(e|%65|%45)(l|%6c|%4c)(e|%65|%45)(c|%63|%43)(t|%74|%54)(\+|%2b|%20) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (\+|%2b|%20)(u|%75|%55)(p|%70|%50)(d|%64|%44)(a|%61|%41)(t|%74|%54)(e|%65|%45)(\+|%2b|%20) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (g|%67|%47)(l|%6c|%4c)(o|%6f|%4f)(b|%62|%42)(a|%61|%41)(l|%6c|%4c)(s|%73|%53)(=|\[|%[0-9A-Z]{0,2}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (_|%5f)(r|%72|%52)(e|%65|%45)(q|%71|%51)(u|%75|%55)(e|%65|%45)(s|%73|%53)(t|%74|%54)(=|\[|%[0-9A-Z]{2,}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (j|%6a|%4a)(a|%61|%41)(v|%76|%56)(a|%61|%31)(s|%73|%53)(c|%63|%43)(r|%72|%52)(i|%69|%49)(p|%70|%50)(t|%74|%54)(:|%3a)(.*)(;|%3b|\)|%29) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (b|%62|%42)(a|%61|%41)(s|%73|%53)(e|%65|%45)(6|%36)(4|%34)(_|%5f)(e|%65|%45|d|%64|%44)(e|%65|%45|n|%6e|%4e)(c|%63|%43)(o|%6f|%4f)(d|%64|%44)(e|%65|%45)(.*)(\()(.*)(\)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (@copy|\\\$_(files|get|post)|allow_url_(fopen|include)|auto_prepend_file|blexbot|browsersploit|(c99|php)shell|curl(_exec|test)|disable_functions?|document_root|elastix|encodeuricom|exploit|fclose|fgets|file_put_contents|fputs|fsbuff|fsockopen|gethostbyname|grablogin|hmei7|input_file|(^|[^a-z0-9_]|%(25)?[0-9a-f]{2})null([^a-z0-9_]|%(25)?[0-9a-f]{2}|\$)|open_basedir|outfile|passthru|phpinfo|popen|proc_open|quickbrute|remoteview|root_path|safe_mode|shell_exec|site((.){0,2})copier|sux0r|trojan|user_func_array|wget|xertive) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} ((\+|%2b)(concat|delete|get|select|union)(\+|%2b)) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} union((\\+|%20)+|/\\*.*\\*/)+(all(\\+|%20)+)?select [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (%252e%252e|(\\.\\.|%2e%2e)(%252f|%255c)|%252e(%252f|%255c)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (union)(.*)(select)(.*)(\(|%28) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (concat|eval)(.*)(\(|%28) [NC,OR]" . PHP_EOL;
 
@@ -710,6 +707,10 @@ class HMWP_Models_Rules {
 						$rules .= "RewriteCond %{QUERY_STRING} (<|%3c)(.*)(o|%4f|%6f)(b|%62|%42)(j|%4a|%6a)(e|%65|%45)(c|%63|%43)(t|%74|%54)(.*)(>|%3e) [NC,OR]" . PHP_EOL;
 						$rules .= "RewriteCond %{QUERY_STRING} (<|%3c)(.*)(s|%73|%53)(c|%63|%43)(r|%72|%52)(i|%69|%49)(p|%70|%50)(t|%74|%54)(.*)(>|%3e) [NC,OR]" . PHP_EOL;
 						$rules .= "RewriteCond %{QUERY_STRING} (;|<|>|\'|\\\"|\)|%0a|%0d|%22|%27|%3c|%3e|%00)(.*)(/\*|alter|base64|benchmark|cast|concat|convert|create|encode|declare|delete|drop|insert|md5|request|script|select|union|update) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (;|%3b)(\\+|%20)*((drop|truncate|alter|rename|create)(\\+|%20)+(table|database)|delete(\\+|%20)+from|insert(\\+|%20)+into|update(\\+|%20)+[a-z0-9_]+(\\+|%20)+set) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (=|%3d|\\+|%20)[0-9]+(\\+|%20)+(and|or)(\\+|%20)+[0-9]+(\\+|%20)*(=|%3d|%3c|%3e|<|>)(\\+|%20)*[0-9]+ [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (;|%3b)(\\+|%20)*select(\\+|%20)+[^;&%]+(\\+|%20)+from(\\+|%20) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} Tzo[0-9wxyz] [NC,OR]" . PHP_EOL;
 					}
 
 					$rules .= "RewriteCond %{REQUEST_URI} (\^|`|<|>|\\\|\|) [NC,OR]" . PHP_EOL;
@@ -787,10 +788,6 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (php)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (e|%65|%45)(v|%76|%56)(a|%61|%31)(l|%6c|%4c)(.*)(\(|%28)(.*)(\)|%29) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)(=|%3d|$&|_mm|inurl(:|%3a)(/|%2f)|(mod|path)(=|%3d)(\.|%2e)) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (\+|%2b|%20)(d|%64|%44)(e|%65|%45)(l|%6c|%4c)(e|%65|%45)(t|%74|%54)(e|%65|%45)(\+|%2b|%20) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (\+|%2b|%20)(i|%69|%49)(n|%6e|%4e)(s|%73|%53)(e|%65|%45)(r|%72|%52)(t|%74|%54)(\+|%2b|%20) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (\+|%2b|%20)(s|%73|%53)(e|%65|%45)(l|%6c|%4c)(e|%65|%45)(c|%63|%43)(t|%74|%54)(\+|%2b|%20) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (\+|%2b|%20)(u|%75|%55)(p|%70|%50)(d|%64|%44)(a|%61|%41)(t|%74|%54)(e|%65|%45)(\+|%2b|%20) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (\\\\x00|(\\\"|%22|\'|%27)?0(\\\"|%22|\'|%27)?(=|%3d)(\\\"|%22|\'|%27)?0|cast(\(|%28)0x|or%201(=|%3d)1) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (g|%67|%47)(l|%6c|%4c)(o|%6f|%4f)(b|%62|%42)(a|%61|%41)(l|%6c|%4c)(s|%73|%53)(=|\[|%[0-9A-Z]{0,2}) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (_|%5f)(r|%72|%52)(e|%65|%45)(q|%71|%51)(u|%75|%55)(e|%65|%45)(s|%73|%53)(t|%74|%54)(=|\[|%[0-9A-Z]{2,}) [NC,OR]" . PHP_EOL;
@@ -798,7 +795,8 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (@copy|\\\$_(files|get|post)|allow_url_(fopen|include)|auto_prepend_file|blexbot|browsersploit|call_user_func_array|(php|web)shell|curl(_exec|test)|disable_functions?|document_root) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (elastix|encodeuricom|exploit|fclose|fgets|file_put_contents|fputs|fsbuff|fsockopen|gethostbyname|grablogin|hmei7|hubs_post-cta|input_file|invokefunction|(\b)load_file|open_basedir|outfile|p3dlite) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (pass(=|%3d)shell|passthru|phpinfo|phpshells|popen|proc_open|quickbrute|remoteview|root_path|safe_mode|shell_exec|site((.){0,2})copier|sp_executesql|sux0r|trojan|udtudt|user_func_array|wget|wp_insert_user|xertive) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} ((\+|%2b)(concat|delete|get|select|union)(\+|%2b)) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} union((\\+|%20)+|/\\*.*\\*/)+(all(\\+|%20)+)?select [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (%252e%252e|(\\.\\.|%2e%2e)(%252f|%255c)|%252e(%252f|%255c)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (union)(.*)(select)(.*)(\(|%28) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (concat|eval)(.*)(\(|%28) [NC,OR]" . PHP_EOL;
 
@@ -808,6 +806,10 @@ class HMWP_Models_Rules {
 						$rules .= "RewriteCond %{QUERY_STRING} (<|%3c)(.*)(o|%4f|%6f)(b|%62|%42)(j|%4a|%6a)(e|%65|%45)(c|%63|%43)(t|%74|%54)(.*)(>|%3e) [NC,OR]" . PHP_EOL;
 						$rules .= "RewriteCond %{QUERY_STRING} (<|%3c)(.*)(s|%73|%53)(c|%63|%43)(r|%72|%52)(i|%69|%49)(p|%70|%50)(t|%74|%54)(.*)(>|%3e) [NC,OR]" . PHP_EOL;
 						$rules .= "RewriteCond %{QUERY_STRING} (;|<|>|\'|\\\"|\)|%0a|%0d|%22|%27|%3c|%3e|%00)(.*)(/\*|alter|base64|benchmark|cast|concat|convert|create|encode|declare|delete|drop|insert|md5|request|script|select|union|update) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (;|%3b)(\\+|%20)*((drop|truncate|alter|rename|create)(\\+|%20)+(table|database)|delete(\\+|%20)+from|insert(\\+|%20)+into|update(\\+|%20)+[a-z0-9_]+(\\+|%20)+set) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (=|%3d|\\+|%20)[0-9]+(\\+|%20)+(and|or)(\\+|%20)+[0-9]+(\\+|%20)*(=|%3d|%3c|%3e|<|>)(\\+|%20)*[0-9]+ [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} (;|%3b)(\\+|%20)*select(\\+|%20)+[^;&%]+(\\+|%20)+from(\\+|%20) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{QUERY_STRING} Tzo[0-9wxyz] [NC,OR]" . PHP_EOL;
 					}
 
 					$rules .= "RewriteCond %{REQUEST_URI} (,,,) [NC,OR]" . PHP_EOL;
@@ -880,7 +882,7 @@ class HMWP_Models_Rules {
 				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
 			}
 
-			// 9G: PHP files never run from the uploads folder, a shell uploaded through a vulnerable form stays harmless
+			// 2026 Ghost Firewall: PHP files never run from the uploads folder, a shell uploaded through a vulnerable form stays harmless
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' ) && $level == 5 ) {
 				$uploads = array_unique( array(
 					HMWP_Classes_Tools::getDefault( 'hmwp_wp-content_url' ) . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_upload_url' ),

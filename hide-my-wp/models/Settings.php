@@ -72,6 +72,10 @@ class HMWP_Models_Settings {
 			'css',
 			'js',
 			'font',
+			'phpmyadmin',
+			'pma',
+			'myadmin',
+			'mysqladmin',
 		) );
 
 	}
@@ -100,6 +104,29 @@ class HMWP_Models_Settings {
 			HMWP_Classes_Error::setNotification( esc_html__( "You can't set both ADMIN and LOGIN with the same name. Please use different names", 'hide-my-wp' ) );
 
 			return;
+		}
+
+		// Two renamed paths can't share the same name, or the rewrites become ambiguous and assets break
+		$path_keys = array(
+			'hmwp_admin_url', 'hmwp_login_url', 'hmwp_activate_url', 'hmwp_lostpassword_url',
+			'hmwp_register_url', 'hmwp_logout_url', 'hmwp_plugin_url', 'hmwp_themes_url',
+			'hmwp_upload_url', 'hmwp_admin-ajax_url', 'hmwp_wp-content_url', 'hmwp_wp-includes_url',
+			'hmwp_author_url',
+		);
+		$seen_paths = array();
+		foreach ( $path_keys as $path_key ) {
+			if ( isset( $params[ $path_key ] ) && trim( (string) $params[ $path_key ] ) <> '' ) {
+				$path_value = strtolower( trim( (string) $params[ $path_key ] ) );
+				if ( isset( $seen_paths[ $path_value ] ) ) {
+					HMWP_Classes_Tools::saveOptions( 'error', true );
+					HMWP_Classes_Tools::saveOptions( 'test_frontend', false );
+					/* translators: 1: Duplicated name wrapped in <strong> tags. */
+					HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( "Two custom paths can't use the same name: %1\$s. Please use a different name for each path.", 'hide-my-wp' ), '<strong>' . esc_html( $path_value ) . '</strong>' ) ) );
+
+					return;
+				}
+				$seen_paths[ $path_value ] = $path_key;
+			}
 		}
 
 		// If the selected mode is default, use the default values
@@ -231,11 +258,8 @@ class HMWP_Models_Settings {
 							//Don't check the validation for whitelist URLs
 							if ( isset( $params['hmwp_mode'] ) && $params['hmwp_mode'] <> 'default' ) {
 
-								//check if the name is valid
-								if ( $this->checkValidName( $key, $value ) && $this->checkValidPath( $key, $value ) ) {
-									//Detect Weak Names
-									$this->checkWeakName( $value ); //show weak names
-
+								//check if the name is valid and not weak
+								if ( $this->checkValidName( $key, $value ) && $this->checkValidPath( $key, $value ) && $this->checkWeakName( $key, $value ) ) {
 									HMWP_Classes_Tools::saveOptions( $key, $value );
 								}
 
@@ -542,8 +566,17 @@ class HMWP_Models_Settings {
 	 *
 	 * @param  string  $name
 	 */
-	public function checkWeakName( $name ) {
-		$invalit_paths = array(
+	public function checkWeakName( $key, $name ) {
+
+		//initialize validation fields
+		$this->initValidationFields();
+
+		//only guard the renamed path keys
+		if ( ! in_array( $key, $this->validate_keys ) ) {
+			return true;
+		}
+
+		$weak_paths = array(
 			'login',
 			'mylogin',
 			'wp-login',
@@ -556,10 +589,14 @@ class HMWP_Models_Settings {
 			'wp-include',
 		);
 
-		if ( in_array( $name, $invalit_paths ) ) {
+		if ( in_array( strtolower( (string) $name ), $weak_paths, true ) ) {
 			/* translators: 1: Weak name wrapped in <strong> tags. */
-			HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Weak name detected: %1$s. You need to use another name to increase your website security.', 'hide-my-wp' ), '<strong>' . esc_html( $name ) . '</strong>' ) ) );
+			HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Weak name detected: %1$s. Please use a less predictable name to keep the path hidden.', 'hide-my-wp' ), '<strong>' . esc_html( $name ) . '</strong>' ) ) );
+
+			return false;
 		}
+
+		return true;
 	}
 
 	/**

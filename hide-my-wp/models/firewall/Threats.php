@@ -536,7 +536,7 @@ class HMWP_Models_Firewall_Threats {
 			//--
 			'#\bgzinflate\s*\(#i' => 'THR_QS_MAL_GZINFLATE',
 			'#\bstr_rot13\s*\(#i' => 'THR_QS_MAL_STR_ROT13',
-			'#/(?:phpmyadmin|pma|myadmin|mysqladmin)(?:/|$)#' => 'THR_URI_PMA_PROBE',
+			'#uri=/(?:phpmyadmin|pma|myadmin|mysqladmin)(?:/|$)#i' => 'THR_URI_PMA_PROBE',
 
 			// URI probes
 			'#uri=/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}(?:[/?\#]|$)#i' => 'THR_URI_EMAIL_PATH',

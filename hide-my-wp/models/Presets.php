@@ -23,7 +23,7 @@ class HMWP_Models_Presets {
 		$presets = array(
 			1 => __( "Minimal (No Config Rewrites)", 'hide-my-wp' ),
 			2 => __( "Lite Mode + Firewall + Compatibility Settings", 'hide-my-wp' ),
-			3 => __( "Lite Mode + 9G Firewall + Brute Force + Events Log + Threats Log + Two factor", 'hide-my-wp' ),
+			3 => __( "Lite Mode + 2026 Ghost Firewall + Brute Force + Events Log + Threats Log + Two factor", 'hide-my-wp' ),
 		);
 
 		return $presets;
@@ -233,7 +233,7 @@ class HMWP_Models_Presets {
 			case 4:
 				return esc_html__( '8G Firewall', 'hide-my-wp' );
 			case 5:
-				return esc_html__( '9G Firewall', 'hide-my-wp' );
+				return esc_html__( '2026 Ghost Firewall', 'hide-my-wp' );
 		}
 	}
 

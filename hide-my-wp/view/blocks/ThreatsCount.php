@@ -112,7 +112,7 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
             <tr>
                 <td colspan="2" style="padding: 6px 0 2px;">
                     <a href="<?php echo esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_firewall&tab=firewall', true ) ); ?>" style="display:block;background:#F59E0B;color:#fff;text-align:center;padding:7px 10px;border-radius:0;text-decoration:none;font-size:0.82rem;font-weight:600;">
-                        &#9888; <?php echo esc_html__( 'Activate 7G or 8G Firewall to block these threats', 'hide-my-wp' ); ?>
+                        &#9888; <?php echo esc_html__( 'Activate the 2026 Ghost Firewall to block these threats', 'hide-my-wp' ); ?>
                     </a>
                 </td>
             </tr>

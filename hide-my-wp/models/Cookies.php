@@ -102,7 +102,18 @@ class HMWP_Models_Cookies {
 		global $current_user;
 
 		if ( $current_user->ID ) {
-			wp_set_auth_cookie( $current_user->ID );
+			// Reuse the current session token so re-issuing the cookie for the
+			// new path doesn't rotate it and invalidate nonces already on the page.
+			$token    = wp_get_session_token();
+			$remember = false;
+			if ( $token ) {
+				$session = WP_Session_Tokens::get_instance( $current_user->ID )->get( $token );
+				// Keep a remember-me login long-lived instead of dropping it to a session cookie
+				if ( ! empty( $session['expiration'] ) && ( (int) $session['expiration'] - time() ) > ( 3 * DAY_IN_SECONDS ) ) {
+					$remember = true;
+				}
+			}
+			wp_set_auth_cookie( $current_user->ID, $remember, '', $token );
 
 			if ( $this->testCookies() ) {
 

@@ -2795,6 +2795,12 @@ class HMWP_Models_Rewrite {
 	public function replaceLinks( $found ) {
 		$url = $found[3];
 
+		// A real href/src/url value never holds an angle bracket; if the capture
+		// has one, the regex ran past a tag boundary (CVE-2026-119159) - leave it.
+		if ( strpos( $url, '<' ) !== false || strpos( $url, '>' ) !== false ) {
+			return $found[0];
+		}
+
 		//remove hashtags
 		if( strpos( $url, '#' ) !== false ){
 			$url = substr( $url, 0, strpos( $url, '#' ) );
@@ -2826,8 +2832,8 @@ class HMWP_Models_Rewrite {
 		$scheme    = $host = $path = '';
 		$backslash = false;
 
-		//if relative with preview dir
-		if ( strpos( $rel, "../" ) !== false ) {
+		//if relative with parent dir - unescape \/ first so ..\/ can't slip past (CVE-2026-119159)
+		if ( strpos( $rel, "../" ) !== false || strpos( str_replace( '\/', '/', $rel ), "../" ) !== false ) {
 			return $rel;
 		}
 

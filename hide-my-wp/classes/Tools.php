@@ -173,6 +173,9 @@ class HMWP_Classes_Tools {
 			'banlist_user_agent'             => array(),
 			'banlist_referrer'               => array(),
 			'block_ai_bots'                  => 0,
+			'hmwp_bot_throttle'              => 0,
+			'hmwp_bot_throttle_limit'        => 5,
+			'hmwp_bot_throttle_retry'        => 120,
 
 			//-- Brute Force
 			'hmwp_bruteforce'                => 0,
@@ -680,7 +683,7 @@ class HMWP_Classes_Tools {
 
 			}
 
-			// Websites that never saved the firewall level keep 8G, the 9G default is for new installs
+			// Websites that never saved the firewall level keep 8G, the 2026 Ghost Firewall default is for new installs
 			$saved = json_decode( (string) get_option( HMWP_OPTION ), true );
 			if ( is_array( $saved ) && ! isset( $saved['hmwp_sqlinjection_level'] ) ) {
 				self::$options['hmwp_sqlinjection_level'] = 4;

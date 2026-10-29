@@ -469,13 +469,13 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 				'javascript' => "pro",
 			),
 			'checkFirewall'  => array(
-				'name'       => esc_html__( "7G/8G Firewall Not Loaded", 'hide-my-wp' ),
+				'name'       => esc_html__( "Firewall Not Loaded", 'hide-my-wp' ),
 				'value'      => false,
 				'valid'      => false,
 				'warning'    => false,
-				'message'    => __( "The 7G/8G Firewall is not active. Without these rulesets, malicious requests, including SQL injection attempts, script injections and exploit probes, reach your site without being filtered.", 'hide-my-wp' ),
+				'message'    => __( "The firewall is not active. Without these rulesets, malicious requests, including SQL injection attempts, script injections and exploit probes, reach your site without being filtered.", 'hide-my-wp' ),
 				/* translators: 1: Opening <a> tag to Firewall settings URL, 2: Plugin menu name, 3: Closing </a> tag. */
-				'solution'   => wp_kses_post( sprintf( __( 'Switch on the 7G or 8G Firewall from %1$s%2$s > Firewall & Headers%3$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_firewall' ) ) . '" >', esc_html( HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ) ), '</a>' ) ),
+				'solution'   => wp_kses_post( sprintf( __( 'Switch on the 2026 Ghost Firewall from %1$s%2$s > Firewall & Headers%3$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_firewall' ) ) . '" >', esc_html( HMWP_Classes_Tools::getOption( 'hmwp_plugin_menu' ) ), '</a>' ) ),
 				'javascript' => "jQuery(this).hmwp_fixSettings('hmwp_sqlinjection,hmwp_sqlinjection_level','1,5');",
 			),
 			'checkFirewallAutomation' => array(

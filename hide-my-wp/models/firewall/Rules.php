@@ -152,7 +152,7 @@ class HMWP_Models_Firewall_Rules {
 			return false;
 		}
 
-		// Level 4 (8G) and Level 5 (9G, the 8G rules plus the request checks)
+		// Level 4 (8G) and Level 5 (2026 Ghost Firewall, the 8G rules plus the request checks)
 		if ( (int) $level === 4 || (int) $level === 5 ) {
 
 			if ( $this->ref !== '' ) {
@@ -192,7 +192,7 @@ class HMWP_Models_Firewall_Rules {
 			}
 
 			if ( (int) $level === 5 ) {
-				return $this->detectRules9G();
+				return $this->detectRulesGhost();
 			}
 
 			return false;
@@ -202,35 +202,35 @@ class HMWP_Models_Firewall_Rules {
 	}
 
 	/**
-	 * Level 5 (9G) - checks inside the request: role fields, uploads, serialized objects and SSRF targets
+	 * Level 5 (2026 Ghost Firewall) - checks inside the request: role fields, uploads, serialized objects and SSRF targets
 	 *
 	 * @return array|false
 	 */
-	protected function detectRules9G() {
+	protected function detectRulesGhost() {
 
 		$whitelist = $this->getWhitelistRules();
 		$fields    = $this->getRequestFields();
 
 		// A visitor never sets an account role, capabilities or the registration options
-		if ( ! in_array( 'FW_9G_ROLE_ESCALATION', $whitelist, true ) ) {
+		if ( ! in_array( 'FW_GHOST_ROLE_ESCALATION', $whitelist, true ) ) {
 			foreach ( $fields as $field ) {
 				list( $key, $value ) = $field;
 				$root = strtolower( (string) strtok( $key, '[' ) );
 
 				if ( in_array( $root, array( 'wp_capabilities', 'wp_user_level', 'default_role', 'users_can_register' ), true ) ||
 				     ( in_array( $root, array( 'role', 'roles', 'user_role', 'new_role' ), true ) && preg_match( '/^(administrator|editor|shop_manager|super_admin)$/i', trim( (string) $value ) ) ) ) {
-					return array( 'code' => 'FW_9G_ROLE_ESCALATION', 'area' => 'request', 'pattern' => $root );
+					return array( 'code' => 'FW_GHOST_ROLE_ESCALATION', 'area' => 'request', 'pattern' => $root );
 				}
 			}
 		}
 
 		// No PHP files from visitors, also when the PHP code hides inside an image
-		if ( ! in_array( 'FW_9G_UPLOAD_PHP_SHELL', $whitelist, true ) && ! empty( $_FILES ) ) {
+		if ( ! in_array( 'FW_GHOST_UPLOAD_PHP_SHELL', $whitelist, true ) && ! empty( $_FILES ) ) {
 			foreach ( $this->getUploadedFiles( $_FILES ) as $file ) {
 				list( $name, $tmp ) = $file;
 
 				if ( preg_match( '/(\.(php\d*|phtml|pht|phar|phps|pgif|shtml)$|\.php\d*\.|^\.htaccess$|^\.user\.ini$)/i', basename( (string) $name ) ) ) {
-					return array( 'code' => 'FW_9G_UPLOAD_PHP_SHELL', 'area' => 'upload', 'pattern' => 'extension' );
+					return array( 'code' => 'FW_GHOST_UPLOAD_PHP_SHELL', 'area' => 'upload', 'pattern' => 'extension' );
 				}
 
 				if ( $tmp <> '' && is_uploaded_file( $tmp ) && ( $handle = @fopen( $tmp, 'rb' ) ) ) { //phpcs:ignore
@@ -238,14 +238,14 @@ class HMWP_Models_Firewall_Rules {
 					fclose( $handle ); //phpcs:ignore
 
 					if ( stripos( $head, '<?php' ) !== false ) {
-						return array( 'code' => 'FW_9G_UPLOAD_PHP_SHELL', 'area' => 'upload', 'pattern' => 'content' );
+						return array( 'code' => 'FW_GHOST_UPLOAD_PHP_SHELL', 'area' => 'upload', 'pattern' => 'content' );
 					}
 				}
 			}
 		}
 
 		// Serialized PHP objects, in parameters and cookies
-		if ( ! in_array( 'FW_9G_OBJECT_INJECTION', $whitelist, true ) ) {
+		if ( ! in_array( 'FW_GHOST_OBJECT_INJECTION', $whitelist, true ) ) {
 			$values = array();
 			foreach ( $fields as $field ) {
 				$values[] = $field[1];
@@ -258,16 +258,16 @@ class HMWP_Models_Firewall_Rules {
 
 			foreach ( $values as $value ) {
 				if ( preg_match( '/(^|[^a-z0-9_])[oc]:\+?\d+:"[a-z_\\\\][a-z0-9_\\\\]*":\d+:\{/i', (string) $value ) ) {
-					return array( 'code' => 'FW_9G_OBJECT_INJECTION', 'area' => 'request', 'pattern' => 'serialized object' );
+					return array( 'code' => 'FW_GHOST_OBJECT_INJECTION', 'area' => 'request', 'pattern' => 'serialized object' );
 				}
 			}
 		}
 
 		// Cloud metadata addresses and non-web URL schemes used for SSRF
-		if ( ! in_array( 'FW_9G_SSRF', $whitelist, true ) ) {
+		if ( ! in_array( 'FW_GHOST_SSRF', $whitelist, true ) ) {
 			foreach ( $fields as $field ) {
 				if ( preg_match( '/(169\.254\.169\.254|metadata\.google\.internal|100\.100\.100\.200|fd00:ec2::254|\b(gopher|dict|ldap|tftp):\/\/)/i', (string) $field[1] ) ) {
-					return array( 'code' => 'FW_9G_SSRF', 'area' => 'request', 'pattern' => 'ssrf' );
+					return array( 'code' => 'FW_GHOST_SSRF', 'area' => 'request', 'pattern' => 'ssrf' );
 				}
 			}
 		}
@@ -398,7 +398,7 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_BASE64_ENCODE'  => '/base64_encode.*\(.*\)/i',
 			'FW_QS_BASE64_CODEC'   => '/base64_(en|de)code[^(]*\([^)]*\)/i',
 			'FW_QS_LOCALHOST'      => '/(localhost|loopback|127\.0\.0\.1)/i',
-			'FW_QS_SQL_KEYWORDS_1'  => '/((\+|%2b)(concat|delete|get|select|union)(\+|%2b))/i',
+			'FW_QS_SQL_KEYWORDS_1'  => '/union((\+|%20|\s)+|\/\*.*?\*\/)+(all((\+|%20|\s)+|\/\*.*?\*\/)+)?select/i',
 			'FW_QS_EVAL_CONCAT'     => '/(concat|eval)(.*)(\(|%28)/i',
 			'FW_QS_UNION_SELECT'    => '/union([^s]*s)+elect/i',
 			'FW_QS_UNION_ALL_SEL'   => '/union([^a]*a)+ll([^s]*s)+elect/i',
@@ -454,7 +454,7 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_CTRL_BYTES'        => '/[\x00\x04\x08\x0d\x1b\x20\x3c\x3e\x7f]/',
 			'FW_QS_NULL_OUTFILE'      => '/(^|[^a-z0-9_]|%(25)?[0-9a-f]{2})(null|outfile|load_file)([^a-z0-9_]|%(25)?[0-9a-f]{2}|$)/i',
 			'FW_QS_DOTSLASH_MOTD'     => '/(\.{1,}\/)+(motd|etc|bin)/i',
-			'FW_QS_SQL_KEYWORDS_1'    => '/((\+|%2b)(concat|delete|get|select|union)(\+|%2b))/i',
+			'FW_QS_SQL_KEYWORDS_1'    => '/union((\+|%20|\s)+|\/\*.*?\*\/)+(all((\+|%20|\s)+|\/\*.*?\*\/)+)?select/i',
 			'FW_QS_EVAL_CONCAT'       => '/(concat|eval)(.*)(\(|%28)/i',
 			'FW_QS_PHP_INI_OVERRIDES' => '/-[sdcr].*(allow_url_include|allow_url_fopen|safe_mode|disable_functions|auto_prepend_file)/i',
 			'FW_QS_SP_EXECUTESQL'     => '/sp_executesql/i',
@@ -540,10 +540,6 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_IFRAME_TAG'       => '/(<|%3c)(.*)(i|%69|%49)(f|%66|%46)(r|%72|%52)(a|%61|%41)(m|%6d|%4d)(e|%65|%45)(.*)(>|%3e)/i',
 			'FW_QS_OBJECT_TAG'       => '/(<|%3c)(.*)(o|%4f|%6f)(b|%62|%42)(j|%4a|%6a)(e|%65|%45)(c|%63|%43)(t|%74|%54)(.*)(>|%3e)/i',
 			'FW_QS_SCRIPT_TAG'       => '/(<|%3c)(.*)(s|%73|%53)(c|%63|%43)(r|%72|%52)(i|%69|%49)(p|%70|%50)(t|%74|%54)(.*)(>|%3e)/i',
-			'FW_QS_DELETE_KEYWORD'   => '/(\+|%2b|%20)(d|%64|%44)(e|%65|%45)(l|%6c|%4c)(e|%65|%45)(t|%74|%54)(e|%65|%45)(\+|%2b|%20)/i',
-			'FW_QS_INSERT_KEYWORD'   => '/(\+|%2b|%20)(i|%69|%49)(n|%6e|%4e)(s|%73|%53)(e|%65|%45)(r|%72|%52)(t|%74|%54)(\+|%2b|%20)/i',
-			'FW_QS_SELECT_KEYWORD'   => '/(\+|%2b|%20)(s|%73|%53)(e|%65|%45)(l|%6c|%4c)(e|%65|%45)(c|%63|%43)(t|%74|%54)(\+|%2b|%20)/i',
-			'FW_QS_UPDATE_KEYWORD'   => '/(\+|%2b|%20)(u|%75|%55)(p|%70|%50)(d|%64|%44)(a|%61|%41)(t|%74|%54)(e|%65|%45)(\+|%2b|%20)/i',
 			'FW_QS_CAST_OR_1EQ1'     => '/(\\\\x00|("|%22|\'|%27)?0("|%22|\'|%27)?(=|%3d)("|%22|\'|%27)?0|cast(\(|%28)0x|or%201(=|%3d)1)/i',
 			'FW_QS_GLOBALS_ENC'      => '/(g|%67|%47)(l|%6c|%4c)(o|%6f|%4f)(b|%62|%42)(a|%61|%41)(l|%6c|%4c)(s|%73|%53)(=|\[|%[0-9A-Z]{0,2})/i',
 			'FW_QS_REQUEST_ENC'      => '/(_|%5f)(r|%72|%52)(e|%65|%45)(q|%71|%51)(u|%75|%55)(e|%65|%45)(s|%73|%53)(t|%74|%54)(=|\[|%[0-9A-Z]{2,})/i',
@@ -553,7 +549,13 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_MALWARE_TOKENS_2' => '/(disable_functions?|document_root|elastix|encodeuricom|exploit|fclose|fgets|file_put_contents|fputs|fsbuff|fsockopen|gethostbyname|grablogin|hmei7)/i',
 			'FW_QS_MALWARE_TOKENS_3' => '/(input_file|open_basedir|outfile|passthru|phpinfo|popen|proc_open|quickbrute|remoteview|root_path|safe_mode|shell_exec|site((.){0,2})copier|sux0r|trojan|user_func_array|wget|xertive)/i',
 			'FW_QS_SQLI_MIX'         => '/(;|<|>|\'|"|\)|%0a|%0d|%22|%27|%3c|%3e|%00)(.*)(\/\*|alter|base64|benchmark|cast|concat|convert|create|encode|declare|delete|drop|insert|md5|request|script|select|set|union|update)/i',
-			'FW_QS_SQL_KEYWORDS_1'   => '/((\+|%2b)(concat|delete|get|select|union)(\+|%2b))/i',
+			'FW_QS_DOUBLE_ENC_TRAV'  => '/(%252e%252e|(\.\.|%2e%2e)(%252f|%255c)|%252e(%252f|%255c))/i',
+			'FW_QS_EVENT_HANDLER'    => '/(<|%3c)(.*)(\s|%20|\+|%09)on(load|error|focus|blur|toggle|mouseover|mouseenter|mouseout|click|dblclick|keydown|keyup|keypress|submit|change|input|scroll|contextmenu|animationstart|animationend|transitionend|pointerover|pointerdown|wheel|beforeunload|hashchange|play|canplay|loadstart|progress|resize|select|drag)(=|%3d)/i',
+			'FW_QS_STACKED_SQL'      => '/(;|%3b)(\+|%20|\s)*((drop|truncate|alter|rename|create)(\+|%20|\s)+(table|database)|delete(\+|%20|\s)+from|insert(\+|%20|\s)+into|update(\+|%20|\s)+[a-z0-9_]+(\+|%20|\s)+set)/i',
+			'FW_QS_BOOLEAN_NUM'      => '/(=|%3d|\+|%20|\s)[0-9]+(\+|%20|\s)+(and|or)(\+|%20|\s)+[0-9]+(\+|%20|\s)*(=|%3d|%3c|%3e|<|>)(\+|%20|\s)*[0-9]+/i',
+			'FW_QS_STACKED_SELECT'   => '/(;|%3b)(\+|%20|\s)*select(\+|%20|\s)+[^\s;&%]+(\+|%20|\s)+from(\+|%20|\s)/i',
+			'FW_QS_B64_SERIALIZED'   => '/(Tzo[0-9wxyz])/',
+			'FW_QS_UNION_SELECT'     => '/union((\+|%20|\s)+|\/\*.*?\*\/)+(all((\+|%20|\s)+|\/\*.*?\*\/)+)?select/i',
 			'FW_QS_UNION_SELECT_FN'  => '/(union)(.*)(select)(.*)(\(|%28)/i',
 			'FW_QS_EVAL_CONCAT'      => '/(concat|eval)(.*)(\(|%28)/i',
 		);
@@ -691,10 +693,6 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_IFRAME_TAG'       => '/(<|%3c)(.*)(i|%69|%49)(f|%66|%46)(r|%72|%52)(a|%61|%41)(m|%6d|%4d)(e|%65|%45)(.*)(>|%3e)/i',
 			'FW_QS_OBJECT_TAG'       => '/(<|%3c)(.*)(o|%4f|%6f)(b|%62|%42)(j|%4a|%6a)(e|%65|%45)(c|%63|%43)(t|%74|%54)(.*)(>|%3e)/i',
 			'FW_QS_SCRIPT_TAG'       => '/(<|%3c)(.*)(s|%73|%53)(c|%63|%43)(r|%72|%52)(i|%69|%49)(p|%70|%50)(t|%74|%54)(.*)(>|%3e)/i',
-			'FW_QS_DELETE_KEYWORD'   => '/(\+|%2b|%20)(d|%64|%44)(e|%65|%45)(l|%6c|%4c)(e|%65|%45)(t|%74|%54)(e|%65|%45)(\+|%2b|%20)/i',
-			'FW_QS_INSERT_KEYWORD'   => '/(\+|%2b|%20)(i|%69|%49)(n|%6e|%4e)(s|%73|%53)(e|%65|%45)(r|%72|%52)(t|%74|%54)(\+|%2b|%20)/i',
-			'FW_QS_SELECT_KEYWORD'   => '/(\+|%2b|%20)(s|%73|%53)(e|%65|%45)(l|%6c|%4c)(e|%65|%45)(c|%63|%43)(t|%74|%54)(\+|%2b|%20)/i',
-			'FW_QS_UPDATE_KEYWORD'   => '/(\+|%2b|%20)(u|%75|%55)(p|%70|%50)(d|%64|%44)(a|%61|%41)(t|%74|%54)(e|%65|%45)(\+|%2b|%20)/i',
 			'FW_QS_CAST_OR_1EQ1'     => '/(\\\\x00|("|%22|\'|%27)?0("|%22|\'|%27)?(=|%3d)("|%22|\'|%27)?0|cast(\(|%28)0x|or%201(=|%3d)1)/i',
 			'FW_QS_GLOBALS_ENC'      => '/(g|%67|%47)(l|%6c|%4c)(o|%6f|%4f)(b|%62|%42)(a|%61|%41)(l|%6c|%4c)(s|%73|%53)(=|\[|%[0-9A-Z]{0,2})/i',
 			'FW_QS_REQUEST_ENC'      => '/(_|%5f)(r|%72|%52)(e|%65|%45)(q|%71|%51)(u|%75|%55)(e|%65|%45)(s|%73|%53)(t|%74|%54)(=|\[|%[0-9A-Z]{2,})/i',
@@ -707,7 +705,13 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_MALWARE_TOKENS_3' => '/(pass(=|%3d)shell|passthru|phpinfo|phpshells|popen|proc_open|quickbrute|remoteview|root_path|safe_mode|shell_exec|site((.){0,2})copier|sp_executesql|sux0r|trojan|udtudt|user_func_array|wget|wp_insert_user|xertive)/i',
 
 			'FW_QS_SQLI_MIX'         => '/(;|<|>|\'|"|\)|%0a|%0d|%22|%27|%3c|%3e|%00)(.*)(\/\*|alter|base64|benchmark|cast|concat|convert|create|encode|declare|delay|delete|drop|hex|insert|load|md5|null|replace|request|script|select|set|sleep|truncate|unhex|update)/i',
-			'FW_QS_SQL_KEYWORDS_1'   => '/((\+|%2b)(concat|delete|get|select|union)(\+|%2b))/i',
+			'FW_QS_DOUBLE_ENC_TRAV'  => '/(%252e%252e|(\.\.|%2e%2e)(%252f|%255c)|%252e(%252f|%255c))/i',
+			'FW_QS_EVENT_HANDLER'    => '/(<|%3c)(.*)(\s|%20|\+|%09)on(load|error|focus|blur|toggle|mouseover|mouseenter|mouseout|click|dblclick|keydown|keyup|keypress|submit|change|input|scroll|contextmenu|animationstart|animationend|transitionend|pointerover|pointerdown|wheel|beforeunload|hashchange|play|canplay|loadstart|progress|resize|select|drag)(=|%3d)/i',
+			'FW_QS_STACKED_SQL'      => '/(;|%3b)(\+|%20|\s)*((drop|truncate|alter|rename|create)(\+|%20|\s)+(table|database)|delete(\+|%20|\s)+from|insert(\+|%20|\s)+into|update(\+|%20|\s)+[a-z0-9_]+(\+|%20|\s)+set)/i',
+			'FW_QS_BOOLEAN_NUM'      => '/(=|%3d|\+|%20|\s)[0-9]+(\+|%20|\s)+(and|or)(\+|%20|\s)+[0-9]+(\+|%20|\s)*(=|%3d|%3c|%3e|<|>)(\+|%20|\s)*[0-9]+/i',
+			'FW_QS_STACKED_SELECT'   => '/(;|%3b)(\+|%20|\s)*select(\+|%20|\s)+[^\s;&%]+(\+|%20|\s)+from(\+|%20|\s)/i',
+			'FW_QS_B64_SERIALIZED'   => '/(Tzo[0-9wxyz])/',
+			'FW_QS_UNION_SELECT'     => '/union((\+|%20|\s)+|\/\*.*?\*\/)+(all((\+|%20|\s)+|\/\*.*?\*\/)+)?select/i',
 			'FW_QS_UNION_SELECT_FN'  => '/(union)(.*)(select)(.*)(\(|%28)/i',
 			'FW_QS_EVAL_CONCAT'      => '/(concat|eval)(.*)(\(|%28)/i',
 		);
@@ -992,6 +996,11 @@ class HMWP_Models_Firewall_Rules {
 			$this->whitelistRaw = $raw;
 			$rules              = ! empty( $raw ) ? json_decode( $raw, true ) : array();
 			$this->whitelist    = is_array( $rules ) ? $rules : array();
+
+			// Keep entries saved under the old FW_9G_ codes matching after the rename
+			$this->whitelist = array_map( function ( $code ) {
+				return str_replace( 'FW_9G_', 'FW_GHOST_', (string) $code );
+			}, $this->whitelist );
 		}
 
 		return $this->whitelist;

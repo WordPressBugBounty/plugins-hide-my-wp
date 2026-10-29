@@ -3,6 +3,18 @@ defined( 'ABSPATH' ) || die( 'Cheating uh?' );
 if ( ! isset( $view ) ) {
 	return;
 } ?>
+<style>
+    @media (max-width: 782px) {
+        #hmwp_wrap .hmwp_threats_auto .d-flex.flex-wrap,
+        #hmwp_wrap .hmwp_bot_throttle .d-flex.flex-wrap { flex-direction: column; align-items: stretch; }
+        #hmwp_wrap .hmwp_threats_auto .d-flex.flex-wrap input,
+        #hmwp_wrap .hmwp_threats_auto .d-flex.flex-wrap select,
+        #hmwp_wrap .hmwp_bot_throttle .d-flex.flex-wrap input,
+        #hmwp_wrap .hmwp_bot_throttle .d-flex.flex-wrap select { width: 100% !important; max-width: 100% !important; margin: 2px 0 10px 0 !important; }
+        #hmwp_wrap .hmwp_threats_auto .d-flex.flex-wrap > span,
+        #hmwp_wrap .hmwp_bot_throttle .d-flex.flex-wrap > span { margin: 0 0 2px 0 !important; }
+    }
+</style>
 <noscript>
     <style>#hmwp_wrap .tab-panel:not(.tab-panel-first) {
             display: block
@@ -57,8 +69,8 @@ if ( ! isset( $view ) ) {
                                     <?php echo wp_kses_post(
                                             sprintf(
                                                     /* translators: 1: Opening anchor tag. 2: Closing anchor tag. */
-                                                    __( 'Learn more about the %1$s9G firewall%2$s.', 'hide-my-wp' ),
-                                                    '<a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/9g-firewall/' ) . '" target="_blank" rel="noopener">',
+                                                    __( 'Learn more about the %1$s2026 Ghost firewall%2$s.', 'hide-my-wp' ),
+                                                    '<a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/2026-ghost-firewall/' ) . '" target="_blank" rel="noopener">',
                                                     '</a>'
                                             )
                                         );
@@ -70,9 +82,9 @@ if ( ! isset( $view ) ) {
                                     <option value="2" <?php echo selected( 2, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( 'Medium', 'hide-my-wp' ); ?></option>
                                     <option value="3" <?php echo selected( 3, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '7G Firewall', 'hide-my-wp' ); ?></option>
                                     <option value="4" <?php echo selected( 4, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '8G Firewall', 'hide-my-wp' ); ?></option>
-                                    <option value="5" <?php echo selected( 5, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '9G Firewall', 'hide-my-wp' ); ?> (<?php echo esc_html__( 'recommended', 'hide-my-wp' ); ?>)</option>
+                                    <option value="5" <?php echo selected( 5, HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) ) ?>><?php echo esc_html__( '2026 Ghost Firewall', 'hide-my-wp' ); ?> (<?php echo esc_html__( 'recommended', 'hide-my-wp' ); ?>)</option>
                                 </select>
-                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/9g-firewall/' ) ?>" target="_blank" class="position-absolute float-right" style="right: 27px;top: 12%;"><i class="dashicons dashicons-editor-help"></i></a>
+                                <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/2026-ghost-firewall/' ) ?>" target="_blank" class="position-absolute float-right" style="right: 27px;top: 12%;"><i class="dashicons dashicons-editor-help"></i></a>
                             </div>
 
                         </div>
@@ -179,19 +191,6 @@ if ( ! isset( $view ) ) {
                         <div class="col-sm-12 row mb-1 ml-1 p-2">
                             <div class="checker col-sm-12 row my-2 py-1">
                                 <div class="col-sm-12 p-0 switch switch-sm">
-                                    <input type="hidden" name="hmwp_hide_unsafe_headers" value="0"/>
-                                    <input type="checkbox" id="hmwp_hide_unsafe_headers" name="hmwp_hide_unsafe_headers" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_hide_unsafe_headers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
-                                    <label for="hmwp_hide_unsafe_headers"><?php echo esc_html__( 'Remove Unsafe Headers', 'hide-my-wp' ); ?>
-                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/firewall-security/#ghost-remove-unsafe-headers' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
-                                    </label>
-                                    <div class="text-black-50 ml-5"><?php echo esc_html__( 'Remove PHP version, Server info, Server Signature from header.', 'hide-my-wp' ); ?></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-sm-12 row mb-1 ml-1 p-2">
-                            <div class="checker col-sm-12 row my-2 py-1">
-                                <div class="col-sm-12 p-0 switch switch-sm">
                                     <input type="hidden" name="hmwp_detectors_block" value="0"/>
                                     <input type="checkbox" id="hmwp_detectors_block" name="hmwp_detectors_block" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_detectors_block' ) ? 'checked="checked"' : '' ) ?> value="1"/>
                                     <label for="hmwp_detectors_block"><?php echo esc_html__( 'Block Theme Detectors Crawlers', 'hide-my-wp' ); ?>
@@ -224,6 +223,44 @@ if ( ! isset( $view ) ) {
                             </div>
                         </div>
 
+                        <div class="col-sm-12 row mb-1 ml-1 p-2 <?php echo esc_attr(HMWP_CLASS_CTA) ?>">
+                            <div class="checker col-sm-12 row my-2 py-1">
+                                <div class="col-sm-12 p-0 switch switch-sm">
+                                    <input type="hidden" name="hmwp_bot_throttle" value="0"/>
+                                    <input type="checkbox" id="hmwp_bot_throttle" name="hmwp_bot_throttle" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_bot_throttle' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                    <label for="hmwp_bot_throttle"><?php echo esc_html__( 'Throttle AI Training Crawler Bots', 'hide-my-wp' ); ?>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/firewall-security/#ghost-throttle-ai-crawlers' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                    </label>
+                                    <div class="text-black-50 ml-5"><?php echo esc_html__( 'When many AI bots crawl at once, serve the extra ones a temporary 503 instead of loading the full page, so a crawl spike cannot exhaust the server.', 'hide-my-wp' ); ?></div>
+                                    <div class="text-black-50 font-italic ml-5"><?php echo esc_html__( 'Never affects visitors, logged-in users or search engines like Google and Bing. Recommended with the 2026 Ghost Firewall.', 'hide-my-wp' ); ?></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_bot_throttle">
+                            <div class="card-body pt-0">
+                                <div class="border rounded-3 p-3 bg-white">
+                                    <div class="d-flex flex-wrap align-items-center my-2 py-1">
+                                        <span class="font-weight-bold mr-2"><?php echo esc_html__( 'Concurrent AI bots', 'hide-my-wp' ); ?></span>
+                                        <input type="number" min="1" max="50" class="form-control form-control-sm mr-2" style="width: 90px;" id="hmwp_bot_throttle_limit" name="hmwp_bot_throttle_limit" value="<?php echo esc_attr( (int) HMWP_Classes_Tools::getOption( 'hmwp_bot_throttle_limit' ) ); ?>"/>
+                                        <span class="text-black-50"><?php echo esc_html__( 'how many AI bots can crawl at the same time', 'hide-my-wp' ); ?></span>
+                                    </div>
+                                    <div class="d-flex flex-wrap align-items-center my-2 py-1">
+                                        <span class="font-weight-bold mr-2"><?php echo esc_html__( 'Then ask the rest to come back after', 'hide-my-wp' ); ?></span>
+                                        <select name="hmwp_bot_throttle_retry" id="hmwp_bot_throttle_retry" class="form-select form-select-sm mr-2" style="width: 150px;">
+                                            <option value="<?php echo esc_attr( MINUTE_IN_SECONDS ); ?>" <?php selected( MINUTE_IN_SECONDS, HMWP_Classes_Tools::getOption( 'hmwp_bot_throttle_retry' ) ); ?>><?php echo esc_html__( '1 minute', 'hide-my-wp' ); ?></option>
+                                            <option value="120" <?php selected( 120, HMWP_Classes_Tools::getOption( 'hmwp_bot_throttle_retry' ) ); ?>><?php echo esc_html__( '2 minutes', 'hide-my-wp' ); ?></option>
+                                            <option value="300" <?php selected( 300, HMWP_Classes_Tools::getOption( 'hmwp_bot_throttle_retry' ) ); ?>><?php echo esc_html__( '5 minutes', 'hide-my-wp' ); ?></option>
+                                            <option value="600" <?php selected( 600, HMWP_Classes_Tools::getOption( 'hmwp_bot_throttle_retry' ) ); ?>><?php echo esc_html__( '10 minutes', 'hide-my-wp' ); ?></option>
+                                        </select>
+                                    </div>
+                                    <div class="d-flex flex-wrap align-items-center text-black-50 my-2 py-1">
+                                        <?php echo esc_html__( 'Visitors, logged-in users and search engines are never throttled.', 'hide-my-wp' ); ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                     </div>
                 </div>
@@ -234,6 +271,19 @@ if ( ! isset( $view ) ) {
                             <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/header-security/' ) ?>" target="_blank" class="d-inline-block float-right mr-2" style="color: white"><i class="dashicons dashicons-editor-help"></i></a>
                         </h3>
                         <div class="card-body">
+
+                        <div class="col-sm-12 row mb-1 ml-1 p-2">
+                            <div class="checker col-sm-12 row my-2 py-1">
+                                <div class="col-sm-12 p-0 switch switch-sm">
+                                    <input type="hidden" name="hmwp_hide_unsafe_headers" value="0"/>
+                                    <input type="checkbox" id="hmwp_hide_unsafe_headers" name="hmwp_hide_unsafe_headers" class="switch"<?php echo( HMWP_Classes_Tools::getOption( 'hmwp_hide_unsafe_headers' ) ? 'checked="checked"' : '' ) ?> value="1"/>
+                                    <label for="hmwp_hide_unsafe_headers"><?php echo esc_html__( 'Remove Unsafe Headers', 'hide-my-wp' ); ?>
+                                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/header-security/#ghost-remove-unsafe-headers' ) ?>" target="_blank" class="d-inline ml-1"><i class="dashicons dashicons-editor-help d-inline"></i></a>
+                                    </label>
+                                    <div class="text-black-50 ml-5"><?php echo esc_html__( 'Remove PHP version, Server info, Server Signature from header.', 'hide-my-wp' ); ?></div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="col-sm-12 row mb-1 ml-1 p-2">
                             <div class="checker col-sm-12 row my-2 py-1">

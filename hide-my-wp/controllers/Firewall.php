@@ -101,7 +101,7 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 		}
 
 		if ( HMWP_Classes_Tools::isApi() ) {
-			return $this->isAnonymous9G();
+			return $this->isAnonymousGhost();
 		}
 
 		//If not admin but logged in
@@ -114,23 +114,45 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 
 		}
 
-		// 9G also checks visitors calling admin-ajax.php and admin-post.php
+		// The 2026 Ghost Firewall also checks visitors calling admin-ajax.php and admin-post.php
 		if ( HMWP_Classes_Tools::isAjax() || ( isset( $_SERVER['SCRIPT_NAME'] ) && basename( (string) $_SERVER['SCRIPT_NAME'] ) == 'admin-post.php' ) ) { //phpcs:ignore
-			return $this->isAnonymous9G();
+			return $this->isAnonymousGhost();
 		}
 
 		return false;
 	}
 
 	/**
-	 * Check if the 9G Firewall is on and the visitor is not logged in
+	 * Check if the 2026 Ghost Firewall is on and the visitor is not logged in
 	 *
 	 * @return bool
 	 */
-	private function isAnonymous9G() {
+	private function isAnonymousGhost() {
 		return ( HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection' ) &&
 		         (int) HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_level' ) === 5 &&
 		         ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cookies' )->isLoggedInRequest() );
+	}
+
+	/** @var null|bool Whitelist decision for the current request, computed on demand */
+	private $whitelistedIp = null;
+
+	/**
+	 * Whether the current visitor IP is whitelisted.
+	 *
+	 * Computed only when a rule is about to block and cached for the request, so a
+	 * clean request never pays for the whitelist lookup, even under attack load.
+	 *
+	 * @return bool
+	 * @throws Exception
+	 */
+	private function isWhitelistedIp() {
+		if ( $this->whitelistedIp === null ) {
+			$server              = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' );
+			$rules               = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' );
+			$this->whitelistedIp = $rules->isWhitelistedIP( $server->getIp() );
+		}
+
+		return $this->whitelistedIp;
 	}
 
 	/**
@@ -168,7 +190,7 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 				// Hook the threat detection event
 				do_action( 'hmwp_threat_detected', $fw );
 
-				if ( $firewallEnabled ) {
+				if ( $firewallEnabled && ! $this->isWhitelistedIp() ) {
 					$this->firewallBlock( 'Firewall Rules Security' );
 				}
 
@@ -190,7 +212,7 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 					do_action( 'hmwp_threat_detected', $thr );
 
 					// Block only on L3/L4
-					if ( $firewallEnabled && $level >= 3 ) {
+					if ( $firewallEnabled && $level >= 3 && ! $this->isWhitelistedIp() ) {
 						$this->firewallBlock( 'Threat Security' );
 					}
 				}

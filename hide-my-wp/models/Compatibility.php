@@ -849,7 +849,7 @@ class HMWP_Models_Compatibility {
 
 			if ( ( ! HMWP_Classes_Tools::getOption('hmwp_sqlinjection') || HMWP_Classes_Tools::getOption('hmwp_sqlinjection_level') < 3 ) && HMWP_Classes_Tools::getOption('hmwp_threats_log') && $page == 'hmwp_log' ) {
 				/* translators: 1: Line break and opening <strong><a> tag to Firewall settings URL, 2: Closing </a></strong> tag. */
-				HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Your site is currently logging security threats, but advanced firewall filtering is not fully enabled. %1$s Activate 7G or 8G Firewall %2$s to automatically block malicious patterns before they reach WordPress.', 'hide-my-wp' ), '<br /><strong><a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_firewall&tab=firewall', true ) ) . '" >', '</a></strong>' ) ) );
+				HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Your site is currently logging security threats, but advanced firewall filtering is not fully enabled. %1$s Activate the 2026 Ghost Firewall %2$s to automatically block malicious patterns before they reach WordPress.', 'hide-my-wp' ), '<br /><strong><a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_firewall&tab=firewall', true ) ) . '" >', '</a></strong>' ) ) );
 			}
 
 
