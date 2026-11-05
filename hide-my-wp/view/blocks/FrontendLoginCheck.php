@@ -64,7 +64,7 @@ if ( HMWP_Classes_Tools::getOption( 'test_frontend' ) && HMWP_Classes_Tools::get
             </table>
         </div>
 
-        <div class="col-sm-12 px-4 py-3 border-top d-flex flex-row align-items-center">
+        <div class="col-sm-12 px-4 py-3 border-top d-flex flex-row align-items-center hmwp_pc_row">
             <div class="hmwp_confirm">
                 <form method="POST" class="m-0">
 					<?php wp_nonce_field( 'hmwp_confirm', 'hmwp_nonce' ); ?>

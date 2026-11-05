@@ -272,6 +272,9 @@ class HMWP_Models_Files {
 			}
 		}
 
+		// Mark the loopback so a nested showFile() won't proxy it again and loop
+		$headers['X-HMWP-Loopback'] = '1';
+
 		return apply_filters( 'hmwp_files_request_headers', $headers );
 	}
 
@@ -1024,6 +1027,10 @@ class HMWP_Models_Files {
 						$this->saveCacheFile( $cachefile, $content );
 					}
 
+					// Send the body past the other plugins' buffers, as the cached path does,
+					// so none of them can change or cut the compressed content
+					$this->closeBuffers();
+
 					// Show the file html content
 					header( 'Content-Length: ' . strlen( $content ) );
 
@@ -1032,6 +1039,12 @@ class HMWP_Models_Files {
 				}
 
 			} elseif ( stripos( trailingslashit( $new_url_no_query ), '/' . HMWP_Classes_Tools::getDefault( 'hmwp_wp-json' ) . '/' ) !== false ) {
+
+					// Don't re-proxy a request we already looped back ourselves, or the
+					// legacy /wp-json/ proxy can pile up and take the site down
+					if ( ! empty( $_SERVER['HTTP_X_HMWP_LOOPBACK'] ) ) {
+						return;
+					}
 
 					$response = false;
 

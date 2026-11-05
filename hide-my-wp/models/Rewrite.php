@@ -3223,7 +3223,8 @@ class HMWP_Models_Rewrite {
 			$find[]    = '/(<style[^>]*)[\s]id=[\'"][0-9a-zA-Z._-]+[\'"]([^>]*>)/i';
 			$replace[] = '$1 $2';
 
-			$find[]    = '/(<script[^>]*)[\s]id=[\'"][0-9a-zA-Z._-]+[\'"]([^>]*>)/i';
+			// Only the WordPress script handles (-js, -js-extra, ...); template and data ids are read by JS
+			$find[]    = '/(<script[^>]*)[\s]id=[\'"][0-9a-zA-Z._-]+-js(?:-extra|-before|-after|-translations)?[\'"]([^>]*>)/i';
 			$replace[] = '$1 $2';
 
 			$find[]    = '/<meta[^>]*name=[\'"]msapplication-TileImage[\'"][^>]*>/i';

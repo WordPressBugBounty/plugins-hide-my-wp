@@ -72,6 +72,25 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 	}
 
 	/**
+	 * Check if the Nginx config file holds rules the include line would load
+	 *
+	 * @return bool
+	 */
+	private function hasNginxRules() {
+		$config_file = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getConfFile();
+		$wp_filesystem = HMWP_Classes_ObjController::initFilesystem();
+
+		if ( ! $config_file || ! $wp_filesystem->exists( $config_file ) ) {
+			return false;
+		}
+
+		// Settings like the Minimal preset write no rules, so there is nothing to include
+		$rules = preg_replace( '/^\s*#.*$/m', '', (string) $wp_filesystem->get_contents( $config_file ) );
+
+		return trim( $rules ) !== '';
+	}
+
+	/**
 	 * Called on Menu hook
 	 * Init the Settings page
 	 *
@@ -97,7 +116,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 			include_once ABSPATH . '/wp-admin/includes/plugin.php';
 		}
 
-		if ( HMWP_Classes_Tools::isNginx() && HMWP_Classes_Tools::getOption( 'test_frontend' ) && HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' ) {
+		if ( HMWP_Classes_Tools::isNginx() && HMWP_Classes_Tools::getOption( 'test_frontend' ) && HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' && $this->hasNginxRules() ) {
 			$config_file = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getConfFile();
 			if ( HMWP_Classes_Tools::isLocalFlywheel() ) {
 				if ( strpos( $config_file, '/includes/' ) !== false ) {

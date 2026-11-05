@@ -193,10 +193,8 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 		}
 
 		// Don't block whitelisted IPs (matches the login flow behavior).
-		if ( isset( $_SERVER['REMOTE_ADDR'] ) ) { // phpcs:ignore WordPress.Security, check isset only
-			if ( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $_SERVER['REMOTE_ADDR'] ) ) { // phpcs:ignore WordPress.Security, filtered in isWhitelistedIP function
-				return;
-			}
+		if ( $this->isWhitelistedVisitor() ) {
+			return;
 		}
 
 		// Only force users in scope that haven't configured 2FA yet.
@@ -240,21 +238,16 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 	 */
 	public function hookLogin( $user_login, $user ) {
 
-		if ( isset( $_SERVER['REMOTE_ADDR'] ) ) { // phpcs:ignore WordPress.Security, check isset only
-			$ip = $_SERVER['REMOTE_ADDR']; // phpcs:ignore WordPress.Security, filtered in isWhitelistedIP function
-
-			if ( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $ip ) ) {
-				return;
-			}
-
-			if ( $this->model->isRememberDevice( $user->ID ) ) {
-				return;
-			}
-
-		}
-
 		if ( ! $user ) {
 			$user = wp_get_current_user();
+		}
+
+		if ( $this->isWhitelistedVisitor() ) {
+			return;
+		}
+
+		if ( $this->model->isRememberDevice( $user->ID ) ) {
+			return;
 		}
 		/** @var HMWP_Models_Twofactor_Passkey $passkeyService */
 		$passkeyService = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor_Passkey' );
@@ -275,6 +268,24 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 
 		$this->model->showTwoFactorLogin( $user );
 		exit();
+	}
+
+	/**
+	 * Check if the visitor's IP is whitelisted, so the 2FA step is skipped
+	 *
+	 * @return bool
+	 * @throws Exception
+	 */
+	private function isWhitelistedVisitor() {
+		// Same visitor IP as the firewall and brute force, read through the proxy
+		$ip = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' )->getIp();
+
+		// A loopback IP means a proxy hid the visitor, never skip 2FA for it
+		if ( in_array( $ip, array( '127.0.0.1', '::1' ), true ) ) {
+			return false;
+		}
+
+		return HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $ip );
 	}
 
 	/**

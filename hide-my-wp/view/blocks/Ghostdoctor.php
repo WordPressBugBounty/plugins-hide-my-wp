@@ -35,7 +35,7 @@ $ai_resets = ( $ai_used_up && ! empty( $quota['data']['resets_at'] ) )
 		// it was left aligned left a column of empty space down the middle and
 		// made one card read as two unrelated ones.
 		?>
-        <div class="col-sm-12 px-4 py-4 d-flex flex-row justify-content-between align-items-center">
+        <div class="col-sm-12 px-4 py-4 d-flex flex-row justify-content-between align-items-center hmwp_pc_row">
 
             <div class="pr-4">
 
@@ -239,7 +239,7 @@ $ai_resets = ( $ai_used_up && ! empty( $quota['data']['resets_at'] ) )
 		<?php } ?>
 
 		<?php if ( $pending ) { ?>
-            <div class="col-sm-12 px-4 py-3 d-flex flex-row justify-content-between align-items-center border-top">
+            <div class="col-sm-12 px-4 py-3 d-flex flex-row justify-content-between align-items-center border-top hmwp_pc_row">
                 <div class="text-muted small">
 					<?php echo esc_html__( 'Check your website now. If anything looks wrong, undo the changes.', 'hide-my-wp' ); ?>
                 </div>

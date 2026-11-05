@@ -405,7 +405,6 @@ class HMWP_Classes_Tools {
 			'hmwp_security_headers'          => array(
 				"Strict-Transport-Security" => "max-age=15768000;includeSubdomains",
 				"Content-Security-Policy"   => "object-src 'none'",
-				"X-XSS-Protection"          => "1; mode=block",
 			),
 			//--
 			'hmwp_detectors_block'           => 0,
@@ -587,6 +586,14 @@ class HMWP_Classes_Tools {
 	 * @return void
 	 */
 	private static function updateDatabase() {
+		// X-XSS-Protection is deprecated and can open XSS holes, stop sending it (any version, re-packs included)
+		if ( isset( self::$options['hmwp_security_headers'] ) && is_array( self::$options['hmwp_security_headers'] ) && isset( self::$options['hmwp_security_headers']['X-XSS-Protection'] ) ) {
+			unset( self::$options['hmwp_security_headers']['X-XSS-Protection'] );
+			self::saveOptions();
+			// Rebuild the config file rules on the next admin page
+			set_transient( 'hmwp_update', 1 );
+		}
+
 		// Check if the plugin version is updated
 		if ( self::$options['hmwp_ver'] < HMWP_VERSION_ID ) {
 
@@ -653,7 +660,6 @@ class HMWP_Classes_Tools {
 					self::$options['hmwp_security_headers'] = array(
 						"Strict-Transport-Security" => "max-age=63072000",
 						"Content-Security-Policy"   => "object-src 'none'",
-						"X-XSS-Protection"          => "1; mode=block",
 					);
 				}
 			}

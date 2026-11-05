@@ -13,6 +13,8 @@
     }
     ?>
     <style>#hmwp_wrap .hmwp_nav .hmwp_nav_item:nth-child(n+3){display: none}</style>
+    <?php // On phones the confirmation-card action rows stack instead of scrolling the page sideways ?>
+    <style>@media (max-width:820px){#hmwp_wrap .hmwp_pc_row{flex-direction:column !important;align-items:stretch !important}#hmwp_wrap .hmwp_pc_row>*{width:100%;margin-left:0 !important}#hmwp_wrap .hmwp_pc_row>*+*{margin-top:.75rem}#hmwp_wrap .hmwp_pc_row .btn{white-space:normal}}</style>
     <div class="hmwp_row d-flex flex-row p-0 m-0">
         <?php do_action('hmwp_notices'); ?>
         <div class="hmwp_col flex-grow-1 p-0 pr-2 mr-2 mb-3">

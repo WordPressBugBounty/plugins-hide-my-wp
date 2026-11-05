@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.16
+Stable tag: 7.0.17
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -201,7 +201,7 @@ See all <a href="https://wpghost.com/features/">WP Ghost Premium features</a>.
 
 The full policy is in the plugin's `SECURITY.md` file, and bundled third-party components are listed in `sbom.json`.
 
-**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.16, released October 2026, is supported until October 2031.
+**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.17, released November 2026, is supported until November 2031.
 
 = Documentation and guides =
 
@@ -303,6 +303,14 @@ WP Ghost Premium includes crawler controls, but blocking search crawlers such as
 
 
 == Changelog ==
+
+= 7.0.17 (5 Nov 2026) =
+
+* Update - Two-factor login reads the real visitor IP behind a proxy
+* Update - Hide IDs from META Tags keeps the template IDs WooCommerce needs
+* Update - Mapped CSS and JS files load in full on the first visit
+* Update - Header Security drops the deprecated X-XSS-Protection header
+* Update - Nginx setup notice appears only when there are rules to add
 
 = 7.0.16 (28 Oct 2026) =
 

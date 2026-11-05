@@ -300,9 +300,6 @@ if ( ! isset( $view ) ) {
                                 <div class="text-black-50 col-sm-12 p-0 ml-5"><?php echo esc_html__( "Add Content-Security-Policy header", 'hide-my-wp' ); ?>
                                     <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP" target="_blank"><?php echo esc_html__( 'more details', 'hide-my-wp' ) ?></a>
                                 </div>
-                                <div class="text-black-50 col-sm-12 p-0 ml-5"><?php echo esc_html__( "Add X-XSS-Protection header", 'hide-my-wp' ); ?>
-                                    <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection" target="_blank"><?php echo esc_html__( 'more details', 'hide-my-wp' ) ?></a>
-                                </div>
                                 <div class="text-black-50 col-sm-12 p-0 ml-5"><?php echo esc_html__( "Add X-Content-Type-Options header", 'hide-my-wp' ); ?>
                                     <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options" target="_blank"><?php echo esc_html__( 'more details', 'hide-my-wp' ) ?></a>
                                 </div>
@@ -322,10 +319,6 @@ if ( ! isset( $view ) ) {
 										"title"   => "Adds layer of security that helps to detect and mitigate certain types of attacks, including Cross-Site Scripting (XSS) and data injection attacks.",
 										"link"    => "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP",
 										"default" => "object-src 'none'"
-									), "X-XSS-Protection"             => array(
-										"title"   => "Stops pages from loading when they detect reflected cross-site scripting (XSS) attacks.",
-										"link"    => "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection",
-										"default" => "1; mode=block"
 									), "X-Content-Type-Options"       => array(
 										"title"   => "Blocks content sniffing that could transform non-executable MIME types into executable MIME types.",
 										"link"    => "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options",

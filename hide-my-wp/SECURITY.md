@@ -89,8 +89,8 @@ upstream as well, but tell us too — we are responsible for what we ship.
 
 Security updates are provided for **5 years from the release of each version**.
 
-**This version — WP Ghost 7.0.10, released September 2026 — is supported with security
-updates until September 2031.**
+**This version — WP Ghost 7.0.17, released November 2026 — is supported with security
+updates until November 2031.**
 
 The period runs from the version you are running, so installing a newer release moves
 the end date forward. Staying on the current release line is therefore the reliable way
