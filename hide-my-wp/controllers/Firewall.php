@@ -149,7 +149,8 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 		if ( $this->whitelistedIp === null ) {
 			$server              = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' );
 			$rules               = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' );
-			$this->whitelistedIp = $rules->isWhitelistedIP( $server->getIp() );
+			// An unknown visitor behind a proxy must not inherit the server's own whitelist
+			$this->whitelistedIp = ! $server->isUnknownIp() && $rules->isWhitelistedIP( $server->getIp() );
 		}
 
 		return $this->whitelistedIp;

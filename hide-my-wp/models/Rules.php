@@ -590,6 +590,12 @@ class HMWP_Models_Rules {
 				$rules .= "RewriteEngine On" . PHP_EOL;
 				$rules .= "RewriteBase $home_root" . PHP_EOL;
 
+				// AI assistant sign-in (MCP OAuth): mark a redirect_uri back to the user's own computer,
+				// only when no other query parameter mentions localhost
+				$rules .= "RewriteCond %{THE_REQUEST} ^GET\\s" . preg_quote( $home_root, '/' ) . "oauth/authorize/?\\?([^\\s]*&)?redirect_uri=http%3A%2F%2F(127\\.0\\.0\\.1|localhost)(%3A[0-9]{1,5})?(%2F[^&\\s]*)?(&[^\\s]*)?\\sHTTP [NC]" . PHP_EOL;
+				$rules .= "RewriteCond %{QUERY_STRING} !(^|&)(?!redirect_uri=http%3A%2F%2F(127\\.0\\.0\\.1|localhost)(%3A[0-9]{1,5})?(%2F[^&]*)?(&|$))[^&]*(localhost|loopback|127(\\.|%2e)0(\\.|%2e)0(\\.|%2e)1) [NC]" . PHP_EOL;
+				$rules .= "RewriteRule ^ - [E=HMWP_OAUTH_LOOPBACK:1]" . PHP_EOL;
+
 				// Let the whitelisted IPs bypass the firewall rules (added without [OR] so they are AND-ed before the rule group)
 				if ( !empty($this->whitelist_ips) ){
 					foreach ($this->whitelist_ips as $ip){
@@ -606,7 +612,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (<|%3C)([^i]*i)+frame.*(>|%3E) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} base64_encode.*\\(.*\\) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} base64_(en|de)code[^(]*\\([^)]*\\) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (localhost|loopback|127\\.0\\.0\\.1) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{ENV:HMWP_OAUTH_LOOPBACK}#%{QUERY_STRING} ^#.*(localhost|loopback|127\\.0\\.0\\.1) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} concat[^\\(]*\\( [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} union([^s]*s)+elect [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} union([^a]*a)+ll([^s]*s)+elect [NC,OR]" . PHP_EOL;
@@ -654,7 +660,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} ^.*(\\x00|\\x04|\\x08|\\x0d|\\x1b|\\x20|\\x3c|\\x3e|\\x7f).* [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (^|[^a-z0-9_]|%(25)?[0-9a-f]{2})(null|outfile|load_file)([^a-z0-9_]|%(25)?[0-9a-f]{2}|\$) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (\\.{1,}/)+(motd|etc|bin) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (localhost|loopback|127\\.0\\.0\\.1) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{ENV:HMWP_OAUTH_LOOPBACK}#%{QUERY_STRING} ^#.*(localhost|loopback|127\\.0\\.0\\.1) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} concat[^\\(]*\\( [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} union([^s]*s)+elect [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} union([^a]*a)+ll([^s]*s)+elect [NC,OR]" . PHP_EOL;
@@ -682,7 +688,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)((wp-)?config)((\.|%2e)inc)?((\.|%2e)php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (thumbs?(_editor|open)?|tim(thumbs?)?)((\.|%2e)php) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (absolute_|base|root_)(dir|path)(=|%3d)(ftp|https?) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (localhost|loopback|127(\.|%2e)0(\.|%2e)0(\.|%2e)1) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{ENV:HMWP_OAUTH_LOOPBACK}#%{QUERY_STRING} ^#.*(localhost|loopback|127(\.|%2e)0(\.|%2e)0(\.|%2e)1) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (s)?(ftp|inurl|php)(s)?(:(/|%2f|%u2215)(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (\.|20)(get|the)(_|%5f)(permalink|posts_page_url)(\(|%28) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} ((boot|win)((\.|%2e)ini)|etc(/|%2f)passwd|self(/|%2f)environ) [NC,OR]" . PHP_EOL;
@@ -774,7 +780,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{QUERY_STRING} (`|<|>|\^|\|\\\\|0x00|%00|%0d%0a) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (f?ckfinder|f?ckeditor|fullclick) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} ((.*)header:|(.*)set-cookie:(.*)=) [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{QUERY_STRING} (localhost|127(\.|%2e)0(\.|%2e)0(\.|%2e)1) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{ENV:HMWP_OAUTH_LOOPBACK}#%{QUERY_STRING} ^#.*(localhost|127(\.|%2e)0(\.|%2e)0(\.|%2e)1) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (cmd|command)(=|%3d)(chdir|mkdir)(.*)(x20) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (globals|mosconfig([a-z_]{1,22})|request)(=|\[) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)((wp-)?config)((\.|%2e)inc)?((\.|%2e)php) [NC,OR]" . PHP_EOL;

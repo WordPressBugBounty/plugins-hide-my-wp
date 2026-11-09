@@ -346,6 +346,12 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 				add_filter( 'hmwp_process_hide_urls', '__return_false' );
 			}
 
+			//AI assistant sign-in (MCP OAuth in Squirrly SEO, WP Rocket, Imagify) sends the visitor to the login page
+			if ( $url == home_url( 'oauth/authorize', 'relative' ) && HMWP_Classes_Tools::getValue( 'response_type' ) == 'code' && HMWP_Classes_Tools::getValue( 'client_id' ) &&
+			     ( HMWP_Classes_Tools::isPluginActive( 'squirrly-seo/squirrly.php' ) || HMWP_Classes_Tools::isPluginActive( 'wp-rocket/wp-rocket.php' ) || HMWP_Classes_Tools::isPluginActive( 'imagify/imagify.php' ) ) ) {
+				add_filter( 'hmwp_process_hide_urls', '__return_false' );
+			}
+
 			//If Ajax
 			if ( HMWP_Classes_Tools::isAjax() ) {
 				//?action=backup_guard_awake on backupguard scans

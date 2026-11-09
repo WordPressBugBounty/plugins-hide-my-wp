@@ -39,7 +39,7 @@ class HMWP_Models_Twofactor_Email extends HMWP_Models_Twofactor_Abstract {
      * @throws Exception
      */
 	public function isServiceActive( $user ) {
-        if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor' )->isActiveService( $user, 'hmwp_2fa_email') ) {
+        if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor' )->isLoginService( $user, 'hmwp_2fa_email') ) {
 			return false;
 		}
 

@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.17
+Stable tag: 7.0.18
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,7 +160,7 @@ Only the findings on your Security Check screen and six setup parameters (server
 * **AI Copyright Protection:** crawler controls at the firewall and in `robots.txt`, including rules for `GPTBot`, `ClaudeBot`, `PerplexityBot`, `CCBot` and `Bytespider`
 * **Unlimited Security Threats Log and User Events Log entries** with country, status, and threat filters, search, and CSV export
 * **30-day cloud event retention** for audit history
-* **Instant email alerts** on brute-force lockouts or disabled logs, plus optional weekly threat summary emails
+* **Instant email alerts** on brute-force lockouts
 * **Country blocking (Geo-Security)** for the whole site or specific paths
 * **File extension hiding** for `.php`, `.css`, `.js`, and `.json` URLs
 * **One-click database prefix rename, file permission repair, and SALT key regeneration**
@@ -201,7 +201,7 @@ See all <a href="https://wpghost.com/features/">WP Ghost Premium features</a>.
 
 The full policy is in the plugin's `SECURITY.md` file, and bundled third-party components are listed in `sbom.json`.
 
-**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.17, released November 2026, is supported until November 2031.
+**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.18, released November 2026, is supported until November 2031.
 
 = Documentation and guides =
 
@@ -304,6 +304,18 @@ WP Ghost Premium includes crawler controls, but blocking search crawlers such as
 
 == Changelog ==
 
+= 7.0.18 (9 Nov 2026) =
+
+* Update - Two-factor login falls back to a method the user has set up
+* Update - Plugins page asks before deactivating, which resets the settings
+* Update - Text Mapping keeps pages scrolling on sites that load Bootstrap
+* Update - Upgrade popup lists the Premium features and pricing
+* Update - Rollback card installs the current or a previous stable version
+* Update - AI assistant sign-ins work with Squirrly SEO, WP Rocket and Imagify
+* Update - Security update: Trust this browser uses a secure cookie for 30 days
+* Update - Firewall protects sites whose proxy hides the visitor IP
+* Update - Translations cover the new texts
+
 = 7.0.17 (5 Nov 2026) =
 
 * Update - Two-factor login reads the real visitor IP behind a proxy
@@ -327,12 +339,12 @@ WP Ghost Premium includes crawler controls, but blocking search crawlers such as
 * Update - Firewall checks comment and form submissions on levels 3 and 4
 * Update - Password and payment fields stay private in the threat log
 * Update - Country database saved in the uploads folder and downloaded in the background
-* Update - Security Check warns about PHP2Shell (CVE-2026-109618)
+* Update - Security Check warns about PHP2Shell
 * Update - Translated the new texts in all bundled languages
 
 = 7.0.14 (14 Oct 2026) =
 
-* Update - Security update: Hide Source Map References now removes source map comments only inside inline scripts and styles, so text in a visitor comment can no longer turn a link into JavaScript (CVE-2026-89051).
+* Update - Security update: Hide Source Map References works only inside inline scripts and styles
 * Fix - Firewall level 2 no longer blocks visitors from Facebook, Instagram and Google Ads when the fbclid or gclid token contains x1b, x20 or null.
 * Fix - Firewall level 4 checks its short malware-name list on the URL path only, so random fbclid and gclid tokens no longer match it.
 * Fix - Whitelisting a firewall rule now skips only that rule, and the other rules still check the request.

@@ -9,7 +9,7 @@
 
                     <h2 style="font-family: 'Georgia', serif; font-size: 28px; font-weight: 700; color: #1a1a1a; margin: 0 0 12px; line-height: 1.25; text-align: center;">Five switches waiting on your site</h2>
 
-                    <p style="font-size: 14px; color: #777; margin: 0 0 22px; line-height: 1.5; text-align: center;">Get the most out of WP Ghost including GEO Security, Advanced Paths Security &amp; Firewall, Automation and Alerts.</p>
+                    <p style="font-size: 14px; color: #777; margin: 0 0 22px; line-height: 1.5; text-align: center;">Get the most out of WP Ghost including GEO Security, Firewall Automation and Cloud Logs.</p>
 
                     <div style="display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-top: 1px solid #e3e6ec;">
                         <div aria-hidden="true" style="flex: 0 0 38px; width: 38px; height: 21px; margin-top: 2px; background: #cdd2db; border-radius: 11px; position: relative;"><div style="position: absolute; left: 3px; top: 3px; width: 15px; height: 15px; background: #fff; border-radius: 50%;"></div></div>

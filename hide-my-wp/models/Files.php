@@ -355,7 +355,7 @@ class HMWP_Models_Files {
 			// The map holds the CDN and the third party changes, so it covers more than the plugin options
 			$this->_fingerprint = md5( wp_json_encode( array(
 				$rewriteModel->_replace,
-				HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ),
+				HMWP_Classes_Tools::getTextMapping(),
 				HMWP_Classes_Tools::getOption( 'hmwp_mapping_classes' ),
 				HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ),
 				HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ),

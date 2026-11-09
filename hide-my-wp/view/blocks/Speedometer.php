@@ -33,7 +33,7 @@ if ( ! $do_check ) {
         $hmwp_score_message = wp_kses_post( __( "You've completed all free security tasks.", 'hide-my-wp' ) ) ;
     }
     /* translators: 1: Opening <strong><a> tag linking to premium page, 2: Closing </a></strong> tag. */
-    $hmwp_score_message .= '<br />' . sprintf( wp_kses_post( __( '%1$sGet the firewall, 2FA and geo-blocking with Premium >%2$s', 'hide-my-wp' ) ), '<strong><a href="https://wpghost.com/plugin-offer-ghost5/?utm_source=social&utm_medium=banner&utm_campaign=free&utm_id=offer" target="_blank" >', '</a></strong>' ) ;
+    $hmwp_score_message .= '<br />' . sprintf( wp_kses_post( __( '%1$sAdd Ghost Mode, Country Blocking and AI crawler blocking with Premium >%2$s', 'hide-my-wp' ) ), '<strong><a href="https://wpghost.com/plugin-offer-ghost5/?utm_source=social&utm_medium=banner&utm_campaign=free&utm_id=offer" target="_blank" >', '</a></strong>' ) ;
 
 }
 

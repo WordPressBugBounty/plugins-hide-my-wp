@@ -44,6 +44,29 @@ class HMWP_Models_Firewall_Rules {
 		//Path without the query string, as in Apache's REQUEST_URI
 		$pos        = strpos( $this->uri, '?' );
 		$this->path = ( $pos === false ) ? $this->uri : substr( $this->uri, 0, $pos );
+
+		$this->qs = $this->skipLoopbackRedirect( $this->qs );
+	}
+
+	/**
+	 * AI assistant sign-in (MCP OAuth) may return to the user's own computer:
+	 * drop that one redirect_uri so the localhost rules still check the rest
+	 *
+	 * @param string $qs The query string.
+	 *
+	 * @return string
+	 */
+	protected function skipLoopbackRedirect( $qs ) {
+
+		if ( $qs === '' || untrailingslashit( $this->path ) !== home_url( 'oauth/authorize', 'relative' ) ) {
+			return $qs;
+		}
+
+		if ( ! HMWP_Classes_Tools::isPluginActive( 'squirrly-seo/squirrly.php' ) && ! HMWP_Classes_Tools::isPluginActive( 'wp-rocket/wp-rocket.php' ) && ! HMWP_Classes_Tools::isPluginActive( 'imagify/imagify.php' ) ) {
+			return $qs;
+		}
+
+		return preg_replace( '/(^|&)redirect_uri=http(%3A|:)(%2F|\/){2}(127\.0\.0\.1|localhost)((%3A|:)[0-9]{1,5})?((%2F|\/)[A-Za-z0-9._~%\/-]*)?(?=&|$)/i', '$1', $qs );
 	}
 
 	/**

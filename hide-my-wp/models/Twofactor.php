@@ -53,6 +53,56 @@ class HMWP_Models_Twofactor {
     }
 
     /**
+     * Check if a 2FA method can be used for this user at login
+     *
+     * @param WP_User $user The user to check.
+     * @param string  $name The option name of the method.
+     *
+     * @return bool
+     * @throws Exception
+     */
+    public function isLoginService( $user, $name ) {
+
+        if ( $this->isActiveService( $user, $name ) ) {
+            return true;
+        }
+
+        if ( ! HMWP_Classes_Tools::getOption( $name ) ) {
+            return false;
+        }
+
+        // A chosen method that isn't set up must not switch off a method that is
+        $selected = HMWP_Classes_Tools::getUserMeta( self::USER_2FA, $user->ID );
+
+        return ( $selected && ! $this->isMethodSetUp( $user, $selected ) );
+    }
+
+    /**
+     * Check if the user finished the setup of a 2FA method
+     *
+     * @param WP_User $user The user to check.
+     * @param string  $name The option name of the method.
+     *
+     * @return bool
+     * @throws Exception
+     */
+    private function isMethodSetUp( $user, $name ) {
+
+        switch ( $name ) {
+            case 'hmwp_2fa_totp':
+                return (bool) HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor_Tftotp' )->getUserTotpKey( $user->ID );
+            case 'hmwp_2fa_email':
+                return (bool) HMWP_Classes_Tools::getUserMeta( HMWP_Models_Twofactor_Email::EMAIL_META_KEY, $user->ID );
+            case 'hmwp_2fa_passkey':
+                $creds = HMWP_Classes_Tools::getUserMeta( HMWP_Models_Twofactor_Passkey::META_CREDENTIALS, $user->ID );
+
+                return is_array( $creds ) && ! empty( $creds );
+        }
+
+        return false;
+    }
+
+    /**
      * Check whether the user has at least one 2FA method fully configured
      * (an authenticator key, a verified email code, or a registered passkey).
      *
@@ -724,40 +774,62 @@ class HMWP_Models_Twofactor {
 
         if ( HMWP_Classes_Tools::getValue( 'remember_device' ) ) {
 
-            if ( isset( $_SERVER['HTTP_USER_AGENT'] ) && $_SERVER['HTTP_USER_AGENT'] ) { //phpcs:ignore
-                $devices   = (array) HMWP_Classes_Tools::getUserMeta( '_hmwp_2fa_devices', $user_id );
-                $devices[] = md5( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) . ( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '' ) ); //phpcs:ignore
-                $devices   = array_unique( $devices );
-                HMWP_Classes_Tools::saveUserMeta( '_hmwp_2fa_devices', $devices, $user_id );
-            }
+            // A random token in an HttpOnly cookie, only its keyed hash is stored, valid 30 days
+            $token   = wp_generate_password( 40, false );
+            $expires = time() + 30 * DAY_IN_SECONDS;
+            $devices = $this->getTrustedDevices( $user_id );
 
+            $devices[ hash_hmac( 'sha256', $token, wp_salt( 'auth' ) ) ] = $expires;
+            HMWP_Classes_Tools::saveUserMeta( '_hmwp_2fa_devices', $devices, $user_id );
+
+            setcookie( 'hmwp_2fa_trusted', $user_id . '|' . $token, $expires, COOKIEPATH ? COOKIEPATH : '/', COOKIE_DOMAIN, is_ssl(), true );
         }
 
     }
 
-
     /**
-     * Check if the current device is in the list of remembered devices for the user.
+     * Check if the current browser carries a valid trusted-browser cookie for this user
      *
-     * This method verifies whether the current device, identified by a combination
-     * of the HTTP User-Agent and IP address, has been previously remembered by the user.
+     * @param int $user_id The user ID.
      *
-     * @param int $user_id The id of the current user
-     *
-     * @return bool Returns true if the device is remembered, otherwise false.
+     * @return bool
      */
     public function isRememberDevice( $user_id ) {
 
-        if ( isset( $_SERVER['HTTP_USER_AGENT'] ) && $_SERVER['HTTP_USER_AGENT'] ) { //phpcs:ignore
-            $devices = (array) HMWP_Classes_Tools::getUserMeta( '_hmwp_2fa_devices', $user_id );
-            $devices = array_filter( $devices );
+        $cookie = isset( $_COOKIE['hmwp_2fa_trusted'] ) ? (string) wp_unslash( $_COOKIE['hmwp_2fa_trusted'] ) : ''; //phpcs:ignore
 
-            if ( in_array( md5( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) . ( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '' ) ), $devices ) ) { //phpcs:ignore WordPress.Security.NonceVerification
-                return true;
-            }
+        if ( strpos( $cookie, '|' ) === false ) {
+            return false;
         }
 
-        return false;
+        list( $cookie_user, $token ) = explode( '|', $cookie, 2 );
+
+        if ( (int) $cookie_user !== (int) $user_id || $token === '' ) {
+            return false;
+        }
+
+        $devices = $this->getTrustedDevices( $user_id );
+        $hash    = hash_hmac( 'sha256', $token, wp_salt( 'auth' ) );
+
+        return isset( $devices[ $hash ] );
+
+    }
+
+    /**
+     * Get the user's trusted browsers that haven't expired
+     *
+     * @param int $user_id The user ID.
+     *
+     * @return array Token hash => expiry time.
+     */
+    private function getTrustedDevices( $user_id ) {
+
+        $devices = (array) HMWP_Classes_Tools::getUserMeta( '_hmwp_2fa_devices', $user_id );
+
+        // Older browser fingerprints (numeric keys) are dropped, so those browsers ask for a code again
+        return array_filter( $devices, function ( $expires, $hash ) {
+            return is_string( $hash ) && strlen( $hash ) === 64 && (int) $expires > time();
+        }, ARRAY_FILTER_USE_BOTH );
 
     }
 

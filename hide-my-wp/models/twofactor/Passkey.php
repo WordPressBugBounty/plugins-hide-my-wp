@@ -29,7 +29,7 @@ class HMWP_Models_Twofactor_Passkey extends HMWP_Models_Twofactor_Abstract {
      */
     public function isServiceActive( $user ) {
 
-        if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor' )->isActiveService( $user, 'hmwp_2fa_passkey' ) ) {
+        if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor' )->isLoginService( $user, 'hmwp_2fa_passkey' ) ) {
             return false;
         }
 

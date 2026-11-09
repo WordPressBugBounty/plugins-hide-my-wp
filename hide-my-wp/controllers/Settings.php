@@ -940,22 +940,35 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 
             case 'hmwp_rollback_stable':
 
-                HMWP_Classes_Tools::setHeader( 'html' );
+                if ( ! current_user_can( 'update_plugins' ) ) {
+                    return;
+                }
+
                 $plugin_slug = 'hide-my-wp';
 
                 /** @var HMWP_Models_Rollback $rollback */
                 $rollback    = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rollback' );
+                $version     = HMWP_Classes_Tools::getValue( 'hmwp_rollback_version' );
+
+                // Only the versions offered on the page
+                if ( ! in_array( $version, $rollback->getVersions(), true ) ) {
+                    HMWP_Classes_Error::setNotification( esc_html__( 'Select a version from the list.', 'hide-my-wp' ) );
+                    break;
+                }
 
                 $rollback->set_plugin( array(
-                        'version'     => HMWP_STABLE_VERSION,
-                        'plugin_name' => _HMWP_ROOT_DIR_,
+                        'version'     => $version,
+                        'plugin_name' => HMWP_BASENAME,
                         'plugin_slug' => $plugin_slug,
-                        'package_url' => sprintf( 'https://downloads.wordpress.org/plugin/%s.%s.zip', $plugin_slug, HMWP_STABLE_VERSION ),
+                        'package_url' => sprintf( 'https://downloads.wordpress.org/plugin/%s.%s.zip', $plugin_slug, $version ),
                 ) );
 
-                $rollback->run();
+                $result = $rollback->run();
 
-                wp_die( '', esc_html( "Rollback to Previous Version" ), [ 'response' => 200 ] );
+                /* translators: %s: plugin version number. */
+                $message = is_wp_error( $result ) ? $result->get_error_message() : sprintf( esc_html__( 'Version %s is installed.', 'hide-my-wp' ), esc_html( $version ) );
+
+                wp_die( '<p>' . wp_kses_post( $message ) . '</p><p><a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_backup' ) ) . '">' . esc_html__( 'Back to the plugin', 'hide-my-wp' ) . '</a></p>', esc_html__( 'Rollback', 'hide-my-wp' ), array( 'response' => 200 ) );
 			case 'hmwp_restore':
 
 				$tmp_options = array(

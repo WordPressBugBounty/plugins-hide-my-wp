@@ -7225,3 +7225,51 @@ msgstr ""
 #: view/TwofactorUser.php:40
 msgid "Passkey (Face ID / Touch ID / Windows Hello)"
 msgstr ""
+
+#, php-format
+msgid "Deactivating %s resets its settings and custom paths to default. Deactivate anyway?"
+msgstr ""
+
+#, php-format
+msgid "Moving to Premium? Upload it over this plugin instead, so your settings stay."
+msgstr ""
+
+#, php-format
+msgid "%1$sAdd Ghost Mode, Country Blocking and AI crawler blocking with Premium >%2$s"
+msgstr ""
+
+msgid "Rollback"
+msgstr ""
+
+msgid "Reinstall the current version or go back to an earlier one from WordPress.org. Your settings stay as they are."
+msgstr ""
+
+msgid "Version"
+msgstr ""
+
+#, php-format
+msgid "%s (reinstall the current version)"
+msgstr ""
+
+#, php-format
+msgid "%s (previous stable version)"
+msgstr ""
+
+msgid "Install the selected version? Older versions don't have the latest security updates."
+msgstr ""
+
+msgid "Install Version"
+msgstr ""
+
+msgid "Select a version from the list."
+msgstr ""
+
+#, php-format
+msgid "Version %s is installed."
+msgstr ""
+
+msgid "Back to the plugin"
+msgstr ""
+
+msgid "WordPress can't write the plugin files on this server."
+msgstr ""

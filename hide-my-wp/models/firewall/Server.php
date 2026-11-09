@@ -16,6 +16,9 @@ class HMWP_Models_Firewall_Server {
 
 	private $ips = array();
 
+	/** @var bool True when a proxy hid the visitor IP and 127.0.0.1 is only a placeholder */
+	private $unknown = false;
+
 	/**
 	 * Retrieves the client IP address from a list of server variables.
 	 * The method prioritizes filtering and validating IPs, excluding localhost addresses.
@@ -46,7 +49,22 @@ class HMWP_Models_Firewall_Server {
 			}
 		}
 
+		// A private REMOTE_ADDR with no usable header is a proxy, not the server calling itself
+		$remote = $ips['REMOTE_ADDR'] ?? '';
+		$this->unknown = ( $this->ip === '127.0.0.1' && $remote !== '' && $remote !== '::1' && strpos( $remote, '127.' ) !== 0 );
+
 		return $this->ip;
+	}
+
+	/**
+	 * Check if the visitor IP couldn't be read (127.0.0.1 is only a placeholder)
+	 *
+	 * @return bool
+	 */
+	public function isUnknownIp() {
+		$this->getIp();
+
+		return $this->unknown;
 	}
 
 
@@ -102,8 +120,16 @@ class HMWP_Models_Firewall_Server {
 			return false;
 		}
 
+		// A list "client, proxy1, proxy2": take the last public IP, the one the nearest proxy added
 		if ( strpos( $ip, ',' ) !== false ) {
-			$ip = preg_replace( '/[\s,]/', '', explode( ',', $ip ) );
+			foreach ( array_reverse( array_map( 'trim', explode( ',', $ip ) ) ) as $item ) {
+				$item = $this->getCleanIp( $item );
+				if ( $item && ! $this->isPrivate( $item ) && $item !== '::1' ) {
+					return $item;
+				}
+			}
+
+			return false;
 		}
 
 		return $this->getCleanIp( $ip );

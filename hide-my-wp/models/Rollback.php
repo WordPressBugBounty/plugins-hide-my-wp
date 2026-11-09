@@ -33,43 +33,52 @@ class HMWP_Models_Rollback {
 	 */
 	protected $plugin_slug;
 
+	/**
+	 * Get the versions that can be installed: the current one and up to 5 previous stable ones from WordPress.org
+	 *
+	 * @return array Version numbers, the current version first, then newest to oldest.
+	 */
+	public function getVersions() {
+
+		$versions = get_site_transient( 'hmwp_rollback_versions' );
+
+		if ( ! is_array( $versions ) ) {
+			$versions = array();
+			$response = wp_remote_get( 'https://api.wordpress.org/plugins/info/1.0/hide-my-wp.json', array( 'timeout' => 5 ) );
+
+			if ( ! is_wp_error( $response ) && wp_remote_retrieve_response_code( $response ) === 200 ) {
+				$data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+				if ( ! empty( $data['versions'] ) && is_array( $data['versions'] ) ) {
+					$versions = array_map( 'strval', array_keys( $data['versions'] ) );
+				}
+			}
+
+			// Ask again sooner if WordPress.org didn't answer
+			set_site_transient( 'hmwp_rollback_versions', $versions, $versions ? 12 * HOUR_IN_SECONDS : HOUR_IN_SECONDS );
+		}
+
+		$previous = array();
+
+		foreach ( ( $versions ? $versions : array( HMWP_STABLE_VERSION ) ) as $version ) {
+			if ( preg_match( '/^\d+(\.\d+)+$/', $version ) && version_compare( $version, HMWP_VERSION, '<' ) && version_compare( $version, HMWP_STABLE_VERSION, '>=' ) ) {
+				$previous[] = $version;
+			}
+		}
+
+		usort( $previous, function ( $a, $b ) {
+			return version_compare( $b, $a );
+		} );
+
+		return array_merge( array( HMWP_VERSION ), array_slice( $previous, 0, 5 ) );
+	}
+
 	public function set_plugin( $args = array() ) {
 		foreach ( $args as $key => $value ) {
 			$this->{$key} = $value;
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Print inline style.
-	 *
-	 * @access private
-	 */
-	private function print_inline_style() {
-		?>
-        <style>
-            .wrap {
-                overflow: hidden;
-            }
-
-            h1 {
-                background: #0a9b8f;
-                text-align: center;
-                color: #fff !important;
-                padding: 50px !important;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                line-height: 30px;
-            }
-
-            h1 img {
-                max-width: 300px;
-                display: block;
-                margin: auto auto 50px;
-            }
-        </style>
-		<?php
 	}
 
 	/**
@@ -97,28 +106,47 @@ class HMWP_Models_Rollback {
 		set_site_transient( 'update_plugins', $update_plugins );
 	}
 
-    /**
-     * Initiates the plugin upgrade process by setting up the necessary arguments
-     * and invoking the Plugin_Upgrader class to perform the upgrade.
-     *
-     * @return void
-     */
+	/**
+	 * Install the package set with apply_package()
+	 *
+	 * @return true|WP_Error True if the version was installed.
+	 */
 	protected function upgrade() {
 		include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 
-		$this->print_inline_style();
-		$upgrader = new \Plugin_Upgrader( );
-		$upgrader->upgrade( $this->plugin_name );
+		// Same route as the Updates page: the plugin stays active with its rules in place
+		$skin     = new \WP_Ajax_Upgrader_Skin();
+		$upgrader = new \Plugin_Upgrader( $skin );
+		$result   = $upgrader->bulk_upgrade( array( $this->plugin_name ) );
+
+		if ( $skin->get_errors()->has_errors() ) {
+			return $skin->get_errors();
+		}
+
+		if ( is_wp_error( $skin->result ) ) {
+			return $skin->result;
+		}
+
+		if ( empty( $result[ $this->plugin_name ] ) || is_wp_error( $result[ $this->plugin_name ] ) ) {
+			return new \WP_Error( 'hmwp_rollback', esc_html__( "WordPress can't write the plugin files on this server.", 'hide-my-wp' ) );
+		}
+
+		return true;
 	}
 
-    /**
-     * Executes the primary flow for applying a package and subsequently performing an upgrade.
-     *
-     * @return void
-     */
+	/**
+	 * Install the selected version
+	 *
+	 * @return true|WP_Error True if the version was installed.
+	 */
 	public function run() {
 		$this->apply_package();
-		$this->upgrade();
+		$result = $this->upgrade();
+
+		// Drop the update entry added above, also if the install failed
+		delete_site_transient( 'update_plugins' );
+
+		return $result;
 	}
 
     /**

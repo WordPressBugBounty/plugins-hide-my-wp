@@ -74,6 +74,9 @@ class HMWP_Classes_Tools {
 			self::updateDatabase();
 
 			// Add setting link in plugin
+			// Warn that deactivating resets the settings and custom paths
+			add_action( 'admin_footer-plugins.php', array( $this, 'hookDeactivateWarning' ) );
+
 			add_filter( 'plugin_action_links_' . HMWP_BASENAME, array( $this, 'hookActionlink' ) );
 			add_filter( 'network_admin_plugin_action_links_' . HMWP_BASENAME, array( $this, 'hookActionlink' ) );
 
@@ -727,6 +730,27 @@ class HMWP_Classes_Tools {
 	}
 
 	/**
+	 * Get the saved Text Mapping, ready to apply on the content.
+	 *
+	 * @return array|null The from and to lists
+	 */
+	public static function getTextMapping() {
+		$mapping = json_decode( self::getOption( 'hmwp_text_mapping' ), true );
+
+		if ( ! empty( $mapping['from'] ) && ! in_array( 'wp-embed-responsive', $mapping['from'], true ) ) {
+			$index = array_search( 'wp-embed', $mapping['from'], true );
+
+			// Bootstrap 3 and 4 set overflow:hidden on .embed-responsive, so the body class needs its own name.
+			if ( $index !== false && isset( $mapping['to'][ $index ] ) && $mapping['to'][ $index ] === 'embed' ) {
+				array_unshift( $mapping['from'], 'wp-embed-responsive' );
+				array_unshift( $mapping['to'], 'embed-fluid' );
+			}
+		}
+
+		return $mapping;
+	}
+
+	/**
 	 * Retrieve the value of a specified option key.
 	 *
 	 * @param  string  $key  The key of the option to retrieve.
@@ -860,6 +884,35 @@ class HMWP_Classes_Tools {
 		}
 
 		return delete_user_meta( $user_id, $key );
+	}
+
+	/**
+	 * Ask for confirmation before deactivating, as it resets the settings to default
+	 *
+	 * @return void
+	 */
+	public function hookDeactivateWarning() {
+		// Nothing to lose when the plugin runs on its default settings
+		if ( self::getOption( 'hmwp_mode' ) == 'default' ) {
+			return;
+		}
+
+		/* translators: %s: Plugin name. */
+		$message = sprintf( __( 'Deactivating %s resets its settings and custom paths to default. Deactivate anyway?', 'hide-my-wp' ), self::getOption( 'hmwp_plugin_name' ) );
+
+		if ( HMWP_CLASS_CTA ) {
+			$message = __( 'Moving to Premium? Upload it over this plugin instead, so your settings stay.', 'hide-my-wp' ) . "\n\n" . $message;
+		}
+		?>
+		<script>
+			document.addEventListener('click', function (e) {
+				var link = e.target.closest ? e.target.closest('tr[data-plugin=<?php echo wp_json_encode( HMWP_BASENAME ); ?>] .deactivate a') : null;
+				if (link && !window.confirm(<?php echo wp_json_encode( $message, JSON_HEX_TAG ); ?>)) {
+					e.preventDefault();
+				}
+			});
+		</script>
+		<?php
 	}
 
 	/**

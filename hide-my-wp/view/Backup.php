@@ -55,14 +55,29 @@ if ( ! isset( $view ) ) {
             </div>
 
             <div class="card col-sm-12 p-0 m-0 mt-3">
-                <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Rollback to version', 'hide-my-wp' ) . ' ' . esc_html( HMWP_STABLE_VERSION ) ?></h3>
+                <h3 class="card-title hmwp_header p-2 m-0"><?php echo esc_html__( 'Rollback', 'hide-my-wp' ); ?></h3>
                 <div class="card-body">
                     <div class="hmwp_settings_rollback">
-                        <div class="text-black-50 mb-2"><?php echo esc_html__( 'Install the last stable version of the plugin.', 'hide-my-wp' ); ?></div>
-                        <form method="POST">
+                        <div class="text-black-50 mb-2"><?php echo esc_html__( 'Reinstall the current version or go back to an earlier one from WordPress.org. Your settings stay as they are.', 'hide-my-wp' ); ?></div>
+                        <form method="POST" class="form-inline">
                             <?php wp_nonce_field( 'hmwp_rollback_stable', 'hmwp_nonce' ); ?>
                             <input type="hidden" name="action" value="hmwp_rollback_stable"/>
-                            <input type="submit" class="btn rounded-0 btn-default" name="hmwp_backup" onclick="return confirm('<?php echo esc_html__( 'Are you sure you want to rollback to the previous version of the plugin?', 'hide-my-wp' ) ?>');" value="<?php echo esc_html__( 'Rollback Now', 'hide-my-wp' ) ?>"/>
+                            <select name="hmwp_rollback_version" class="form-control rounded-0 mr-2 mb-2" aria-label="<?php echo esc_attr__( 'Version', 'hide-my-wp' ); ?>">
+                                <?php foreach ( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rollback' )->getVersions() as $hmwp_index => $hmwp_version ) { ?>
+                                    <option value="<?php echo esc_attr( $hmwp_version ); ?>" <?php selected( $hmwp_index, 1 ); ?>><?php
+                                        if ( $hmwp_index === 0 ) {
+                                            /* translators: %s: plugin version number. */
+                                            echo esc_html( sprintf( __( '%s (reinstall the current version)', 'hide-my-wp' ), $hmwp_version ) );
+                                        } elseif ( $hmwp_index === 1 ) {
+                                            /* translators: %s: plugin version number. */
+                                            echo esc_html( sprintf( __( '%s (previous stable version)', 'hide-my-wp' ), $hmwp_version ) );
+                                        } else {
+                                            echo esc_html( $hmwp_version );
+                                        }
+                                    ?></option>
+                                <?php } ?>
+                            </select>
+                            <input type="submit" class="btn rounded-0 btn-default mb-2" name="hmwp_backup" onclick="return confirm('<?php echo esc_js( __( "Install the selected version? Older versions don't have the latest security updates.", 'hide-my-wp' ) ); ?>');" value="<?php echo esc_attr__( 'Install Version', 'hide-my-wp' ); ?>"/>
                         </form>
                     </div>
                 </div>

@@ -3046,7 +3046,7 @@ class HMWP_Models_Rewrite {
 		}
 
 		// Replace custom classes
-		$hmwp_text_mapping = json_decode( HMWP_Classes_Tools::getOption( 'hmwp_text_mapping' ), true );
+		$hmwp_text_mapping = HMWP_Classes_Tools::getTextMapping();
 		if ( isset( $hmwp_text_mapping['from'] ) && ! empty( $hmwp_text_mapping['from'] ) && isset( $hmwp_text_mapping['to'] ) && ! empty( $hmwp_text_mapping['to'] ) ) {
 
 			foreach ( $hmwp_text_mapping['to'] as &$value ) {
