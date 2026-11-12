@@ -86,7 +86,7 @@ class HMWP_Classes_Tools {
 
 		// Add the required options for the remote calls
 		add_filter( 'puc_request_info_options-hide-my-wp', array( $this, 'add_remote_options' ) );
-		add_filter( 'hmwp_wpcall_options', array( $this, 'add_remote_options' ) );
+		add_filter( 'hmwp_wpcall_options', array( $this, 'add_remote_options' ), 10, 2 );
 
 	}
 
@@ -703,6 +703,9 @@ class HMWP_Classes_Tools {
 				set_transient( 'hmwp_geoip_download', 1 );
 			}
 
+			// Older versions gave a page named "login" the custom login address; Yoast keeps it until rebuilt
+			set_transient( 'hmwp_refresh_login_page', 1, DAY_IN_SECONDS );
+
 			// Update the login paths on Cloud when the plugin is updated
 			self::sendLoginPathsApi();
 
@@ -1031,6 +1034,39 @@ class HMWP_Classes_Tools {
 		// /wp-login.php, /xmlrpc.php, etc. to skip the firewall.
 		if ( HMWP_Classes_Tools::getValue( 'rest_route' ) <> '' ) {
 			if ( $path == '/' || preg_match( '#/index\.php$#', $path ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * MCP sign-in for AI assistants: OAuth authorize with PKCE, as the MCP spec requires
+	 *
+	 * @return bool
+	 */
+	public static function isMcpAuthorizeRequest() {
+		return self::getValue( 'response_type' ) == 'code' && self::getValue( 'client_id' ) && self::getValue( 'code_challenge' ) && self::getValue( 'code_challenge_method' ) == 'S256';
+	}
+
+	/**
+	 * MCP server path on the REST API (WordPress MCP Adapter, AI Engine, WordPress MCP and similar).
+	 * The MCP endpoint checks access itself; clients first call it without a token to find the sign-in.
+	 *
+	 * @param string $url Request path
+	 *
+	 * @return bool
+	 */
+	public static function isMcpRestRequest( $url ) {
+		// No dot segments, so /wp-json/mcp/../wp/v2/users can't use the exception
+		if ( preg_match( '#/\.{1,2}(/|$)#', str_replace( '\\', '/', rawurldecode( rawurldecode( (string) $url ) ) ) ) ) {
+			return false;
+		}
+
+		$prefixes = array_unique( array( 'wp-json', self::getOption( 'hmwp_wp-json' ) ) );
+		foreach ( $prefixes as $prefix ) {
+			if ( $prefix && preg_match( '#^' . preg_quote( home_url( $prefix, 'relative' ), '#' ) . '/(?:[a-z0-9_-]+/)*(mcp|wpmcp)(/|$)#i', $url ) ) {
 				return true;
 			}
 		}
@@ -1564,15 +1600,56 @@ class HMWP_Classes_Tools {
 	}
 
 	/**
+	 * Whether a URL points at the account server (or the AI endpoint, which a
+	 * staging site may move with the hmwp_ai_api filter).
+	 *
+	 * @param  string  $url  The request URL.
+	 *
+	 * @return bool
+	 */
+	public static function isAccountUrl( $url ) {
+		$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+		if ( $host === '' ) {
+			return false;
+		}
+
+		$trusted = array( _HMWP_API_SITE_, _HMWP_ACCOUNT_SITE_, apply_filters( 'hmwp_ai_api', _HMWP_API_SITE_ ) );
+		foreach ( $trusted as $site ) {
+			if ( $host === strtolower( (string) wp_parse_url( $site, PHP_URL_HOST ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Merge and set default remote options.
 	 *
 	 * @param  array  $options  Custom options to merge with the default remote options.
 	 *
 	 * @return array The merged options array.
 	 */
-	public function add_remote_options( $options ) {
-		return array_replace_recursive( array(
+	public function add_remote_options( $options, $url = null ) {
+
+		// The licence and account tokens only go to the account server. Third
+		// party calls (e.g. the QUIC.cloud IP list) get the old defaults and no
+		// headers. The update checker passes no URL; it only calls the account server.
+		if ( $url !== null && ! self::isAccountUrl( $url ) ) {
+			return array_replace_recursive( array(
 				'sslverify' => _HMWP_CHECK_SSL_,
+				'method'    => 'GET',
+				'timeout'   => 10,
+			), $options );
+		}
+
+		return array_replace_recursive( array(
+				// Always verify the account server's certificate. This used to follow
+				// whether this site runs on HTTPS, which says nothing about the remote
+				// server: on an HTTP-only site anyone on the network path could answer
+				// for the account server, and its replies set plugin options and the
+				// update download URL.
+				'sslverify' => true,
 				'method'    => 'GET',
 				'timeout'   => 10,
 				'headers'   => array(
@@ -1596,7 +1673,7 @@ class HMWP_Classes_Tools {
 	 */
 	public static function hmwp_wpcall( $url, $params, $options ) {
 		// Apply filters to the options array before making the request
-		$options = apply_filters( 'hmwp_wpcall_options', $options );
+		$options = apply_filters( 'hmwp_wpcall_options', $options, $url );
 
 		if ( $options['method'] == 'POST' ) {
 			// Check if the method is POST and handle accordingly

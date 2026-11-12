@@ -662,8 +662,8 @@ class HMWP_Models_Twofactor {
             return true;
         }
 
-        // Require fresh nonce if valid, but the login fails.
-        if ( $delete ) {
+        // Require a fresh nonce if it was valid but expired; a wrong nonce from someone else changes nothing
+        if ( $delete && $hashes_match ) {
             $this->deleteLoginNonce( $user_id );
         }
 

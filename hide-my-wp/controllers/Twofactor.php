@@ -41,6 +41,9 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 
 		//Add login & validation hooks
 		add_action( 'wp_login', array( $this, 'hookLogin' ), 10, 2 );
+
+		// XML-RPC never reaches wp_login, so check the second factor on authentication
+		add_filter( 'authenticate', array( $this, 'hookXmlrpcAuthenticate' ), PHP_INT_MAX - 1, 3 );
 		add_action( 'set_auth_cookie', array( $this->model, 'collectAuthCookieTokens' ) );
 		add_action( 'set_logged_in_cookie', array( $this->model, 'collectAuthCookieTokens' ) );
 		add_action( 'init', array( $this->model, 'validateTwoFactor' ) );
@@ -268,6 +271,34 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 
 		$this->model->showTwoFactorLogin( $user );
 		exit();
+	}
+
+	/**
+	 * Refuse an XML-RPC login with the account password when the user has 2FA set up
+	 *
+	 * @param WP_User|WP_Error|null $user     The authenticated user.
+	 * @param string                $username The username.
+	 * @param string                $password The password.
+	 *
+	 * @return WP_User|WP_Error|null
+	 * @throws Exception
+	 */
+	public function hookXmlrpcAuthenticate( $user, $username = '', $password = '' ) {
+
+		if ( ! ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) || ! ( $user instanceof WP_User ) || (string) $password === '' ) {
+			return $user;
+		}
+
+		// Only the account password: application passwords and plugin tokens are left to work
+		if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
+			return $user;
+		}
+
+		if ( $this->isWhitelistedVisitor() || ! $this->model->hasConfiguredTwoFactor( $user ) ) {
+			return $user;
+		}
+
+		return new WP_Error( 'hmwp_2fa_required', esc_html__( 'This account uses two-factor authentication. Use an application password to sign in from apps.', 'hide-my-wp' ) );
 	}
 
 	/**

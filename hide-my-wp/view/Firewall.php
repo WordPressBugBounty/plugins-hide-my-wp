@@ -613,6 +613,17 @@ if ( ! isset( $view ) ) {
                         </div>
 
                         <div class="col-sm-12 row py-3 mx-0 my-3">
+                            <div class="col-md-4 p-0 font-weight-bold">
+								<?php echo esc_html__( 'Visitor IP Header', 'hide-my-wp' ); ?>:
+                                <div class="small text-black-50"><?php echo esc_html__( 'Only for sites behind their own proxy or load balancer. Leave it empty if you are not sure.', 'hide-my-wp' ) ?></div>
+                            </div>
+                            <div class="col-md-8 p-0 input-group input-group pl-2">
+                                <input type="text" class="form-control" name="trusted_ip_header" id="trusted_ip_header" value="<?php echo esc_attr( str_replace( '_', '-', preg_replace( '/^HTTP_/', '', (string) HMWP_Classes_Tools::getOption( 'trusted_ip_header' ) ) ) ) ?>" placeholder="X-Real-IP" />
+                                <div class="small text-black-50 col-md-12 pt-2 px-0"><?php echo esc_html__( 'The header your proxy fills with the visitor IP, for example X-Real-IP. Set it only when every visit goes through that proxy, otherwise visitors can send a fake IP.', 'hide-my-wp' ) ?></div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-12 row py-3 mx-0 my-3">
                             <div class="col-md-4 p-0 font-weight-bold ">
 								<?php echo esc_html__( 'Whitelist Paths', 'hide-my-wp' ); ?>:
                                 <div class="small text-black-50"><?php echo esc_html__( 'Add URL paths that should never be blocked by the firewall.', 'hide-my-wp' ) ?></div>

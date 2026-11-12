@@ -27,8 +27,11 @@ class HMWP_Models_Compatibility_MainWP extends HMWP_Models_Compatibility_Abstrac
 					if ( HMWP_Classes_Tools::searchInString( $agent, $agents ) ) {
 
 						//The user agent proves nothing on its own, require the signed request
+						// Only a POST to a site that is connected to a MainWP dashboard
 						if ( HMWP_Classes_Tools::getValue( 'mainwpsignature' ) <> '' &&
-						     HMWP_Classes_Tools::getValue( 'function' ) <> '' ) {
+						     HMWP_Classes_Tools::getValue( 'function' ) <> '' &&
+						     isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] &&
+						     get_option( 'mainwp_child_pubkey' ) ) {
 							add_filter( 'hmwp_process_hide_urls', '__return_false' );
 							add_filter( 'hmwp_process_init', '__return_false' );
 						}

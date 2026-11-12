@@ -466,7 +466,8 @@ class HMWP_Models_Uniquelogin {
 	 */
 	public function loginHtml( $error_msg = '' ) {
 
-		$redirect_to = HMWP_Classes_Tools::getValue( 'redirect_to', admin_url() );
+		// Front-end pages don't print the admin address; the server picks the redirect after the magic login
+		$redirect_to = HMWP_Classes_Tools::getValue( 'redirect_to', did_action( 'login_init' ) ? admin_url() : '' );
         $button_text = HMWP_Classes_Tools::getOption( 'hmwp_uniquelogin_title' );
 
 		if ( $page_name = $this->isWooCommerceLoginPage() ) {
@@ -490,6 +491,8 @@ class HMWP_Models_Uniquelogin {
             </div>
         </div>
         <div id="unique_login_form">
+            <?php // Disabled until the script moves it out of the host form, so its fields never post with a password login ?>
+            <fieldset disabled style="border: 0; margin: 0; padding: 0; min-width: 0;">
             <p style="font-size: 1rem; font-weight: 600; margin: 10px 0;">
                 <?php echo esc_html( $button_text ); ?>
             </p>
@@ -504,6 +507,7 @@ class HMWP_Models_Uniquelogin {
                 <input type="submit" id="unique_login_submit" class="button button-primary button-large" value="<?php echo esc_attr__( 'Send', 'hide-my-wp' ); ?>"/>
                 <input type="button" id="unique_login_cancel" class="button button-secondary button-large" value="< <?php echo esc_attr__( 'Back', 'hide-my-wp' ); ?>"/>
             </p>
+            </fieldset>
         </div>
         <style>
             form #unique_login_wrap {
@@ -561,13 +565,29 @@ class HMWP_Models_Uniquelogin {
         </style>
         <script>
             (function () {
-                const unique_login_form = document.querySelector('#unique_login_form'),
-                    wrap = document.querySelector('#unique_login_wrap'),
-                    button = document.querySelector('#unique_login_button');
+                /* This script's own block, so two login forms on one page each keep their link */
+                var unique_login_form = null, wrap = null, el = document.currentScript ? document.currentScript.previousElementSibling : null;
+                while (el && el.id !== 'unique_login_form') {
+                    el = el.previousElementSibling;
+                }
+                if (el) {
+                    unique_login_form = el;
+                    wrap = el.previousElementSibling;
+                } else {
+                    unique_login_form = document.querySelector('#unique_login_form');
+                    wrap = document.querySelector('#unique_login_wrap');
+                }
 
-                var login_form = document.querySelector('#loginform');
-                if (document.querySelector('.woocommerce-form') !== null) {
-                    login_form = document.querySelector('.woocommerce-form');
+                if (wrap === null || unique_login_form === null || wrap.id !== 'unique_login_wrap') {
+                    return;
+                }
+
+                var button = wrap.querySelector('#unique_login_button');
+
+                /* The form this block was printed in: core, WooCommerce or a membership plugin login form */
+                var login_form = wrap.closest('form');
+                if (login_form === null) {
+                    login_form = document.querySelector('.woocommerce-form') || document.querySelector('#loginform');
                 }
 
                 if (login_form !== null) {
@@ -575,12 +595,13 @@ class HMWP_Models_Uniquelogin {
 
                     login_form.parentElement.insertBefore(unique_login_form, login_form);
                     unique_login_form.innerHTML = '<form id="magicloginform" method="post">' + unique_login_form.innerHTML + '</form>';
+                    unique_login_form.querySelector('fieldset').disabled = false;
 
                     button.addEventListener("click", function () {
                         login_form.style.display = 'none';
                         unique_login_form.style.display = 'block';
 
-                        document.querySelector('#unique_login_cancel').addEventListener("click", function () {
+                        unique_login_form.querySelector('#unique_login_cancel').addEventListener("click", function () {
                             unique_login_form.style.display = 'none';
                             login_form.style.display = 'block';
                         });

@@ -28,6 +28,43 @@ class HMWP_Models_Firewall_Bots {
 	}
 
 	/**
+	 * Check that a visitor claiming to be a search engine really comes from it
+	 * (reverse DNS on the search engine's domain, then forward DNS back to the same IP)
+	 *
+	 * @return bool
+	 * @throws Exception
+	 */
+	public function isVerifiedSearchEngineBot() {
+
+		if ( ! $this->isSearchEngineBot() ) {
+			return false;
+		}
+
+		$ip = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' )->getIp();
+
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			return false;
+		}
+
+		$cache = get_transient( 'hmwp_bot_' . md5( $ip ) );
+		if ( $cache !== false ) {
+			return ( $cache === 'yes' );
+		}
+
+		$verified = false;
+		$host     = @gethostbyaddr( $ip ); //phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+		if ( $host && $host !== $ip && preg_match( '/\.(googlebot\.com|google\.com|googleusercontent\.com|search\.msn\.com|crawl\.yahoo\.net|yandex\.(ru|net|com)|baidu\.(com|jp)|applebot\.apple\.com|petalsearch\.com|duckduckgo\.com)$/i', $host ) ) {
+			$ips      = @gethostbynamel( $host ); //phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			$verified = ( is_array( $ips ) && in_array( $ip, $ips, true ) );
+		}
+
+		set_transient( 'hmwp_bot_' . md5( $ip ), $verified ? 'yes' : 'no', DAY_IN_SECONDS );
+
+		return $verified;
+	}
+
+	/**
 	 * Determines if the current user agent is a search engine bot by checking against patterns for Google, Yandex, and other bots.
 	 *
 	 * @return bool True if the user agent matches any known search engine bot patterns, false otherwise.

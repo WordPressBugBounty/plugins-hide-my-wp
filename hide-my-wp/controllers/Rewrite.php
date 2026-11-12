@@ -34,12 +34,61 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
             return;
         }
 
+		// Disable XML-RPC Access works on its own, whatever the path settings and server rules
+		$this->initXmlrpcBlock();
+
 		// Init the main hooks
 		// Start HMWP path process
 		$this->initHooks();
 
 		// Start Tweaks Hooks
 		$this->initTweaks();
+	}
+
+	/**
+	 * Block XML-RPC when "Disable XML-RPC Access" is on
+	 *
+	 * @return void
+	 */
+	public function initXmlrpcBlock() {
+		if ( ! HMWP_Classes_Tools::getOption( 'hmwp_disable_xmlrpc' ) ) {
+			return;
+		}
+
+		// No pingback header on the pages
+		add_filter( 'wp_headers', function ( $headers ) {
+			unset( $headers['X-Pingback'] );
+
+			return $headers;
+		}, PHP_INT_MAX );
+
+		if ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) {
+			add_action( 'plugins_loaded', array( $this, 'blockXmlrpcRequest' ), 1 );
+		}
+	}
+
+	/**
+	 * Refuse the XML-RPC endpoint, except for the Safe URL and whitelisted IPs
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function blockXmlrpcRequest() {
+		if ( HMWP_Classes_Tools::calledSafeUrl() ) {
+			return;
+		}
+
+		/** @var HMWP_Models_Firewall_Server $server */
+		$server = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' );
+		if ( ! $server->isUnknownIp() && HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $server->getIp() ) ) {
+			return;
+		}
+
+		// No XML-RPC methods, even if something stops the 404 below
+		add_filter( 'xmlrpc_enabled', '__return_false', PHP_INT_MAX );
+		add_filter( 'xmlrpc_methods', '__return_empty_array', PHP_INT_MAX );
+
+		$this->model->getNotFound( untrailingslashit( strtok( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ), '?' ) ) ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 	}
 
 	/**

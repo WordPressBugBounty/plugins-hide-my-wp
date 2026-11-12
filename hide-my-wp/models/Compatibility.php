@@ -765,8 +765,8 @@ class HMWP_Models_Compatibility {
 						$avada_path = $fusion_url = false;
 						$themes     = HMWP_Classes_Tools::getOption( 'hmwp_themes' );
 
-						foreach ( $themes['from'] as $index => $theme ) {
-							if ( strpos( $theme, 'Avada' ) !== false ) {
+						foreach ( ( isset( $themes['from'] ) ? (array) $themes['from'] : array() ) as $index => $theme ) {
+							if ( strpos( $theme, 'Avada' ) !== false && isset( $themes['to'][ $index ] ) ) {
 								$avada_path = trim( $themes['to'][ $index ], '/' );
 							}
 						}

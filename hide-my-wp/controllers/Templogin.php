@@ -12,6 +12,76 @@ defined( 'ABSPATH' ) || die( 'Cheating uh?' );
 
 class HMWP_Controllers_Templogin extends HMWP_Classes_FrontController {
 
+	public function __construct() {
+		parent::__construct();
+
+		// Temporary accounts sign in only with their login link, and expire on every kind of request (REST, AJAX, XML-RPC)
+		add_filter( 'wp_authenticate_user', array( $this, 'blockPasswordLogin' ), 99 );
+		add_filter( 'allow_password_reset', array( $this, 'allowPasswordReset' ), 99, 2 );
+		add_filter( 'wp_is_application_passwords_available_for_user', array( $this, 'allowAppPasswords' ), 99, 2 );
+		add_filter( 'determine_current_user', array( $this, 'checkCurrentUser' ), 99 );
+	}
+
+	/**
+	 * Refuse a password login for a temporary account
+	 *
+	 * @param WP_User|WP_Error $user The user.
+	 *
+	 * @return WP_User|WP_Error
+	 */
+	public function blockPasswordLogin( $user ) {
+		if ( $user instanceof WP_User && $this->model->isValidTempLogin( $user->ID ) ) {
+			return new WP_Error( 'hmwp_temp_login', esc_html__( 'Temporary accounts sign in with their login link.', 'hide-my-wp' ) );
+		}
+
+		return $user;
+	}
+
+	/**
+	 * No password reset for temporary accounts
+	 *
+	 * @param bool $allow   Whether the reset is allowed.
+	 * @param int  $user_id The user ID.
+	 *
+	 * @return bool
+	 */
+	public function allowPasswordReset( $allow, $user_id ) {
+		return $this->model->isValidTempLogin( $user_id ) ? false : $allow;
+	}
+
+	/**
+	 * No application passwords for temporary accounts
+	 *
+	 * @param bool    $available Whether they are available.
+	 * @param WP_User $user      The user.
+	 *
+	 * @return bool
+	 */
+	public function allowAppPasswords( $available, $user ) {
+		return ( $user instanceof WP_User && $this->model->isValidTempLogin( $user->ID ) ) ? false : $available;
+	}
+
+	/**
+	 * Sign out an expired temporary account wherever its session or token is used
+	 *
+	 * @param int|false $user_id The user WordPress found for this request.
+	 *
+	 * @return int|false
+	 */
+	public function checkCurrentUser( $user_id ) {
+		if ( $user_id && $this->model->isValidTempLogin( $user_id ) ) {
+			$this->model->startCountdown( $user_id );
+
+			if ( $this->model->isExpired( $user_id ) ) {
+				WP_Session_Tokens::get_instance( $user_id )->destroy_all();
+
+				return 0;
+			}
+		}
+
+		return $user_id;
+	}
+
 	/**
 	 * Fires on the WP init hook (admin-side).
 	 *

@@ -896,7 +896,8 @@ class HMWP_Models_Files {
 					if ( ! HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) {
 						//if file is loaded through WordPress rewrites and not through config file
 						if ( wp_parse_url( $url ) && in_array( $ext, array( 'png', 'jpg', 'jpeg', 'webp', 'gif', 'css', 'js', 'svg', 'woff', 'woff2' ) ) ) {
-							if ( stripos( $new_url, 'wp-admin' ) === false ) {
+							// Only an admin's own visit may switch on the safe fallback, never a visitor's request
+							if ( stripos( $new_url, 'wp-admin' ) === false && function_exists( 'current_user_can' ) && HMWP_Classes_Tools::userCan( HMWP_CAPABILITY ) ) {
 								//if it's a valid URL and not from admin
 								//add the url in the WP rewrite list
 								$mappings = (array) HMWP_Classes_Tools::getOption( 'file_mappings' );

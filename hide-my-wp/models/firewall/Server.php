@@ -49,9 +49,12 @@ class HMWP_Models_Firewall_Server {
 			}
 		}
 
-		// A private REMOTE_ADDR with no usable header is a proxy, not the server calling itself
+		// No public IP found: a private REMOTE_ADDR, or a loopback one with forwarding headers, is a proxy
+		// hiding the visitor, not the server calling itself
 		$remote = $ips['REMOTE_ADDR'] ?? '';
-		$this->unknown = ( $this->ip === '127.0.0.1' && $remote !== '' && $remote !== '::1' && strpos( $remote, '127.' ) !== 0 );
+		$loopback = ( $remote === '::1' || strpos( $remote, '127.' ) === 0 );
+		$forwarded = ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) || ! empty( $_SERVER['HTTP_X_REAL_IP'] ) || ! empty( $_SERVER['HTTP_FORWARDED'] ) || ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ); //phpcs:ignore
+		$this->unknown = ( $this->ip === '127.0.0.1' && $remote !== '' && ( ! $loopback || $forwarded ) );
 
 		return $this->ip;
 	}
@@ -132,7 +135,13 @@ class HMWP_Models_Firewall_Server {
 			return false;
 		}
 
-		return $this->getCleanIp( $ip );
+		// A forwarded header never gives a private or loopback address, only REMOTE_ADDR can
+		$ip = $this->getCleanIp( $ip );
+		if ( $ip && $header !== 'REMOTE_ADDR' && ( $this->isPrivate( $ip ) || $ip === '::1' ) ) {
+			return false;
+		}
+
+		return $ip;
 	}
 
 	/**
@@ -159,11 +168,17 @@ class HMWP_Models_Firewall_Server {
 				$headers[] = 'HTTP_CF_CONNECTING_IP';
 			}
 
-			// Same-host reverse proxy (nginx/Apache -> PHP): REMOTE_ADDR is loopback/private.
-			if ( $this->isPrivate( $remote ) || $remote === '::1' ) {
+			// Same-host reverse proxy (nginx/Apache -> PHP): REMOTE_ADDR is loopback.
+			// Other private proxies pass client headers unchanged, so they need the admin's trusted header.
+			if ( $remote === '::1' || strpos( $remote, '127.' ) === 0 ) {
 				$headers[] = 'HTTP_X_REAL_IP';
-				$headers[] = 'HTTP_X_MIDDLETON_IP';
 			}
+		}
+
+		// QUIC.cloud CDN edge: the visitor is in X-Forwarded-For. Its own service calls send none,
+		// so they keep the QUIC.cloud IP and its whitelist
+		if ( $remote && ( $quic = get_transient( 'hmwp_lispeed_ips' ) ) && in_array( $remote, (array) json_decode( $quic, true ), true ) ) {
+			$headers[] = 'HTTP_X_FORWARDED_FOR';
 		}
 
 		// Allow site owners to refine the trusted headers for non-standard setups.

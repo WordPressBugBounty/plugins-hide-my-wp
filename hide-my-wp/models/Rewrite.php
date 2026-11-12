@@ -1048,6 +1048,24 @@ class HMWP_Models_Rewrite {
 	 **************************************************/
 
 	/**
+	 * Check if a real page uses the /login slug (membership plugins like Ultimate Member)
+	 *
+	 * @param string $path Last segment of the URL path
+	 *
+	 * @return bool
+	 */
+	private function isLoginPage( $path ) {
+		if ( $path !== 'login' || ! function_exists( 'get_page_by_path' ) || ! did_action( 'plugins_loaded' ) ) {
+			return false;
+		}
+
+		// Keep the site's own login page; no static cache, a plugin may create the page in this request
+		$page = get_page_by_path( 'login' );
+
+		return ( $page && $page->post_status === 'publish' );
+	}
+
+	/**
 	 * Filters the home URL.
 	 *
 	 * @param string $url The complete site URL including scheme and path.
@@ -1086,7 +1104,7 @@ class HMWP_Models_Rewrite {
 
 		if ( HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
 
-			if ( in_array( $path, array( 'login', 'wp-login', 'wp-login.php' ) ) ) {
+			if ( in_array( $path, array( 'login', 'wp-login', 'wp-login.php' ) ) && ! $this->isLoginPage( $path ) ) {
 
 				// Check if disable and do not redirect to log in
 				if ( HMWP_Classes_Tools::calledSafeUrl( ) ) {
@@ -1177,7 +1195,7 @@ class HMWP_Models_Rewrite {
 
 		if ( HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
 
-			if ( in_array( $path, array( 'login', 'wp-login', 'wp-login.php' ) ) ) {
+			if ( in_array( $path, array( 'login', 'wp-login', 'wp-login.php' ) ) && ! $this->isLoginPage( $path ) ) {
 
 				// Check if disable and do not redirect to log in
 				if ( HMWP_Classes_Tools::calledSafeUrl( ) ) {
@@ -2193,7 +2211,8 @@ class HMWP_Models_Rewrite {
 
 					/////////////////////////////////////////////////////
 					// Disable rest api
-					if ( HMWP_Classes_Tools::getOption( 'hmwp_disable_rest_api' ) ) {
+					// MCP server calls carry their own token and stay reachable for AI assistants
+					if ( HMWP_Classes_Tools::getOption( 'hmwp_disable_rest_api' ) && ! HMWP_Classes_Tools::isMcpRestRequest( $url ) ) {
 						$paths = array(
 							home_url( 'wp-json', 'relative' ),
 							home_url( HMWP_Classes_Tools::getOption( 'hmwp_wp-json' ), 'relative' ),
@@ -2607,11 +2626,6 @@ class HMWP_Models_Rewrite {
 			//emulate other CMS on request
 			$content = $this->emulateCMS( $content );
 
-			//for debug purpose
-			if ( HMWP_Classes_Tools::getValue( 'hmwp_debug' ) ) {
-				$content .= '<pre>' . print_r( $this->_replace, true ) . '</pre>'; //phpcs:ignore
-			}
-
 			//Set the replacement action to prevent multiple calls
 			$this->_replaced = true;
 		}
@@ -2856,6 +2870,11 @@ class HMWP_Models_Rewrite {
 		}
 
 		extract( $base_parts );
+
+		// Keep a custom port (example.com:8080)
+		if ( ! empty( $port ) ) {
+			$host .= ':' . $port;
+		}
 
 		//add the scheme to the URL
 		if ( strpos( $rel, "//" ) === 0 ) {
@@ -3141,19 +3160,24 @@ class HMWP_Models_Rewrite {
 
 			$admin_url = preg_quote( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ), '#' );
 
-			// "\/wp-*.php" entry: element + trailing comma, then leading comma + element (for the last element in the array)
-			$find[]    = '#"[^"]*\\\\?/wp\-\*\.php"\s*,#i';
-			$replace[] = '';
+			// "\/wp-*.php" and "\/wp-admin\/*" entries, each with one adjacent comma
+			$rules = array(
+				'#"[^"]*\\\\?/wp\-\*\.php"\s*,#i'                         => '',
+				'#,\s*"[^"]*\\\\?/wp\-\*\.php"#i'                         => '',
+				'#"[^"]*\\\\?/' . $admin_url . '\\\\?/\*"\s*,#i'          => '',
+				'#,\s*"[^"]*\\\\?/' . $admin_url . '\\\\?/\*"#i'          => '',
+			);
 
-			$find[]    = '#,\s*"[^"]*\\\\?/wp\-\*\.php"#i';
-			$replace[] = '';
+			// Only inside the speculation rules script, never in the page text (comments, names)
+			$cleaned = preg_replace_callback( '#(<script\b[^>]*\btype=["\']?speculationrules["\']?[^>]*>)([\s\S]*?)(</script\s*>)#i', function ( $m ) use ( $rules ) {
+				$json = preg_replace( array_keys( $rules ), array_values( $rules ), $m[2] );
 
-			// "\/wp-admin\/*" entry: element + trailing comma, then leading comma + element
-			$find[]    = '#"[^"]*\\\\?/' . $admin_url . '\\\\?/\*"\s*,#i';
-			$replace[] = '';
+				return $m[1] . ( $json !== null ? $json : $m[2] ) . $m[3];
+			}, $content );
 
-			$find[]    = '#,\s*"[^"]*\\\\?/' . $admin_url . '\\\\?/\*"#i';
-			$replace[] = '';
+			if ( $cleaned !== null ) {
+				$content = $cleaned;
+			}
 
 		}
 

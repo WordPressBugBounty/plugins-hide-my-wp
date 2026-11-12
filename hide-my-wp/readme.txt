@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.18
+Stable tag: 7.0.19
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -303,6 +303,23 @@ WP Ghost Premium includes crawler controls, but blocking search crawlers such as
 
 
 == Changelog ==
+
+= 7.0.19 (12 Nov 2026) =
+
+* Update - Security update: two-factor login also covers XML-RPC sign-ins when Disable XML-RPC Access is off
+* Update - Security update: safer output rewriting for page content
+* Update - Security update: removed a debug output
+* Update - AI assistant sign-ins work with any MCP plugin on the common path
+* Update - Security update: visitor IP checks behind proxies and CDNs
+* Update - Security update: captcha and lockout on every login form
+* Update - Security update: temporary logins and passkey sign-ins
+* Update - Security update: activity log, settings restore and WooCommerce downloads
+* New - Visitor IP Header option for sites behind their own proxy
+* Update - Compatibility with membership plugins, Elementor Pro login and Tutor LMS
+* Update - Compatibility with SiteGuard, MemberPress and Theme My Login
+* Update - Magic Link works next to membership plugin login forms
+* Update - Pages named login keep their own address in SEO plugins
+* Update - Translations cover the new texts
 
 = 7.0.18 (9 Nov 2026) =
 

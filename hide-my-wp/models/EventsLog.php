@@ -171,6 +171,9 @@ class HMWP_Models_EventsLog extends HMWP_Models_Firewall_Threats {
 			$posts = array_merge( $posts, array_intersect_key( (array) $_POST, $allow_keys ) ); //phpcs:ignore
 		}
 
+		// Who did it, from where, is never taken from the request
+		unset( $posts['ip'], $posts['referer'], $posts['username'], $posts['role'] );
+
 		if ( ! function_exists( 'wp_get_current_user' ) ) {
 			include_once ABSPATH . WPINC . '/pluggable.php';
 		}
@@ -207,8 +210,6 @@ class HMWP_Models_EventsLog extends HMWP_Models_Firewall_Threats {
 			$username = '';
 			if ( isset( $posts['log'] ) ) {
 				$username = sanitize_user( (string) $posts['log'], true );
-			} elseif ( isset( $posts['username'] ) ) {
-				$username = sanitize_user( (string) $posts['username'], true );
 			}
 
 			if ( $username !== '' && function_exists( 'username_exists' ) ) {
@@ -249,7 +250,7 @@ class HMWP_Models_EventsLog extends HMWP_Models_Firewall_Threats {
 		);
 
 		// Merge all the data
-		$data = array_merge( $data, (array) $values, (array) $posts );
+		$data = array_merge( (array) $posts, (array) $values, $data );
 
 		// Sanitize/cap values to avoid massive payloads
 		$data = $this->sanitizeLogData( $data );

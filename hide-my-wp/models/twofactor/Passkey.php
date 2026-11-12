@@ -305,6 +305,14 @@ class HMWP_Models_Twofactor_Passkey extends HMWP_Models_Twofactor_Abstract {
             $clientJson = hmwp_base64url_decode( $assert['response']['clientDataJSON'] );
             $client     = json_decode( $clientJson, true );
 
+            // The answer must sign the challenge this server issued for this login, once
+            $issued = HMWP_Classes_Tools::getUserMeta( '_hmwp_passkey_challenge', $user->ID );
+            HMWP_Classes_Tools::deleteUserMeta( '_hmwp_passkey_challenge', $user->ID );
+            if ( ! is_array( $client ) || ( $client['type'] ?? '' ) !== 'webauthn.get' || ! is_array( $issued ) || empty( $issued['c'] ) ||
+                 (int) ( $issued['t'] ?? 0 ) < time() || ! hash_equals( (string) $issued['c'], (string) ( $client['challenge'] ?? '' ) ) ) {
+                return false;
+            }
+
             $originHost = wp_parse_url( $client['origin'], PHP_URL_HOST );
             if ( ! hash_equals( $originHost, $this->rpId ) ) {
                 return false;
@@ -333,7 +341,8 @@ class HMWP_Models_Twofactor_Passkey extends HMWP_Models_Twofactor_Abstract {
             // update counter
             $counter = unpack( 'N', substr( $authData, 33, 4 ) )[1];
             $prev    = (int) ( $cred['counter'] ?? 0 );
-            if ( $counter < $prev ) {
+            // A signature counter in use must grow with every login
+            if ( ( $counter > 0 || $prev > 0 ) && $counter <= $prev ) {
                 return false;
             }
 
@@ -515,6 +524,9 @@ class HMWP_Models_Twofactor_Passkey extends HMWP_Models_Twofactor_Abstract {
         $creds = HMWP_Classes_Tools::getUserMeta( self::META_CREDENTIALS, $user_id );
 
         $challenge = $this->randomB64u( 32 );
+
+        // Keep the challenge on the server so an old signed answer can't be replayed (single use, 2 minutes)
+        HMWP_Classes_Tools::saveUserMeta( '_hmwp_passkey_challenge', array( 'c' => $challenge, 't' => time() + 120 ), $user_id );
 
         $allow = [];
         foreach ( $creds as $c ) {

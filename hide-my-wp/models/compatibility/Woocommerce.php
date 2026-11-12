@@ -93,9 +93,10 @@ class HMWP_Models_Compatibility_Woocommerce extends HMWP_Models_Compatibility_Ab
                 ) ) &&
                 preg_match( '#/[^/]*(paypal|stripe|square|authorize[_-]?net|braintree)#i', $uri ) );
 
-        // WooCommerce secure downloads, all four parameters have to carry a value
-        $is_download = ( HMWP_Classes_Tools::getValue( 'download_file' ) <> '' &&
-                         HMWP_Classes_Tools::getValue( 'order' ) <> '' &&
+        // WooCommerce secure downloads: on the site root, a product ID and a real order key
+        $is_download = ( $this->isWooRootRequest( $uri ) &&
+                         ctype_digit( (string) HMWP_Classes_Tools::getValue( 'download_file' ) ) &&
+                         strpos( (string) HMWP_Classes_Tools::getValue( 'order' ), 'wc_order_' ) === 0 &&
                          HMWP_Classes_Tools::getValue( 'uid' ) <> '' &&
                          HMWP_Classes_Tools::getValue( 'key' ) <> '' );
 

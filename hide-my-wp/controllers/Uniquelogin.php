@@ -12,6 +12,12 @@ defined( 'ABSPATH' ) || die( 'Cheating uh?' );
 
 class HMWP_Controllers_Uniquelogin extends HMWP_Classes_FrontController {
 
+	/** @var bool A magic link request was already handled in this request */
+	private $processed = false;
+
+	/** @var false|string Collects the success message for a front-end form instead of a full page */
+	private $inline_notice = false;
+
 	/**
 	 * Constructor. Registers login-form hooks for the unique-login token feature.
 	 *
@@ -130,6 +136,13 @@ class HMWP_Controllers_Uniquelogin extends HMWP_Classes_FrontController {
 
 				if ( $do_login ) {
 
+					// Same account checks a password login runs (pending approval, banned, spam)
+					$wp_user = get_user_by( 'id', $user->ID );
+					$allowed = $wp_user ? apply_filters( 'wp_authenticate_user', $wp_user, '' ) : false;
+					if ( ! $allowed || is_wp_error( $allowed ) || ( is_multisite() && is_user_spammy( $wp_user ) ) ) {
+						wp_die( esc_html__( 'Could not login with this user.', 'hide-my-wp' ), esc_html__( 'Temporary Login', 'hide-my-wp' ), array( 'response' => 403 ) );
+					}
+
 					//remove other filters on authenticate
 					remove_all_filters( 'authenticate' );
 					remove_all_actions( 'wp_login_failed' );
@@ -179,7 +192,23 @@ class HMWP_Controllers_Uniquelogin extends HMWP_Classes_FrontController {
 	 *
 	 */
 	public function hookLoginForm() {
-		$this->model->loginHtml();
+		$message = '';
+
+		// A magic link sent from a form outside wp-login.php posts back to the same page
+		if ( ! $this->processed && ! did_action( 'login_init' ) ) {
+			$this->inline_notice = '';
+			$user = $this->hookLogin( false );
+
+			if ( is_wp_error( $user ) ) {
+				$message = $user->get_error_message();
+			} elseif ( $this->inline_notice ) {
+				$message = $this->inline_notice;
+			}
+
+			$this->inline_notice = false;
+		}
+
+		$this->model->loginHtml( wp_strip_all_tags( $message ) );
 	}
 
 	/**
@@ -221,6 +250,7 @@ class HMWP_Controllers_Uniquelogin extends HMWP_Classes_FrontController {
 
 		//If the call is valid
 		if ( $user_email <> '' && $action == 'validate_magic_link' ) {
+			$this->processed = true;
 
 			remove_all_filters( 'authenticate' );
 			remove_all_actions( 'wp_login_failed' );
@@ -271,6 +301,9 @@ class HMWP_Controllers_Uniquelogin extends HMWP_Classes_FrontController {
 							//show notification in woocommerce
 							wc_add_notice( $success );
 							wc_print_notices();
+						} elseif ( $this->inline_notice !== false ) {
+							//show the message inside the front-end form
+							$this->inline_notice = $success;
 						} else {
 							//show notification and stop the authentication process
 							$this->model->showNotices( $success );

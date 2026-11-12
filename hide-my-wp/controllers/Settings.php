@@ -597,6 +597,13 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
                     // Save the rest of the settings
 					$this->model->saveValues( $_POST ); //phpcs:ignore
 
+					// Visitor IP header from the site's own proxy, stored as the PHP server key (X-Real-IP -> HTTP_X_REAL_IP)
+					$ip_header = strtoupper( str_replace( '-', '_', preg_replace( '/[^A-Za-z0-9_-]/', '', (string) HMWP_Classes_Tools::getValue( 'trusted_ip_header', '' ) ) ) );
+					if ( $ip_header !== '' && $ip_header !== 'REMOTE_ADDR' && strpos( $ip_header, 'HTTP_' ) !== 0 ) {
+						$ip_header = 'HTTP_' . $ip_header;
+					}
+					HMWP_Classes_Tools::saveOptions( 'trusted_ip_header', $ip_header === 'REMOTE_ADDR' ? '' : $ip_header );
+
 					// If no change is made on settings, just return
 					if ( ! $this->model->checkOptionsChange() ) {
 						return;
@@ -1000,7 +1007,11 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 						if ( is_array( $options ) && isset( $options['hmwp_ver'] ) ) {
 							foreach ( $options as $key => $value ) {
 								if ( !in_array($key, $tmp_options) ) {
-									HMWP_Classes_Tools::saveOptions( $key, $value );
+									// Only known settings, with the same checks a normal save makes
+									$value = $this->sanitizeRestoreValue( $key, $value );
+									if ( $value !== null ) {
+										HMWP_Classes_Tools::saveOptions( $key, $value );
+									}
 								}
 							}
 
@@ -1328,4 +1339,61 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 		echo '<noscript><style>.tab-panel {display: block;}</style></noscript>';
 	}
 
+
+	/**
+	 * Check a value from a settings backup before it is saved
+	 *
+	 * @param string $key   The option name.
+	 * @param mixed  $value The value from the backup file.
+	 *
+	 * @return mixed|null The value to save, or null to keep the current setting.
+	 */
+	private function sanitizeRestoreValue( $key, $value ) {
+
+		// Unknown settings, or a different type than the plugin uses, are skipped
+		if ( ! array_key_exists( $key, (array) HMWP_Classes_Tools::$options ) ) {
+			return null;
+		}
+
+		$current = HMWP_Classes_Tools::$options[ $key ];
+		if ( is_array( $current ) !== is_array( $value ) ) {
+			return null;
+		}
+
+		/** @var HMWP_Models_Settings $settings */
+		$settings = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' );
+		// Paths go into the server config: same characters and checks as on the Change Paths page
+		if ( in_array( $key, $settings->getValidateKeys(), true ) ) {
+			if ( ! is_string( $value ) || ! preg_match( '/^[a-z0-9\-_\/.]*$/i', $value ) || ! $settings->checkValidName( $key, $value ) || ! $settings->checkValidPath( $key, $value ) ) {
+				return null;
+			}
+
+			return $value;
+		}
+
+		$clean = function ( $item, $is_key = false ) use ( &$clean, $key ) {
+			if ( is_array( $item ) ) {
+				$out = array();
+				foreach ( $item as $k => $v ) {
+					$k = is_string( $k ) ? $clean( $k, true ) : $k;
+					$out[ $k ] = $clean( $v );
+				}
+
+				return $out;
+			}
+
+			if ( ! is_string( $item ) ) {
+				return $item;
+			}
+
+			// Header names stay header names; no line breaks or tags in any value
+			if ( $is_key && $key === 'hmwp_security_headers' ) {
+				return preg_replace( '/[^A-Za-z0-9\-]/', '', $item );
+			}
+
+			return wp_strip_all_tags( str_replace( array( "\r", "\n" ), ' ', $item ) );
+		};
+
+		return $clean( $value );
+	}
 }

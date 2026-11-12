@@ -25,6 +25,17 @@ class HMWP_Models_Settings {
 	private $invalid_names;
 
 	/**
+	 * Get the path settings that need validation
+	 *
+	 * @return array
+	 */
+	public function getValidateKeys() {
+		$this->initValidationFields();
+
+		return (array) $this->validate_keys;
+	}
+
+	/**
 	 * Initialize the validation keys and names
 	 *
 	 * @return void

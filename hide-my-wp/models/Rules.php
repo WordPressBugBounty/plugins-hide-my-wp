@@ -562,6 +562,9 @@ class HMWP_Models_Rules {
 				$rules .= 'location ~ ^/(' . join( '|', $files ) . ') { deny all; }' . PHP_EOL;
 			}
 
+			// This rules file sits in the web root, never serve it
+			$rules .= 'location = ' . $home_root . 'hidemywp.conf { deny all; }' . PHP_EOL;
+
 		} elseif ( HMWP_Classes_Tools::isApache() || HMWP_Classes_Tools::isLitespeed() ) {
 
 
@@ -849,7 +852,7 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(::[0-9999]|%3a%3a[0-9999]|127\.0\.0\.1|ccx|localhost|makefile|pingserver|wwwroot)(/)? [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)?j((\s)+)?a((\s)+)?v((\s)+)?a((\s)+)?s((\s)+)?c((\s)+)?r((\s)+)?i((\s)+)?p((\s)+)?t((\s)+)?(%3a|:) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} ^(/)(old-?site(back)?|old(web)?site(here)?|sites?|staging|undefined)(/)?$ [NC,OR]" . PHP_EOL;
-					$rules .= "RewriteCond %{REQUEST_URI} (/)(filemanager|htdocs|httpdocs|https?|login|mailman|mailto|msoffice|undefined|usage|var|vhosts|webmaster|www)(/) [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} (/)(filemanager|htdocs|httpdocs|https?|mailman|mailto|msoffice|undefined|usage|var|vhosts|webmaster|www)(/) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (\(null\)|\{\\\$itemURL\}|cast\(0x|echo(.*)kae|etc/passwd|eval\(|null(.*)null|open_basedir|self/environ|\+union\+all\+select) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)(db-?|j-?|my(sql)?-?|setup-?|web-?|wp-?)?(admin-?)?(setup-?)?(conf\b|conf(ig)?)(uration)?(\.?bak|\.inc)?(\.inc|\.old|\.php|\.txt) [NC,OR]" . PHP_EOL;
 					$rules .= "RewriteCond %{REQUEST_URI} (/)((.*)crlf-?injection|(.*)xss-?protection|__(inc|jsc)|administrator|author-panel|downloader|(db|mysql)-?admin)(/) [NC,OR]" . PHP_EOL;

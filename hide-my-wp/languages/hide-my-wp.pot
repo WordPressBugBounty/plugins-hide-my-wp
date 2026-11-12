@@ -7273,3 +7273,21 @@ msgstr ""
 
 msgid "WordPress can't write the plugin files on this server."
 msgstr ""
+
+msgid "This account uses two-factor authentication. Use an application password to sign in from apps."
+msgstr ""
+
+msgid "Temporary accounts sign in with their login link."
+msgstr ""
+
+#: view/Firewall.php
+msgid "Visitor IP Header"
+msgstr ""
+
+#: view/Firewall.php
+msgid "Only for sites behind their own proxy or load balancer. Leave it empty if you are not sure."
+msgstr ""
+
+#: view/Firewall.php
+msgid "The header your proxy fills with the visitor IP, for example X-Real-IP. Set it only when every visit goes through that proxy, otherwise visitors can send a fake IP."
+msgstr ""

@@ -58,9 +58,49 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 			add_filter( 'hmwp_option_hmwp_hideajax_paths', '__return_false' );
 		}
 
-		//Check if login auth check is required
-		add_filter( 'hmwp_preauth_check', array( $this, 'fixRecaptchaCheck' ) );
+		// Tutor LMS prints admin addresses in its front-end script data; visitors don't need them
+		if ( HMWP_Classes_Tools::isPluginActive( 'tutor/tutor.php' ) ) {
+			add_filter( 'tutor_localize_data', array( $this, 'fixTutorAdminUrls' ) );
+		}
 
+		// Theme My Login serves its form on /login, which WP Ghost hides; use the custom login path instead
+		if ( HMWP_Classes_Tools::isPluginActive( 'theme-my-login/theme-my-login.php' ) ) {
+			add_filter( 'tml_get_action_slug', array( $this, 'fixThemeMyLoginSlug' ), 10, 2 );
+		}
+
+		//Check if login auth check is required
+		add_filter( 'hmwp_preauth_captcha_check', array( $this, 'fixRecaptchaCheck' ) );
+
+		// Once after an update: rebuild the Yoast data of the "login" page
+		if ( get_transient( 'hmwp_refresh_login_page' ) ) {
+			add_action( 'wp_loaded', array( $this, 'refreshLoginPageSeo' ) );
+		}
+
+	}
+
+	/**
+	 * Rebuild the Yoast SEO data (canonical, schema) of a page named "login" after an update
+	 *
+	 * @return void
+	 */
+	public function refreshLoginPageSeo() {
+		delete_transient( 'hmwp_refresh_login_page' );
+
+		$page = get_page_by_path( 'login' );
+		if ( ! $page || ! function_exists( 'YoastSEO' ) || ! class_exists( '\Yoast\WP\SEO\Builders\Indexable_Builder' ) || ! class_exists( '\Yoast\WP\SEO\Repositories\Indexable_Repository' ) ) {
+			return;
+		}
+
+		try {
+			$indexable = YoastSEO()->classes->get( 'Yoast\WP\SEO\Repositories\Indexable_Repository' )->find_by_id_and_type( $page->ID, 'post' );
+			if ( $indexable ) {
+				$indexable = YoastSEO()->classes->get( 'Yoast\WP\SEO\Builders\Indexable_Builder' )->build_for_id_and_type( $page->ID, 'post', $indexable );
+				if ( $indexable ) {
+					$indexable->save();
+				}
+			}
+		} catch ( Throwable $e ) {
+		}
 	}
 
 	public function hookAdmin() {
@@ -299,7 +339,32 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 	}
 
 	/**
-	 * Fix compatibility on hide URLs
+	 * Check if WordPress serves the request as a front-end page
+	 *
+	 * @param string $url Request path
+	 *
+	 * @return bool
+	 */
+	public function isFrontPageRequest( $url ) {
+		$script = isset( $_SERVER['SCRIPT_FILENAME'] ) ? wp_normalize_path( wp_unslash( $_SERVER['SCRIPT_FILENAME'] ) ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$path   = str_replace( '\\', '/', rawurldecode( rawurldecode( $url ) ) );
+
+		// Served by the front index.php, and no dot segment that the server resolves (/login/../wp-login.php)
+		if ( basename( $script ) !== 'index.php' || strpos( $path, '/.' ) !== false ) {
+			return false;
+		}
+
+		foreach ( array( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ), 'wp-includes', 'wp-content' ) as $dir ) {
+			if ( strpos( $script, '/' . $dir . '/' ) !== false ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check the URL params and compatibilities before hiding the paths
 	 *
 	 * @return void
 	 */
@@ -310,62 +375,87 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 		//Compatibility with iThemes Security, Temporary Login Plugin, LoginPress, Wordfence
 		if ( $url && ! HMWP_Classes_Tools::isLoggedInUser() ) {
 
-			//if the /login path is hidden but there is a page with the same URL
-			if ( $url == home_url( 'login', 'relative' ) && get_page_by_path( 'login' ) ) {
-				add_filter( 'hmwp_process_hide_urls', '__return_false' );
-			}
-
-			//Only a request from the plugin itself, carrying the matching hash, is genuine
-			if ( HMWP_Classes_Tools::getValue( 'action' ) == 'itsec-check-loopback' &&
-			     ( HMWP_Classes_Tools::isPluginActive( 'better-wp-security/better-wp-security.php' ) ||
-			       HMWP_Classes_Tools::isPluginActive( 'ithemes-security-pro/ithemes-security-pro.php' ) ) ) {
-
-				$exp = HMWP_Classes_Tools::getValue( 'exp' );
-
-				//The loopback link is only valid until it expires
-				if ( $exp <> '' && is_numeric( $exp ) && (int) $exp > time() ) {
-					$action = 'itsec-check-loopback';
-					$hash   = hash_hmac( 'sha1', "$action|$exp", wp_salt() );
-
-					if ( hash_equals( $hash, (string) HMWP_Classes_Tools::getValue( 'hash', '' ) ) ) {
+			// /login, /dashboard and /admin are hidden as WordPress shortcuts, but a published page with that
+			// address (membership, LMS, shop account pages) has to load
+			if ( $this->isFrontPageRequest( $url ) ) {
+				foreach ( array( 'login', 'dashboard', 'admin' ) as $slug ) {
+					if ( strpos( $url . '/', home_url( $slug, 'relative' ) . '/' ) === 0 && ( $page = get_page_by_path( $slug ) ) && $page->post_status === 'publish' ) {
 						add_filter( 'hmwp_process_hide_urls', '__return_false' );
 					}
 				}
 			}
 
-			if ( HMWP_Classes_Tools::getValue( 'wtlwp_token' ) && HMWP_Classes_Tools::isPluginActive( 'temporary-login-without-password/temporary-login-without-password.php' ) ) {
-				add_filter( 'hmwp_process_hide_urls', '__return_false' );
+			// Only a real temporary login token lifts the hiding
+			$wtlwp_token = (string) HMWP_Classes_Tools::getValue( 'wtlwp_token' );
+			if ( $wtlwp_token !== '' && HMWP_Classes_Tools::isPluginActive( 'temporary-login-without-password/temporary-login-without-password.php' ) ) {
+				if ( get_users( array( 'meta_key' => '_wtlwp_token', 'meta_value' => $wtlwp_token, 'number' => 1, 'fields' => 'ID' ) ) ) {
+					add_filter( 'hmwp_process_hide_urls', '__return_false' );
+				}
 			}
+
+			// These tokens can't be checked here, so they never unhide the default login and admin paths
+			$default_path = HMWP_Classes_Tools::searchInString( $url, array(
+				home_url( HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ), 'relative' ),
+				site_url( HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ), 'relative' ),
+				home_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ), 'relative' ),
+				site_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ), 'relative' ),
+			) );
 
 			//?aam-jwt=value
-			if ( HMWP_Classes_Tools::getValue( 'aam-jwt' ) && HMWP_Classes_Tools::isPluginActive( 'advanced-access-manager/aam.php' ) ) {
+			if ( ! $default_path && HMWP_Classes_Tools::getValue( 'aam-jwt' ) && HMWP_Classes_Tools::isPluginActive( 'advanced-access-manager/aam.php' ) ) {
 				add_filter( 'hmwp_process_hide_urls', '__return_false' );
 			}
 
-			if ( HMWP_Classes_Tools::getValue( 'loginpress_code' ) && HMWP_Classes_Tools::isPluginActive( 'loginpress/loginpress.php' ) ) {
+			if ( ! $default_path && HMWP_Classes_Tools::getValue( 'loginpress_code' ) && HMWP_Classes_Tools::isPluginActive( 'loginpress/loginpress.php' ) ) {
 				add_filter( 'hmwp_process_hide_urls', '__return_false' );
 			}
 
-			//AI assistant sign-in (MCP OAuth in Squirrly SEO, WP Rocket, Imagify) sends the visitor to the login page
-			if ( $url == home_url( 'oauth/authorize', 'relative' ) && HMWP_Classes_Tools::getValue( 'response_type' ) == 'code' && HMWP_Classes_Tools::getValue( 'client_id' ) &&
-			     ( HMWP_Classes_Tools::isPluginActive( 'squirrly-seo/squirrly.php' ) || HMWP_Classes_Tools::isPluginActive( 'wp-rocket/wp-rocket.php' ) || HMWP_Classes_Tools::isPluginActive( 'imagify/imagify.php' ) ) ) {
+			//AI assistant sign-in (MCP OAuth with PKCE, any plugin on the common /oauth/authorize path) sends the visitor to the login page
+			if ( $url == home_url( 'oauth/authorize', 'relative' ) && HMWP_Classes_Tools::isMcpAuthorizeRequest() ) {
 				add_filter( 'hmwp_process_hide_urls', '__return_false' );
-			}
-
-			//If Ajax
-			if ( HMWP_Classes_Tools::isAjax() ) {
-				//?action=backup_guard_awake on backupguard scans
-				if ( HMWP_Classes_Tools::getValue( 'action' ) == 'backup_guard_awake' && HMWP_Classes_Tools::isPluginActive( 'backup-guard-gold/backup-guard-pro.php' ) ) {
-					add_filter( 'hmwp_process_hide_urls', '__return_false' );
-				}
-
-				//?action=hmbkp_cron_test on backupguard scans
-				if ( HMWP_Classes_Tools::getValue( 'action' ) == 'hmbkp_cron_test' && HMWP_Classes_Tools::isPluginActive( 'backupwordpress/backupwordpress.php' ) ) {
-					add_filter( 'hmwp_process_hide_urls', '__return_false' );
-				}
 			}
 
 		}
+	}
+
+	/**
+	 * Keep the custom admin path out of Tutor LMS data on pages for logged-out visitors
+	 *
+	 * @param array $data Tutor script data
+	 *
+	 * @return array
+	 */
+	public function fixTutorAdminUrls( $data ) {
+		if ( ! is_array( $data ) || is_admin() || HMWP_Classes_Tools::isLoggedInUser() ||
+		     HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) == HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ) ) {
+			return $data;
+		}
+
+		if ( isset( $data['loading_icon_url'] ) ) {
+			$data['loading_icon_url'] = includes_url( 'images/spinner.gif' );
+		}
+		if ( isset( $data['course_list_page_url'] ) ) {
+			$data['course_list_page_url'] = '';
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Theme My Login keeps its default /login slug, which WP Ghost hides; use the custom login path instead
+	 *
+	 * @param string $slug The action slug
+	 * @param string $name The action name
+	 *
+	 * @return string
+	 */
+	public function fixThemeMyLoginSlug( $slug, $name = '' ) {
+		if ( $name === 'login' && $slug === 'login' && HMWP_Classes_Tools::getOption( 'hmwp_hide_login' ) &&
+		     HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
+			return HMWP_Classes_Tools::getOption( 'hmwp_login_url' );
+		}
+
+		return $slug;
 	}
 
 	/**
@@ -385,8 +475,9 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 
 		$url       = ( isset( $_SERVER['REQUEST_URI'] ) ? untrailingslashit( strtok( wp_unslash( $_SERVER["REQUEST_URI"] ), '?' ) ) : false ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
+		// AJAX login forms have no captcha field; the lockout and ban checks still apply to them
 		if ( HMWP_Classes_Tools::isAjax() ) {
-			$url = HMWP_Classes_Tools::getValue( 'referrer' );
+			return false;
 		}
 
 		$http_post = ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' == $_SERVER['REQUEST_METHOD'] );
@@ -422,13 +513,6 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 					return false;
 				}
 
-				if ( HMWP_Classes_Tools::getValue( 'ltk' ) && isset( $_COOKIE['elementor_pro_login'] ) ) {
-					$login_tck = sanitize_key($_COOKIE['elementor_pro_login']);
-
-					if ( HMWP_Classes_Tools::getValue( 'ltk' ) == $login_tck ) {
-						return false;
-					}
-				}
 			}
 
 		}

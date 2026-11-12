@@ -88,8 +88,8 @@ class HMWP_Models_Brute {
 
 				$response['status'] = ( $response['status'] ?? 'ok' );
 
-				// Never block login from whitelisted IPs
-				if ( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $ip ) ) {
+				// Never block login from whitelisted IPs (an unknown visitor behind a proxy is not the server)
+				if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' )->isUnknownIp() && HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $ip ) ) {
 					$response['status'] = 'whitelist';
 				} elseif ( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isBlacklistedIP( $ip ) ) {
 					// Check if the admin already bans the IP address
@@ -157,6 +157,11 @@ class HMWP_Models_Brute {
 	 * @throws Exception
 	 */
 	public function blockIp( $ip ) {
+
+		// 127.0.0.1 is the server itself or the placeholder every unknown visitor shares, never ban it
+		if ( in_array( $ip, array( '127.0.0.1', '::1' ), true ) ) {
+			return;
+		}
 
 		// Get current IP info from database
 		if ( ! $response = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->get( $ip ) ) {

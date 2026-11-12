@@ -13,47 +13,45 @@ class HMWP_Models_Compatibility_Elementor extends HMWP_Models_Compatibility_Abst
 
 	public function hookFrontend() {
 
-		//Check if login brute force protection is loaded on element form
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce' ) ) {
-			add_action( 'elementor/controls/register', array( $this, 'fix_login_form' ), 11, 1 );
+		// The Elementor Pro login widget has no hooks in its form, so the captcha is added to its HTML
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce' ) && HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_login' ) ) {
+			add_filter( 'elementor/widget/render_content', array( $this, 'addLoginCaptcha' ), 10, 2 );
 		}
 
 	}
 
-	public function fix_login_form( $controls ) {
+	/**
+	 * Add the WP Ghost captcha before the submit button of the Elementor Pro login widget
+	 *
+	 * @param string $content Widget HTML
+	 * @param object $widget Elementor widget
+	 *
+	 * @return string
+	 */
+	public function addLoginCaptcha( $content, $widget ) {
 
-		if ( headers_sent() ) {
-			return;
+		if ( ! is_string( $content ) || ! is_object( $widget ) || ! method_exists( $widget, 'get_name' ) || $widget->get_name() !== 'login' || is_user_logged_in() ) {
+			return $content;
 		}
 
-		if ( HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
-
-			$url       = ( isset( $_SERVER['REQUEST_URI'] ) ? untrailingslashit( strtok( wp_unslash( $_SERVER["REQUEST_URI"] ), '?' ) ) : false ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			$http_post = ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' == $_SERVER['REQUEST_METHOD'] );
-
-			if ( $url && ! $http_post && ! HMWP_Classes_Tools::isLoggedInUser() ) {
-
-				if ( ! isset( $_COOKIE['elementor_pro_login'] ) ) {
-					$login_tck = md5( time() . wp_rand( 111111, 999999 ) );
-					setcookie( 'elementor_pro_login', $login_tck, time() + ( 86400 * 30 ), "/" );
-				} else {
-					$login_tck = sanitize_key($_COOKIE['elementor_pro_login']);
-				}
-
-				add_filter( 'site_url', function( $url, $path ) use ( $login_tck ) {
-
-					if ( $path == HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) ) {
-						return add_query_arg( 'ltk', $login_tck, $url );
-					}
-
-					return $url;
-				}, PHP_INT_MAX, 2 );
-
-			}
-
+		// Already has a captcha field
+		if ( strpos( $content, 'brute_ck' ) !== false || strpos( $content, 'g-recaptcha' ) !== false ) {
+			return $content;
 		}
 
+		ob_start();
+		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Brute' )->getInstance()->form();
+		$captcha = ob_get_clean();
+
+		if ( ! $captcha ) {
+			return $content;
+		}
+
+		$new = preg_replace_callback( '/<div[^>]*elementor-field-type-submit/', function ( $m ) use ( $captcha ) {
+			return $captcha . $m[0];
+		}, $content, 1, $count );
+
+		return ( $new !== null && $count ) ? $new : $content;
 	}
-
 
 }

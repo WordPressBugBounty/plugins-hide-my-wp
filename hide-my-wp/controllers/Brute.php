@@ -98,6 +98,11 @@ class HMWP_Controllers_Brute extends HMWP_Classes_FrontController {
 			return false;
 		}
 
+		// Logged-out AJAX logins get the lockout and ban checks too (the captcha is skipped for them)
+		if ( HMWP_Classes_Tools::isAjax() && ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cookies' )->isLoggedInRequest() ) {
+			return true;
+		}
+
 		//If not admin but logged in
 		if ( ! is_admin() && ! is_network_admin() ) {
 

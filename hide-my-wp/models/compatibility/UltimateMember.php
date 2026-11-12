@@ -89,7 +89,7 @@ class HMWP_Models_Compatibility_UltimateMember extends HMWP_Models_Compatibility
 		if ( isset( $options['core_login'] ) && (int) $options['core_login'] > 0 ) {
 			$post = get_post( (int) $options['core_login'] );
 
-			if ( ! is_wp_error( $post ) && $post->post_status == 'publish' ) {
+			if ( $post instanceof WP_Post && $post->post_status == 'publish' ) {
 				return $post->post_name;
 			}
 		}

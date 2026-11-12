@@ -63,6 +63,11 @@ class HMWP_Models_Bruteforce_GoogleV3 extends HMWP_Models_Bruteforce_Abstract {
         if ( $secret <> '' ) {
             $response = json_decode( $this->siteVerify( $secret, $captcha ), true );
 
+            // Google says success for bots too, the score tells them apart
+            if ( ! empty( $response['success'] ) && isset( $response['score'] ) && (float) $response['score'] < (float) apply_filters( 'hmwp_recaptcha_v3_score', 0.5 ) ) {
+                $response['success'] = false;
+            }
+
             if ( isset( $response['success'] ) && ! $response['success'] ) {
                 //If captcha errors, let the user login and fix the error
                 if ( isset( $response['error-codes'] ) && ! empty( $response['error-codes'] ) ) {

@@ -21,10 +21,11 @@ class HMWP_Models_Compatibility_SiteGuard extends HMWP_Models_Compatibility_Abst
 	public function hookFrontend() {
 
 		//remove custom login if already set in HMWP Ghost to prevent errors
-		add_filter( "pre_option_siteguard_config", function( $siteguard_config ) {
+		// Change only this key of the saved config; pre_option gets false and replaced the whole SiteGuard config
+		add_filter( "option_siteguard_config", function( $siteguard_config ) {
 
-			if ( HMWP_Classes_Tools::$default['hmwp_login_url'] <> HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
-				$siteguard_config['renamelogin_enable'] = 0;
+			if ( is_array( $siteguard_config ) && HMWP_Classes_Tools::$default['hmwp_login_url'] <> HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
+				$siteguard_config['renamelogin_enable'] = '0';
 			}
 
 			return $siteguard_config;

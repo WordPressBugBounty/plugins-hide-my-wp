@@ -62,7 +62,8 @@ class HMWP_Models_Firewall_Rules {
 			return $qs;
 		}
 
-		if ( ! HMWP_Classes_Tools::isPluginActive( 'squirrly-seo/squirrly.php' ) && ! HMWP_Classes_Tools::isPluginActive( 'wp-rocket/wp-rocket.php' ) && ! HMWP_Classes_Tools::isPluginActive( 'imagify/imagify.php' ) ) {
+		// Only a real MCP sign-in (PKCE), for any plugin serving the common path
+		if ( ! HMWP_Classes_Tools::isMcpAuthorizeRequest() ) {
 			return $qs;
 		}
 
@@ -971,18 +972,12 @@ class HMWP_Models_Firewall_Rules {
      */
 	public function checkWhitelistIPs() {
 
-		// Get caller server IPs
-		$ips = $this->getServerVariableIPs();
+		/** @var HMWP_Models_Firewall_Server $server */
+		$server = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' );
 
-		if ( ! empty( $ips ) ) {
-			// For each IP found on the caller
-			foreach ( $ips as $ip ) {
-				// If the IP is whitelisted, apply the whitelist level of security
-				if ( $this->isWhitelistedIP( $ip ) ) {
-					$this->whitelistLevel( HMWP_Classes_Tools::getOption( 'whitelist_level' ) );
-					break;
-				}
-			}
+		// Only the resolved visitor IP counts, never a header value or a proxy's address
+		if ( ! $server->isUnknownIp() && $this->isWhitelistedIP( $server->getIp() ) ) {
+			$this->whitelistLevel( HMWP_Classes_Tools::getOption( 'whitelist_level' ) );
 		}
 
 	}

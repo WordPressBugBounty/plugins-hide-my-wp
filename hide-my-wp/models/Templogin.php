@@ -657,13 +657,29 @@ class HMWP_Models_Templogin {
 	}
 
 	/**
-	 * Check if temporary login expired
+	 * Start the expiry countdown of a temporary login stored as a duration key
 	 *
-	 * @param int $user_id
+	 * @param int $user_id The user ID.
+	 *
+	 * @return void
+	 */
+	public function startCountdown( $user_id ) {
+
+		$expire = HMWP_Classes_Tools::getUserMeta( self::USER_SESSION_EXPIRE, $user_id );
+
+		// A duration key (hour, day...) becomes a real end time from the first use, however the user signs in
+		if ( $expire !== '' && $expire !== false && ! is_numeric( $expire ) ) {
+			$seconds = array( 'hour' => HOUR_IN_SECONDS, '3_hours' => 3 * HOUR_IN_SECONDS, 'day' => DAY_IN_SECONDS, '3_days' => 3 * DAY_IN_SECONDS, 'week' => WEEK_IN_SECONDS, 'month' => MONTH_IN_SECONDS, 'halfyear' => 6 * MONTH_IN_SECONDS, 'year' => YEAR_IN_SECONDS );
+			HMWP_Classes_Tools::saveUserMeta( self::USER_SESSION_EXPIRE, $this->gtmTimestamp() + ( $seconds[ $expire ] ?? DAY_IN_SECONDS ), $user_id );
+		}
+	}
+
+	/**
+	 * Check if a temporary login has expired
+	 *
+	 * @param int $user_id The user ID.
 	 *
 	 * @return bool
-	 *
-	 * @since 7.0
 	 */
 	public function isExpired( $user_id = 0 ) {
 

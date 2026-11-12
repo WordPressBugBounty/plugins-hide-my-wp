@@ -40,16 +40,41 @@ class HMWP_Models_Compatibility_MemberPress extends HMWP_Models_Compatibility_Ab
 		// Get the active brute force class
 		$bruteforce = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Brute' )->getInstance();
 
-		add_action( 'mepr-validate-login', array( $bruteforce, 'failed' ) );
+		// MemberPress filters its errors array; the captcha error is added to it (failed attempts count on wp_login_failed)
+		add_filter( 'mepr-validate-login', array( $this, 'validateCaptcha' ) );
 		add_action( 'mepr-login-form-before-submit', array( $bruteforce, 'head' ) );
 		add_action( 'mepr-login-form-before-submit', array( $bruteforce, 'form' ) );
 
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_lostpassword' ) ) {
-			add_action( 'mepr-validate-forgot-password', array( $bruteforce, 'failed' ) );
+			add_filter( 'mepr-validate-forgot-password', array( $this, 'validateCaptcha' ) );
 			add_action( 'mepr-forgot-password-form', array( $bruteforce, 'head' ) );
 			add_action( 'mepr-forgot-password-form', array( $bruteforce, 'form' ) );
 		}
 
+	}
+
+	/**
+	 * Check the captcha on the MemberPress login and forgot password forms
+	 *
+	 * @param array $errors MemberPress validation errors
+	 *
+	 * @return array
+	 * @throws Exception
+	 */
+	public function validateCaptcha( $errors ) {
+		$errors = is_array( $errors ) ? $errors : array();
+
+		$response = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Brute' )->bruteForceCheck();
+		if ( isset( $response['status'] ) && $response['status'] == 'whitelist' ) {
+			return $errors;
+		}
+
+		$bruteforce = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Brute' )->getInstance();
+		if ( method_exists( $bruteforce, 'call' ) && ( $message = $bruteforce->call() ) ) {
+			$errors[] = wp_strip_all_tags( $message );
+		}
+
+		return $errors;
 	}
 
 	/**
@@ -73,7 +98,7 @@ class HMWP_Models_Compatibility_MemberPress extends HMWP_Models_Compatibility_Ab
 		if ( isset( $options['login_page_id'] ) && (int) $options['login_page_id'] > 0 ) {
 			$post = get_post( (int) $options['login_page_id'] );
 
-			if ( ! is_wp_error( $post ) && $post->post_status == 'publish' ) {
+			if ( $post instanceof WP_Post && $post->post_status == 'publish' ) {
 				return $post->post_name;
 			}
 		}
