@@ -294,9 +294,10 @@ class HMWP_Models_Settings {
 	 * @throws Exception
 	 */
 	public function saveRules() {
-		//CLEAR RULES ON DEFAULT
+		// On default mode only the firewall rules stay in the config file, when set to load from it
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_mode' ) == 'default' ) {
-			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->writeToFile( '', 'HMWP_VULNERABILITY' );
+			$rules = HMWP_Classes_Tools::isIIS() ? '' : HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getFirewallRewrite();
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->writeToFile( $rules, 'HMWP_VULNERABILITY' );
 
 			return;
 		}
@@ -306,6 +307,9 @@ class HMWP_Models_Settings {
 		if ( ! HMWP_Classes_Tools::isIIS() ) {
 			//For Nginx and Apache the rules can be inserted separately
 			$rules = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getInjectionRewrite();
+
+			// The firewall rules don't depend on the old paths options
+			$rules .= HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getFirewallRewrite();
 
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths' ) || HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ) ) {
 				$rules .= HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getHideOldPathRewrite();

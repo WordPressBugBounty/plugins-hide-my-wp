@@ -347,11 +347,11 @@ class HMWP_Models_Compatibility {
 		}
 
 		if ( HMWP_Classes_Tools::isPluginActive( 'hummingbird-performance/wp-hummingbird.php' ) ) {
-			//Set the cache directory for this plugin
-			$path = $content_dir . 'wphb-cache/';
+			//Set the cache directory for this plugin: minified files go to uploads/hummingbird-assets unless a folder is set
+			$path = $content_dir . HMWP_Classes_Tools::getDefault( 'hmwp_upload_url' ) . '/hummingbird-assets/';
 
 			if ( $options = get_option( 'wphb_settings' ) ) {
-				if ( isset( $options['minify']['file_path'] ) ) {
+				if ( isset( $options['minify']['file_path'] ) && trim( $options['minify']['file_path'], '/' ) !== '' ) {
 					$path = $wp_filesystem->abspath() . trim( $options['minify']['file_path'], '/' ) . '/';
 				}
 			}
@@ -510,6 +510,28 @@ class HMWP_Models_Compatibility {
 
 
 		//For WP Fastest Cache
+		// Divi, Extra and the Divi Builder write their page CSS to et-cache
+		if ( ( in_array( get_template(), array( 'Divi', 'Extra' ), true ) || HMWP_Classes_Tools::isPluginActive( 'divi-builder/divi-builder.php' ) ) && $wp_filesystem->is_dir( $content_dir . 'et-cache/' ) ) {
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cache' )->setCachePath( $content_dir . 'et-cache/' );
+
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cache' )->changePathsInCss();
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cache' )->changePathsInJs();
+
+			$changed = true;
+		}
+
+		// WP-Optimize and Breeze write their minified CSS and JS here
+		foreach ( array( 'wp-optimize/wp-optimize.php' => 'cache/wpo-minify/', 'breeze/breeze.php' => 'cache/breeze-minification/' ) as $plugin => $folder ) {
+			if ( HMWP_Classes_Tools::isPluginActive( $plugin ) && $wp_filesystem->is_dir( $content_dir . $folder ) ) {
+				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cache' )->setCachePath( $content_dir . $folder );
+
+				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cache' )->changePathsInCss();
+				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cache' )->changePathsInJs();
+
+				$changed = true;
+			}
+		}
+
 		if ( HMWP_Classes_Tools::isPluginActive( 'wp-fastest-cache/wpFastestCache.php' ) ) {
 			//Set the cache directory for this plugin
 			$path = $content_dir . 'cache/wpfc-minified/';

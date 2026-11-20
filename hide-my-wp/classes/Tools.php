@@ -322,7 +322,6 @@ class HMWP_Classes_Tools {
 			'hmwp_disable_drag_drop_message'     => false,
 
 			//--
-			'hmwp_disable_screen_capture'        => 0,
 			'hmwp_file_cache'                    => 0,
 			'hmwp_url_mapping'                   => wp_json_encode( array() ),
 			'hmwp_mapping_classes'               => 1,
@@ -589,12 +588,58 @@ class HMWP_Classes_Tools {
 	 * @return void
 	 */
 	private static function updateDatabase() {
+		// Read before anything below saves the options: a website that never saved the firewall level
+		$keep_8g   = false;
+		$multisite = ( self::isMultisites() && defined( 'BLOG_ID_CURRENT_SITE' ) );
+		if ( self::$options['hmwp_ver'] < HMWP_VERSION_ID ) {
+			$saved   = json_decode( (string) ( $multisite ? get_blog_option( BLOG_ID_CURRENT_SITE, HMWP_OPTION ) : get_option( HMWP_OPTION ) ), true );
+			$keep_8g = ( is_array( $saved ) && ! isset( $saved['hmwp_sqlinjection_level'] ) );
+		}
+
 		// X-XSS-Protection is deprecated and can open XSS holes, stop sending it (any version, re-packs included)
 		if ( isset( self::$options['hmwp_security_headers'] ) && is_array( self::$options['hmwp_security_headers'] ) && isset( self::$options['hmwp_security_headers']['X-XSS-Protection'] ) ) {
 			unset( self::$options['hmwp_security_headers']['X-XSS-Protection'] );
 			self::saveOptions();
 			// Rebuild the config file rules on the next admin page
 			set_transient( 'hmwp_update', 1 );
+		}
+
+		// Drop the file fallbacks saved from broken links, like a quote or a backslash in the address (any version, re-packs included)
+		if ( ! empty( self::$options['file_mappings'] ) && is_array( self::$options['file_mappings'] ) ) {
+			$mappings = array_filter( self::$options['file_mappings'], array( 'HMWP_Classes_Tools', 'isCleanUrlPath' ) );
+			if ( count( $mappings ) <> count( self::$options['file_mappings'] ) ) {
+				self::saveOptions( 'file_mappings', $mappings );
+			}
+		}
+
+		// Minimal firewall strength moves to Medium once, Minimal stays available in the Firewall settings
+		if ( ! isset( self::$options['hmwp_fw_min_upgraded'] ) ) {
+			$raise = ( isset( self::$options['hmwp_sqlinjection_level'] ) && (int) self::$options['hmwp_sqlinjection_level'] === 1 );
+
+			if ( $raise ) {
+				self::$options['hmwp_sqlinjection_level'] = 2;
+				// Rebuild the config file rules on the next admin page and tell the admin once
+				set_transient( 'hmwp_update', 1 );
+				if ( ! empty( self::$options['hmwp_sqlinjection'] ) ) {
+					set_transient( 'hmwp_fw_medium', 1, WEEK_IN_SECONDS );
+				}
+			}
+
+			self::saveOptions( 'hmwp_fw_min_upgraded', (int) $raise );
+
+			// The last confirmed settings follow, so Restore Settings doesn't bring Minimal back
+			$safe = json_decode( (string) ( $multisite ? get_blog_option( BLOG_ID_CURRENT_SITE, HMWP_OPTION_SAFE ) : get_option( HMWP_OPTION_SAFE ) ), true );
+			if ( is_array( $safe ) && ! empty( $safe ) ) {
+				$safe['hmwp_fw_min_upgraded'] = (int) $raise;
+				if ( isset( $safe['hmwp_sqlinjection_level'] ) && (int) $safe['hmwp_sqlinjection_level'] === 1 ) {
+					$safe['hmwp_sqlinjection_level'] = 2;
+				}
+				if ( $multisite ) {
+					update_blog_option( BLOG_ID_CURRENT_SITE, HMWP_OPTION_SAFE, wp_json_encode( $safe ) );
+				} else {
+					update_option( HMWP_OPTION_SAFE, wp_json_encode( $safe ) );
+				}
+			}
 		}
 
 		// Check if the plugin version is updated
@@ -693,8 +738,7 @@ class HMWP_Classes_Tools {
 			}
 
 			// Websites that never saved the firewall level keep 8G, the 2026 Ghost Firewall default is for new installs
-			$saved = json_decode( (string) get_option( HMWP_OPTION ), true );
-			if ( is_array( $saved ) && ! isset( $saved['hmwp_sqlinjection_level'] ) ) {
+			if ( $keep_8g ) {
 				self::$options['hmwp_sqlinjection_level'] = 4;
 			}
 
@@ -708,6 +752,9 @@ class HMWP_Classes_Tools {
 
 			// Update the login paths on Cloud when the plugin is updated
 			self::sendLoginPathsApi();
+
+			// Rebuild the config file rules on the next admin page, so new firewall rules reach the server
+			set_transient( 'hmwp_update', 1 );
 
 			// Set the current version ID
 			self::$options['hmwp_ver'] = HMWP_VERSION_ID;
@@ -1998,6 +2045,22 @@ class HMWP_Classes_Tools {
 		return false;
 	}
 
+	/**
+	 * Returns true if the site itself runs on localhost
+	 *
+	 * @return boolean
+	 */
+	public static function isLocalSite() {
+		static $local = null;
+
+		if ( $local === null ) {
+			$host  = strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+			$local = ( in_array( $host, array( 'localhost', '127.0.0.1', '[::1]' ), true ) || substr( $host, - 10 ) === '.localhost' );
+		}
+
+		return (bool) apply_filters( 'hmwp_local_site', $local );
+	}
+
 
 	/**
 	 * Returns true if server is Wpengine
@@ -2518,6 +2581,9 @@ class HMWP_Classes_Tools {
 					//For Nginx and Apache the rules can be inserted separately
 					$rules = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getInjectionRewrite();
 
+					// The firewall rules don't depend on the old paths options
+					$rules .= HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getFirewallRewrite();
+
 					if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths' ) || HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ) ) {
 						$rules .= HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getHideOldPathRewrite();
 					}
@@ -2738,6 +2804,31 @@ class HMWP_Classes_Tools {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Check that cleaning the URL takes nothing out of its path
+	 *
+	 * @param  string  $url
+	 *
+	 * @return bool
+	 */
+	public static function isCleanUrlPath( $url ) {
+		if ( ! is_string( $url ) || $url === '' ) {
+			return false;
+		}
+
+		// The server picks the file by its path, the query doesn't count
+		if ( strpos( $url, '?' ) !== false ) {
+			$url = substr( $url, 0, strpos( $url, '?' ) );
+		}
+
+		// Browsers resolve the dot segments before they ask, so a real link has none
+		if ( preg_match( '#/\.\.?(/|$)#', $url ) ) {
+			return false;
+		}
+
+		return ( sanitize_url( $url ) === $url );
 	}
 
 	public static function searchInString( $haystack, $needles ) {

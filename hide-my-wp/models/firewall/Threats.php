@@ -289,6 +289,11 @@ class HMWP_Models_Firewall_Threats {
 				return false;
 			}
 
+			// A custom path the server mapped to a real PHP file is not a probe either
+			if ( $this->servedByPhpFile() ) {
+				return false;
+			}
+
 			// Non-existing PHP requested => classic probe
 			return array(
 				'code'    => 'THR_URI_PHP_NONEXISTENT',
@@ -397,6 +402,29 @@ class HMWP_Models_Firewall_Threats {
 		return false;
 	}
 
+
+	/**
+	 * Check if the server ran a real PHP file for this request.
+	 * Custom admin, ajax, plugin and theme paths reach their file through a rewrite rule.
+	 *
+	 * @return bool
+	 */
+	protected function servedByPhpFile() {
+
+		if ( empty( $_SERVER['SCRIPT_FILENAME'] ) ) {
+			return false;
+		}
+
+		// Not unslashed: this runs before WordPress slashes the server values
+		$script = str_replace( '\\', '/', (string) $_SERVER['SCRIPT_FILENAME'] ); // phpcs:ignore
+
+		// index.php answers every path that matches no file, so it proves nothing
+		if ( substr( $script, - 4 ) !== '.php' || basename( $script ) === 'index.php' ) {
+			return false;
+		}
+
+		return @is_file( $script ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+	}
 
 	/**
 	 * Determines if the given path corresponds to an allowed PHP endpoint.

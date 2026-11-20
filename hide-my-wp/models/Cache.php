@@ -68,8 +68,46 @@ class HMWP_Models_Cache {
 			}
 		}
 
-		$this->resolved_cachepath = $wp_filesystem->is_dir($path) ? $path : false;
+		// Only a cache folder may be rewritten, never the WordPress, plugin or theme code
+		$this->resolved_cachepath = ( $wp_filesystem->is_dir( $path ) && $this->isCacheFolder( $path ) ) ? $path : false;
 		return $this->resolved_cachepath;
+	}
+
+	/**
+	 * Check that a folder is a cache folder and not a code folder or a root folder
+	 *
+	 * @param string $path
+	 *
+	 * @return bool
+	 */
+	protected function isCacheFolder( $path ) {
+		$clean = function ( $dir ) {
+			$real = ( $dir && @is_dir( $dir ) ) ? realpath( $dir ) : false;
+
+			return $real ? rtrim( wp_normalize_path( $real ), '/' ) : '';
+		};
+
+		if ( ! $folder = $clean( $path ) ) {
+			return false;
+		}
+
+		$uploads = wp_upload_dir( null, false );
+		$code    = array( WP_PLUGIN_DIR, get_theme_root(), ABSPATH . WPINC, ABSPATH . 'wp-admin', defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : '' );
+		$roots   = array( ABSPATH, WP_CONTENT_DIR, ! empty( $uploads['basedir'] ) ? $uploads['basedir'] : '' );
+
+		foreach ( $roots as $dir ) {
+			if ( ( $dir = $clean( $dir ) ) && $folder === $dir ) {
+				return false;
+			}
+		}
+
+		foreach ( $code as $dir ) {
+			if ( ( $dir = $clean( $dir ) ) && strpos( $folder . '/', $dir . '/' ) === 0 ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -149,6 +187,11 @@ class HMWP_Models_Cache {
 						if ( $newcontent <> $content ) {
 							//write into file
 							$this->writeFile( $file, $newcontent );
+
+							// Keep the compressed copy the server may send instead
+							if ( function_exists( 'gzencode' ) && file_exists( $file . '.gz' ) ) {
+								$this->writeFile( $file . '.gz', gzencode( $newcontent, 9 ) );
+							}
 						}
 
 
@@ -192,6 +235,11 @@ class HMWP_Models_Cache {
 						if ( $newcontent <> $content ) {
 							//write into file
 							$this->writeFile( $file, $newcontent );
+
+							// Keep the compressed copy the server may send instead
+							if ( function_exists( 'gzencode' ) && file_exists( $file . '.gz' ) ) {
+								$this->writeFile( $file . '.gz', gzencode( $newcontent, 9 ) );
+							}
 						}
 
 					}
@@ -238,6 +286,11 @@ class HMWP_Models_Cache {
 						if ( $newcontent <> $content ) {
 							//write into file
 							$this->writeFile( $file, $newcontent );
+
+							// Keep the compressed copy the server may send instead
+							if ( function_exists( 'gzencode' ) && file_exists( $file . '.gz' ) ) {
+								$this->writeFile( $file . '.gz', gzencode( $newcontent, 9 ) );
+							}
 						}
 					}
 				}

@@ -288,6 +288,11 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 				add_filter( 'wp_sitemaps_users_pre_url_list', '__return_false', 99, 0 );
 			}
 
+			// An author asked by user ID stays hidden wherever the ID sits in the request
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
+				add_action( 'template_redirect', array( $this->model, 'hideAuthorId' ), 1 );
+			}
+
 			// Robots.txt compatibility with other plugins
 			if ( isset($_SERVER['REQUEST_URI']) ){
 				$banlist = HMWP_Classes_Tools::getOption('banlist_user_agent');

@@ -89,16 +89,19 @@ if ( ! isset( $view ) ) {
 
                         </div>
 
-						<?php if ( HMWP_Classes_Tools::isApache() || HMWP_Classes_Tools::isLitespeed() ) { ?>
+						<?php if ( HMWP_Classes_Tools::isApache() || HMWP_Classes_Tools::isLitespeed() || HMWP_Classes_Tools::isNginx() ) { ?>
                             <div class="col-sm-12 row px-2 py-2 mx-0 my-3 hmwp_sqlinjection">
                                 <div class="col-sm-4 p-1">
                                     <div class="font-weight-bold"><?php echo esc_html__( 'Firewall Location', 'hide-my-wp' ); ?>:</div>
                                     <div class="text-black-50 small"><?php echo esc_html__( 'Where to add the firewall rules.', 'hide-my-wp' ); ?></div>
+                                    <?php if ( HMWP_Classes_Tools::isNginx() ) { ?>
+                                        <div class="text-black-50 small"><?php echo esc_html__( 'Reload NGINX after saving, so it reads the new rules from the config file.', 'hide-my-wp' ); ?></div>
+                                    <?php } ?>
                                 </div>
                                 <div class="col-sm-8 p-0 input-group mb-1">
                                     <select name="hmwp_sqlinjection_location" class="selectpicker form-control">
                                         <option value="onload" <?php echo selected( 'onload', HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_location' ) ) ?>><?php echo esc_html__( 'On website initialization', 'hide-my-wp' ); ?> (<?php echo esc_html__( 'recommended', 'hide-my-wp' ); ?>)</option>
-                                        <option value="file" <?php echo selected( 'file', HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_location' ) ) ?>><?php echo esc_html__( 'In .htaccess file', 'hide-my-wp' ); ?></option>
+                                        <option value="file" <?php echo selected( 'file', HMWP_Classes_Tools::getOption( 'hmwp_sqlinjection_location' ) ) ?>><?php echo HMWP_Classes_Tools::isNginx() ? esc_html__( 'In NGINX config file', 'hide-my-wp' ) : esc_html__( 'In .htaccess file', 'hide-my-wp' ); ?></option>
                                     </select>
                                 </div>
 

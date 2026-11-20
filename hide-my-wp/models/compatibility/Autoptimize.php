@@ -24,6 +24,29 @@ class HMWP_Models_Compatibility_Autoptimize extends HMWP_Models_Compatibility_Ab
 
 		add_filter( 'autoptimize_html_after_minify', array( $this, 'findReplaceCache' ), PHP_INT_MAX );
 
+		// Fonts and images in the CSS files Autoptimize writes to its cache
+		add_filter( 'autoptimize_css_after_minify', array( $this, 'findReplaceCss' ), PHP_INT_MAX );
+		add_filter( 'autoptimize_filter_css_single_after_minify', array( $this, 'findReplaceCss' ), PHP_INT_MAX );
+
+	}
+
+	/**
+	 * Change the old paths in a CSS file before Autoptimize saves it
+	 *
+	 * @param string $css
+	 *
+	 * @return string
+	 * @throws Exception
+	 */
+	public function findReplaceCss( $css ) {
+		if ( ! is_string( $css ) || $css === '' || ! HMWP_Classes_Tools::doChangePaths() ) {
+			return $css;
+		}
+
+		$cache = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cache' );
+		$cache->buildRedirect();
+
+		return $cache->findReplace( $css );
 	}
 
 }

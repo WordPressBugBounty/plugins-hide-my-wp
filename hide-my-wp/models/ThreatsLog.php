@@ -374,6 +374,17 @@ class HMWP_Models_ThreatsLog extends HMWP_Models_Firewall_Threats {
 			'FW_GHOST_UPLOAD_PHP_SHELL' => 'Malicious File Upload',
 			'FW_GHOST_OBJECT_INJECTION' => 'PHP Object Injection',
 			'FW_GHOST_SSRF'             => 'Server-Side Request Forgery',
+			'FW_GHOST_UA_EXPLOIT_TOOLS' => 'Probing for vulnerable code',
+			'FW_GHOST_QS_PROTO_POLLUTION' => 'Script Injection Attacks',
+			'FW_GHOST_QS_NOSQL_OPERATORS' => 'SQL Injection Attacks',
+			'FW_GHOST_QS_SQLI_CLAUSE'   => 'SQL Injection Attacks',
+			'FW_GHOST_QS_AUTHOR_SQLI'   => 'SQL Injection Attacks',
+			'FW_GHOST_QS_BACKTICK'      => 'Script Injection Attacks',
+			'FW_GHOST_REF_TAGS'         => 'Cross-Site Scripting (XSS)',
+			'FW_GHOST_REST_BATCH'       => 'Vulnerability Exploit',
+			'FW_QS_CLOUD_METADATA'      => 'Server-Side Request Forgery',
+			'FW_QS_MOSCONFIG'           => 'File Inclusion Exploits',
+			'FW_QS_TAG_OPEN'            => 'Cross-Site Scripting (XSS)',
 		);
 		if ( isset( $exact[ $code ] ) ) {
 			return (string) apply_filters( 'hmwp_threats_category_from_code', $exact[ $code ], $code );

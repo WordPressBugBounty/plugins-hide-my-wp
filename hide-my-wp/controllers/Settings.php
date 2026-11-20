@@ -181,6 +181,13 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 			add_filter( 'hmwp_option_hmwp_mapping_url_show', "__return_false" );
 		}
 
+		// Shown once after the firewall strength moved from Minimal to Medium
+		if ( get_transient( 'hmwp_fw_medium' ) ) {
+			delete_transient( 'hmwp_fw_medium' );
+			/* translators: 1: Opening anchor tag. 2: Closing anchor tag. */
+			HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'Firewall Strength is now set to Medium for better protection. You can change it anytime in %1$sFirewall settings%2$s.', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_firewall&tab=firewall', true ) ) . '">', '</a>' ) ) );
+		}
+
 		// Check compatibilities with other plugins
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Compatibility' )->getAlerts();
 

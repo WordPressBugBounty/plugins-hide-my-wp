@@ -930,7 +930,7 @@ class HMWP_Models_Rewrite {
                     $cachecode .= 'if ($request_uri ~* ^' . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_wp-content_url' ) . '/[^\.]+\.[^\.]+) { set $cond "${cond}+redirect_uri"; }' . PHP_EOL;
                     $cachecode .= 'if ($request_uri ~* ^' . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_wp-includes_url' ) . '/[^\.]+\.[^\.]+) { set $cond "${cond}+redirect_uri"; }' . PHP_EOL;
                     $cachecode .= 'if ($request_uri ~* ^' . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_upload_url' ) . '/[^\.]+\.[^\.]+) { set $cond "${cond}+redirect_uri"; }' . PHP_EOL;
-                    $cachecode .= 'if ($cond = "cookie+redirect_uri") {  rewrite ^/([_0-9a-zA-Z-]+/)?(.*)\.(js|css|scss)$ index.php?hmwp_url=/$1$2.$3 last; } ' . PHP_EOL . PHP_EOL;
+                    $cachecode .= 'if ($cond = "cookie+redirect_uri") {  rewrite ^/([_0-9a-zA-Z-]+/)?(.*)\.(js|css|scss)$ ' . $home_root . 'index.php?hmwp_url=/$1$2.$3 last; } ' . PHP_EOL . PHP_EOL;
                 }
 
 				if ( HMWP_Classes_Tools::getOption( 'hmwp_file_cache' ) ) {
@@ -2050,7 +2050,13 @@ class HMWP_Models_Rewrite {
 						$paths = array_unique( $paths );
 
 						if ( HMWP_Classes_Tools::searchInString( $url, $paths ) ) {
-							if ( site_url( HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ), 'relative' ) <> $url && HMWP_Classes_Tools::getOption( 'hmwp_hide_admin' ) ) {
+							// While the safe fallback is on, pages print the default admin-ajax.php, so visitors must reach it
+							$ajax_fallback = ! empty( (array) HMWP_Classes_Tools::getOption( 'file_mappings' ) ) && HMWP_Classes_Tools::searchInString( $url, array(
+								home_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_admin-ajax_url' ), 'relative' ),
+								site_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_admin-ajax_url' ), 'relative' )
+							) );
+
+							if ( ! $ajax_fallback && site_url( HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ), 'relative' ) <> $url && HMWP_Classes_Tools::getOption( 'hmwp_hide_admin' ) ) {
 								$this->getNotFound( $url );
 							}
 						}
@@ -2611,6 +2617,9 @@ class HMWP_Models_Rewrite {
 				//Do the path replace for all paths
 				if ( isset( $this->_replace['from'] ) && isset( $this->_replace['to'] ) && ! empty( $this->_replace['from'] ) && ! empty( $this->_replace['to'] ) ) {
 					$content = str_ireplace( $this->_replace['from'], $this->_replace['to'], $content );
+
+					// Paths inside URL-encoded settings and base64 inline scripts get the same change
+					$content = $this->replaceEncodedPaths( $content );
 				}
 
 				//If Text Mapping is activated
@@ -2634,6 +2643,51 @@ class HMWP_Models_Rewrite {
 		return $content;
 	}
 
+
+	/**
+	 * Change the old paths written URL-encoded (WooCommerce settings) and inside
+	 * inline scripts that a cache plugin stored as base64 data URLs
+	 *
+	 * @param string $content
+	 *
+	 * @return string
+	 */
+	public function replaceEncodedPaths( $content ) {
+		$from = $to = array();
+		foreach ( $this->_replace['from'] as $key => $value ) {
+			if ( isset( $this->_replace['to'][ $key ] ) && strpos( $value, '/' ) !== false ) {
+				$from[] = rawurlencode( $value );
+				$to[]   = rawurlencode( $this->_replace['to'][ $key ] );
+			}
+		}
+
+		if ( ! empty( $from ) && stripos( $content, '%2F' ) !== false ) {
+			$content = str_ireplace( $from, $to, $content );
+		}
+
+		if ( stripos( $content, ';base64,' ) !== false ) {
+			$replace = $this->_replace;
+			$result  = preg_replace_callback( '/(\b(?:data-)?src=["\']data:(?:text|application)\/(?:x-)?javascript;base64,)([A-Za-z0-9+\/=]+)(["\'])/i', function ( $found ) use ( $replace, $from, $to ) {
+				$script = base64_decode( $found[2], true );
+				if ( $script === false ) {
+					return $found[0];
+				}
+
+				$changed = str_ireplace( $replace['from'], $replace['to'], $script );
+				if ( ! empty( $from ) && stripos( $changed, '%2F' ) !== false ) {
+					$changed = str_ireplace( $from, $to, $changed );
+				}
+
+				return ( $changed === $script ) ? $found[0] : $found[1] . base64_encode( $changed ) . $found[3];
+			}, $content );
+
+			if ( is_string( $result ) ) {
+				$content = $result;
+			}
+		}
+
+		return $content;
+	}
 
 	/**
 	 * Add CMS Emulators for theme detectors
@@ -2842,9 +2896,43 @@ class HMWP_Models_Rewrite {
 	 *
 	 * @return string
 	 */
+	/**
+	 * Resolve the dot segments of a path that starts at the site root
+	 *
+	 * @param string $path
+	 *
+	 * @return string The clean path, or the path as it was when it climbs above the root
+	 */
+	protected function removeDotSegments( $path ) {
+		$query = '';
+		if ( ( $pos = strcspn( $path, '?#' ) ) < strlen( $path ) ) {
+			$query = substr( $path, $pos );
+			$path  = substr( $path, 0, $pos );
+		}
+
+		$parts = array();
+		foreach ( explode( '/', substr( $path, 1 ) ) as $segment ) {
+			if ( $segment === '..' ) {
+				if ( empty( $parts ) ) {
+					return $path . $query;
+				}
+				array_pop( $parts );
+			} elseif ( $segment !== '.' ) {
+				$parts[] = $segment;
+			}
+		}
+
+		return '/' . join( '/', $parts ) . $query;
+	}
+
 	protected function _rel2abs( $rel ) {
 		$scheme    = $host = $path = '';
 		$backslash = false;
+
+		// A path from the site root with dot segments, like /wp-content/themes/a/css/../img/b.svg, is read in its clean form
+		if ( strpos( $rel, '/' ) === 0 && strpos( $rel, '//' ) !== 0 && strpos( $rel, '\\' ) === false && strpos( $rel, '../' ) !== false ) {
+			$rel = $this->removeDotSegments( $rel );
+		}
 
 		//if relative with parent dir - unescape \/ first so ..\/ can't slip past (CVE-2026-119159)
 		if ( strpos( $rel, "../" ) !== false || strpos( str_replace( '\/', '/', $rel ), "../" ) !== false ) {
@@ -3161,11 +3249,13 @@ class HMWP_Models_Rewrite {
 			$admin_url = preg_quote( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ), '#' );
 
 			// "\/wp-*.php" and "\/wp-admin\/*" entries, each with one adjacent comma
+			// A JSON string only: no unescaped quote and no < or >, so a match can't leave the string
+			$str   = '"(?:[^"\\\\<>]|\\\\.)*';
 			$rules = array(
-				'#"[^"]*\\\\?/wp\-\*\.php"\s*,#i'                         => '',
-				'#,\s*"[^"]*\\\\?/wp\-\*\.php"#i'                         => '',
-				'#"[^"]*\\\\?/' . $admin_url . '\\\\?/\*"\s*,#i'          => '',
-				'#,\s*"[^"]*\\\\?/' . $admin_url . '\\\\?/\*"#i'          => '',
+				'#' . $str . '\\\\?/wp\-\*\.php"\s*,#i'                => '',
+				'#,\s*' . $str . '\\\\?/wp\-\*\.php"#i'                => '',
+				'#' . $str . '\\\\?/' . $admin_url . '\\\\?/\*"\s*,#i' => '',
+				'#,\s*' . $str . '\\\\?/' . $admin_url . '\\\\?/\*"#i' => '',
 			);
 
 			// Only inside the speculation rules script, never in the page text (comments, names)
@@ -3486,6 +3576,23 @@ class HMWP_Models_Rewrite {
 		}
 
 		return $endpoints;
+	}
+
+	/**
+	 * Show not found when a visitor asks for an author by user ID.
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function hideAuthorId() {
+		global $wp;
+
+		// Author pages by name and logged-in users are not touched
+		if ( empty( $wp->query_vars['author'] ) || is_user_logged_in() ) {
+			return;
+		}
+
+		$this->getNotFound( false );
 	}
 
 	/**

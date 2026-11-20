@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.19
+Stable tag: 7.0.20
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -201,7 +201,7 @@ See all <a href="https://wpghost.com/features/">WP Ghost Premium features</a>.
 
 The full policy is in the plugin's `SECURITY.md` file, and bundled third-party components are listed in `sbom.json`.
 
-**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.18, released November 2026, is supported until November 2031.
+**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.20, released November 2026, is supported until November 2031.
 
 = Documentation and guides =
 
@@ -303,6 +303,26 @@ WP Ghost Premium includes crawler controls, but blocking search crawlers such as
 
 
 == Changelog ==
+
+= 7.0.20 (20 Nov 2026) =
+
+* Update - Security update: file delivery follows the server folder rules
+* Update - Security update: faster firewall checks on long requests
+* New - Firewall rules in the NGINX config file
+* Update - Firewall levels carry compatibility rules for common plugins
+* Update - Minimal firewall moves to Medium for better protection
+* Update - Firewall rules stay in the server file in default mode
+* Update - Hide Old Paths covers CSS and JS files like style.min.css
+* Update - New paths also apply to inline scripts, encoded settings and cached CSS
+* Update - Change Paths in Cached Files works only inside cache folders
+* Update - Compatibility with WP-Optimize, Breeze, Hummingbird, Jetpack Boost, Divi and LearnPress
+* Update - Firewall rules update on the first admin visit after an update
+* Update - Custom admin path keeps visitor AJAX calls working
+* Update - Author IDs stay hidden; admin author filter works
+* Update - NGINX text mapping serves mapped CSS and JS files
+* Update - Visitor AJAX calls work with Prevent Broken Website Layout
+* Update - Speculative loading rules keep page links intact
+* Update - Translations cover the new texts
 
 = 7.0.19 (12 Nov 2026) =
 
