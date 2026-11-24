@@ -48,7 +48,7 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
         padding: 10px;
         background-color: #eeeeee4d;
         box-shadow: 0 0 3px -1px #aaa;
-        border: 1px solid #fff;
+        border: 1px solid var(--hmwp-color-white, #fff);
     }
 
     .hmwp-widget-card-left {
@@ -70,7 +70,8 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
     }
 
     .hmwp-widget-link-accent {
-        color: #FFA500 !important;
+        /* readable on white and on the dark card */
+        color: var(--hmwp-color-text-warning, #a85d00) !important;
     }
 
     .hmwp-widget-empty {
@@ -83,7 +84,7 @@ if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
 
     .hmwp-widget-note {
         font-size: 0.82rem;
-        color: darkgrey;
+        color: var(--hmwp-color-text-muted, #6c757d);
     }
 </style>
 <td class="hmwp_widget_log hmwp-widget-log">

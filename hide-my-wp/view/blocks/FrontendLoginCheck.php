@@ -57,7 +57,8 @@ if ( HMWP_Classes_Tools::getOption( 'test_frontend' ) && HMWP_Classes_Tools::get
                         <td class="border-0 pl-0 align-top text-muted small"><?php echo esc_html__( 'Safe URL', 'hide-my-wp' ); ?></td>
                         <td class="border-0 align-top" style="word-break: break-all;">
                             <a href="<?php echo esc_url( $safe_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $safe_url ); ?></a>
-                            <div class="text-muted small"><?php echo esc_html__( 'Use this one if the new login URL does not work. It bypasses the hidden paths and lets you back into the dashboard.', 'hide-my-wp' ); ?></div>
+                            <?php // Only the URL may break inside a word ?>
+                            <div class="text-muted small" style="word-break: normal;"><?php echo esc_html__( 'Use this one if the new login URL does not work. It bypasses the hidden paths and lets you back into the dashboard.', 'hide-my-wp' ); ?></div>
                         </td>
                     </tr>
 				<?php } ?>

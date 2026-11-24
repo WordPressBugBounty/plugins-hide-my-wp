@@ -52,6 +52,17 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 		// Check compatibilities with other plugins
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Compatibility' )->getAlerts();
 
+		// The login test is waiting: say it here too, the gate is on Change Paths
+		if ( HMWP_Classes_Tools::getOption( 'test_frontend' ) && HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' ) {
+			HMWP_Classes_Error::setNotification( esc_html__( 'Your paths have changed. Confirm you can still log in.', 'hide-my-wp' ) . ' <a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '" class="btn btn-default btn-sm ml-3">' . esc_html__( 'Change Paths', 'hide-my-wp' ) . '</a>' );
+		}
+
+		// Same restore offer as on the settings pages
+		if ( get_transient( 'hmwp_restore' ) == 1 ) {
+			$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_restore_settings' ), 'action' => 'hmwp_restore_settings' ) ) ) . '" class="btn btn-default btn-sm ml-3" />' . esc_html__( "Restore Settings", 'hide-my-wp' ) . '</a>';
+			HMWP_Classes_Error::setNotification( esc_html__( 'Do you want to restore the last saved settings?', 'hide-my-wp' ) . $restoreLink );
+		}
+
 		// Show errors on top
 		HMWP_Classes_ObjController::getClass( 'HMWP_Classes_Error' )->hookNotices();
 
@@ -389,7 +400,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'fa fa-mouse-pointer',
 				'link'        => HMWP_Classes_Tools::getSettingsUrl( 'hmwp_tweaks&tab=disable', true ),
-				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/disable-right-click-and-keys/#ghost-disable-right-click',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/disable-right-click-and-keys/#ghost-disable-right-click',
 				'show'        => true,
 			),
 			array(
@@ -417,7 +428,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 				'connection'  => false,
 				'logo'        => 'dashicons-before dashicons-shield-alt',
 				'link'        => false,
-				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/wp-ghost-and-wordfence-security/',
+				'details'     => HMWP_Classes_Tools::getOption('hmwp_plugin_website') . '/kb/wp-ghost-and-wordfence-security/',
 				'show'        => HMWP_Classes_Tools::isPluginActive( 'wordfence/wordfence.php' ),
 			),
 			array(

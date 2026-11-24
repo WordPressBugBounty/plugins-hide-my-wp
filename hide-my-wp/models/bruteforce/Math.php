@@ -67,9 +67,10 @@ class HMWP_Models_Bruteforce_Math extends HMWP_Models_Bruteforce_Abstract {
 		$ans  = wp_create_nonce( 'hmwp_math_' . $sum );
 		?>
         <div class="humanity">
-            <strong><?php echo esc_html__( 'Prove your humanity:', 'hide-my-wp' ) ?> </strong>
-			<?php echo esc_attr( $num1 ) ?> &nbsp; + &nbsp; <?php echo esc_attr( $num2 ) ?> &nbsp; = &nbsp;
-            <input type="input" name="brute_num" value="" size="2"/>
+            <?php // The question names the answer field for screen readers ?>
+            <span id="hmwp_humanity_q"><strong><?php echo esc_html__( 'Prove your humanity:', 'hide-my-wp' ) ?> </strong>
+			<?php echo esc_attr( $num1 ) ?> &nbsp; + &nbsp; <?php echo esc_attr( $num2 ) ?> &nbsp; = &nbsp;</span>
+            <input type="text" inputmode="numeric" autocomplete="off" name="brute_num" value="" size="2" aria-labelledby="hmwp_humanity_q"/>
             <input type="hidden" name="brute_ck" value="<?php echo esc_attr( $ans ); ?>" id="brute_ck"/>
         </div>
         <style>
@@ -79,7 +80,13 @@ class HMWP_Models_Bruteforce_Math extends HMWP_Models_Bruteforce_Abstract {
             }
 
             div.humanity input[name=brute_num] {
+                width: 60px;
                 max-width: 60px;
+                min-height: 32px;
+                margin: 0;
+                padding: 2px 6px;
+                font-size: 16px;
+                line-height: 1.4;
                 display: inline !important;
                 border: 1px solid gray;
             }

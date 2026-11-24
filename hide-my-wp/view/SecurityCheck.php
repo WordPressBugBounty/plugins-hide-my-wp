@@ -697,7 +697,7 @@ if ( file_exists( _HMWP_MODEL_DIR_ . 'Ghostdoctor.php' ) ) {
             </div>
             <div class="modal-body">
 
-                <?php echo wp_kses_post( sprintf( /* translators: 1: Opening anchor tag. 2: Closing anchor tag. 3: Opening anchor tag. 4: Closing anchor tag. */ __( 'First, you need to activate the %1$sSafe Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ) ?>
+                <?php echo wp_kses_post( sprintf( /* translators: 1: Opening anchor tag. 2: Closing anchor tag. 3: Opening anchor tag. 4: Closing anchor tag. */ __( 'First, you need to activate the %1$sLite Mode%2$s or %3$sGhost Mode%4$s', 'hide-my-wp' ), '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '">', '</a>' ) ) ?>
 
             </div>
             <div class="modal-footer">

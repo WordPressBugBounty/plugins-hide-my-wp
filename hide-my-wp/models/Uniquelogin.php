@@ -31,6 +31,9 @@ class HMWP_Models_Uniquelogin {
     /** @var string the user redirect to */
 	const USER_REDIRECT = '_hmwpml_redirect_to';
 
+	/** @var array the holds set by this request for the magic link email */
+	private $holds = array();
+
 	/**
 	 * Get valid temporary user based on token
 	 *
@@ -159,6 +162,15 @@ class HMWP_Models_Uniquelogin {
 					return $result;
 				}
 
+				// From the login form: one email per user and per IP in 30 seconds, the link sent before stays valid
+				if ( ! empty( $data['throttle'] ) && ! $this->canSendLoginUrl( $user_id ) ) {
+					$result['error']   = false;
+					$result['held']    = true;
+					$result['user_id'] = $user_id;
+
+					return $result;
+				}
+
 				HMWP_Classes_Tools::saveUserMeta( self::USER_SESSION_CREATED, $this->gtmTimestamp(), $user_id );
 				HMWP_Classes_Tools::saveUserMeta( self::USER_SESSION_EXPIRE, ( $this->gtmTimestamp() + $expire ), $user_id );
 				HMWP_Classes_Tools::saveUserMeta( self::USER_TOKEN_KEY, $this->generateToken( $user_id ), $user_id );
@@ -171,6 +183,90 @@ class HMWP_Models_Uniquelogin {
 
 		return $result;
 
+	}
+
+	/**
+	 * Check if a magic link email can leave now and hold the next ones for 30 seconds
+	 *
+	 * @param int $user_id
+	 *
+	 * @return bool
+	 */
+	public function canSendLoginUrl( $user_id ) {
+
+		/** @var HMWP_Models_Firewall_Server $server */
+		$server = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Server' );
+		/** @var HMWP_Models_Bruteforce_Database $database */
+		$database = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' );
+
+		$ip    = $server->getIp();
+		$holds = array( 'hmwp_uniquelogin_sent_' . (int) $user_id );
+
+		// The visitor IP counts too, unless it is whitelisted or shared by all unknown visitors
+		if ( $ip && ! $server->isUnknownIp() && ! in_array( $ip, array( '127.0.0.1', '::1' ), true ) && ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $ip ) ) {
+			$holds[] = 'hmwp_uniquelogin_ip_' . md5( $ip );
+		}
+
+		$send   = true;
+		$switch = ( HMWP_Classes_Tools::isMultisites() && ! is_main_site() );
+
+		// One request at a time checks and marks the email
+		$lock = $database->lock( 'uniquelogin' );
+
+		if ( $switch ) {
+			switch_to_blog( $database->getMainBlogId() );
+		}
+
+		try {
+
+			foreach ( $holds as $hold ) {
+				if ( get_transient( $hold ) ) {
+					$send = false;
+				}
+			}
+
+			if ( $send ) {
+				foreach ( $holds as $hold ) {
+					set_transient( $hold, 1, 30 );
+				}
+
+				$this->holds = $holds;
+			}
+
+		} finally {
+
+			if ( $switch ) {
+				restore_current_blog();
+			}
+
+			$database->unlock( $lock );
+		}
+
+		return $send;
+	}
+
+	/**
+	 * Remove the hold when the email could not leave, so the user can ask again
+	 *
+	 * @return void
+	 */
+	public function releaseLoginUrl() {
+
+		$switch = ( HMWP_Classes_Tools::isMultisites() && ! is_main_site() );
+
+		if ( $switch ) {
+			switch_to_blog( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->getMainBlogId() );
+		}
+
+		foreach ( $this->holds as $hold ) {
+			delete_transient( $hold );
+		}
+
+		if ( $switch ) {
+			restore_current_blog();
+		}
+
+		$this->holds = array();
 	}
 
 	/**

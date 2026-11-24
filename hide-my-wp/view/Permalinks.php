@@ -1031,8 +1031,9 @@
                                 <select multiple name="hmwp_hide_commonfiles_files[]" class="selectpicker form-control mb-1">
                                     <?php
 
-                                    $allfiles = array('wp-config.php', 'readme.html', 'readme.txt', 'license.txt');
-                                    $files = array('wp-config.php', 'readme.html', 'readme.txt', 'license.txt');
+                                    // Same files the preset hides, so a save keeps them hidden
+                                    $allfiles = array('wp-config.php', 'wp-config-sample.php', 'readme.html', 'readme.txt', 'license.txt', 'install.php', 'upgrade.php', 'php.ini', 'bb-config.php', 'error_log', 'debug.log');
+                                    $files = $allfiles;
 
                                     if(HMWP_Classes_Tools::getDefault('hmwp_wp-comments-post') <> HMWP_Classes_Tools::getOption('hmwp_wp-comments-post')) {
                                         array_unshift($allfiles, 'wp-comments-post.php');
@@ -1197,7 +1198,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_hide_plugins">
+                        <div class="col-sm-12 row mb-1 ml-1 p-2 hmwp_hide_themes">
                             <div class="checker col-sm-12 row my-2 py-0">
                                 <div class="col-sm-12 p-0 switch switch-sm">
                                     <input type="hidden" name="hmwp_hide_all_themes" value="0"/>

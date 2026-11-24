@@ -154,7 +154,8 @@ class HMWP_Models_ThreatsListTable extends WP_List_Table {
 
 		echo '<div class="col-sm-12 p-3 m-0 bg-warning" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">';
 
-		echo '<span style="font-size: 13px; color: #555;">';
+		// The text colour comes from the box, so it also reads in dark mode
+		echo '<span style="font-size: 13px;">';
 		if ( $countryName !== '' ) {
 			echo wp_kses_post( sprintf(
 			/* translators: 1: Number of items shown, 2: Total items, 3: Country name. */
@@ -558,7 +559,8 @@ class HMWP_Models_ThreatsListTable extends WP_List_Table {
 
 		// JSON container for this row (read by JS on click)
 		$out .= '<script type="application/json" id="hmwp_threat_json_' . esc_attr( $row_id ) . '">';
-		$out .= wp_json_encode( $payload );
+		// Hex-encode < > & ' " so logged request text can't change how the script block is parsed
+		$out .= wp_json_encode( $payload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT );
 		$out .= '</script>';
 
 		$out .= '<div class="dropdown hmwp-threat-actions" style="text-align:right;">';

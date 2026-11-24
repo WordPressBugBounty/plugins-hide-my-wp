@@ -224,7 +224,7 @@ if ( ! isset( $view ) ) {
                 <div class="col-sm-12 m-0 p-2 bg-light text-center" style="position: fixed; bottom: 0; right: 0; z-index: 100; box-shadow: 0 0 8px -3px #444;">
                     <button type="submit" class="btn rounded-0 btn-success px-5 mr-3 save"><?php echo esc_html__( 'Save', 'hide-my-wp' ); ?></button>
 					<?php if ( HMWP_Classes_Tools::getOption( 'hmwp_2falogin' ) ) { ?>
-                        <a href="<?php echo esc_url(admin_url( 'profile.php' ) . '#hmwp_two_factor_options') ?>" class="btn rounded-0 btn-success px-5 mr-5"><?php echo esc_html__( 'Add Two Factor Authentication', 'hide-my-wp' ); ?></a>
+                        <a href="<?php echo esc_url(admin_url( 'profile.php' ) . '#hmwp_totp_wrap') ?>" class="btn rounded-0 btn-success px-5 mr-5"><?php echo esc_html__( 'Add Two Factor Authentication', 'hide-my-wp' ); ?></a>
 					<?php } ?>
                 </div>
             </form>

@@ -125,18 +125,16 @@ $hmwp_security_score = 100 - $hmwp_risk_percent;
                 <td class="hmwp_widget_security hmwp_widget_gauge">
                     <?php if ( ! $do_check ) { ?>
 
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_securitycheck' ) ); ?>" class="hmwp_widget_gauge_link">
-                            <div class="hmwp_widget_gauge_img">
-                                <?php include _HMWP_THEME_DIR_ . 'blocks/Speedometer.php'; ?>
-                            </div>
-                        </a>
+                        <?php // The gauge block prints its own link ?>
+                        <div class="hmwp_widget_gauge_img">
+                            <?php include _HMWP_THEME_DIR_ . 'blocks/Speedometer.php'; ?>
+                        </div>
                     <?php } else { ?>
 
-                        <a href="<?php echo esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_securitycheck' ) ); ?>" class="hmwp_widget_gauge_link">
-                            <div class="hmwp_widget_gauge_img">
-                                <?php include _HMWP_THEME_DIR_ . 'blocks/Speedometer.php'; ?>
-                            </div>
-                        </a>
+                        <?php // The gauge block prints its own link ?>
+                        <div class="hmwp_widget_gauge_img">
+                            <?php include _HMWP_THEME_DIR_ . 'blocks/Speedometer.php'; ?>
+                        </div>
 
                         <a href="<?php echo esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_securitycheck', true ) ); ?>" class="wp_button">
                             <?php echo esc_html__( 'Run Full Security Check', 'hide-my-wp' ); ?>

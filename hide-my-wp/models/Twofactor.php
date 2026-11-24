@@ -149,7 +149,9 @@ class HMWP_Models_Twofactor {
         // Only force users that can actually reach their profile page (where the
         // setup UI lives). Every standard role has 'read'; this fails open for any
         // custom role without it, so nobody is redirected to a page they can't load.
+        // Temporary Login users can't open profile.php, so they are never forced to enroll
         if ( isset( $user->ID ) && $user->exists() && user_can( $user, 'read' )
+            && ! get_user_meta( $user->ID, '_hmwp_user', true )
             && HMWP_Classes_Tools::getOption( 'hmwp_2falogin' )
             && HMWP_Classes_Tools::getOption( 'hmwp_2fa_forced' ) ) {
 

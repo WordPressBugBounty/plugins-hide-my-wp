@@ -374,6 +374,7 @@ class HMWP_Models_ThreatsLog extends HMWP_Models_Firewall_Threats {
 			'FW_GHOST_UPLOAD_PHP_SHELL' => 'Malicious File Upload',
 			'FW_GHOST_OBJECT_INJECTION' => 'PHP Object Injection',
 			'FW_GHOST_SSRF'             => 'Server-Side Request Forgery',
+			'FW_GHOST_FIELD_LFI'        => 'File Inclusion Exploits',
 			'FW_GHOST_UA_EXPLOIT_TOOLS' => 'Probing for vulnerable code',
 			'FW_GHOST_QS_PROTO_POLLUTION' => 'Script Injection Attacks',
 			'FW_GHOST_QS_NOSQL_OPERATORS' => 'SQL Injection Attacks',
@@ -382,6 +383,8 @@ class HMWP_Models_ThreatsLog extends HMWP_Models_Firewall_Threats {
 			'FW_GHOST_QS_BACKTICK'      => 'Script Injection Attacks',
 			'FW_GHOST_REF_TAGS'         => 'Cross-Site Scripting (XSS)',
 			'FW_GHOST_REST_BATCH'       => 'Vulnerability Exploit',
+			'FW_GHOST_CALLBACK'         => 'Vulnerability Exploit',
+			'FW_GHOST_PACKAGE_URL'      => 'Malicious File Upload',
 			'FW_QS_CLOUD_METADATA'      => 'Server-Side Request Forgery',
 			'FW_QS_MOSCONFIG'           => 'File Inclusion Exploits',
 			'FW_QS_TAG_OPEN'            => 'Cross-Site Scripting (XSS)',
@@ -407,6 +410,11 @@ class HMWP_Models_ThreatsLog extends HMWP_Models_Firewall_Threats {
 			if ( strpos( $code, $prefix ) === 0 ) {
 				return (string) apply_filters( 'hmwp_threats_category_from_code', $category, $code );
 			}
+		}
+
+		// A path that climbs folders, in the URL, the query or a form field
+		if ( strpos( $code, 'THR_' ) === 0 && substr( $code, - 18 ) === '_TRAVERSAL_ENCODED' ) {
+			return (string) apply_filters( 'hmwp_threats_category_from_code', 'Directory Traversal Attacks', $code );
 		}
 
 		// Any other THR_ URI indicators default to probing (non-existing PHP, exposed suffixes, odd markers, etc.)

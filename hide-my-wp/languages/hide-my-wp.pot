@@ -2,7 +2,7 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Ghost Lite 7.0.20\n"
+"Project-Id-Version: WP Ghost Lite 7.0.21\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/hide-my-wp\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7300,4 +7300,10 @@ msgstr ""
 
 #: view/TwofactorUser.php:40
 msgid "Passkey (Face ID / Touch ID / Windows Hello)"
+msgstr ""
+
+#. translators: 1: Detected server name. 2: Selected server type. 3: Opening link HTML. 4: Closing link HTML.
+#: controllers/Settings.php:124
+#, php-format
+msgid "This website runs on %1$s, but Server Type is set to %2$s. WP Ghost now writes its rules for %2$s, so the path changes may stop working. Set Server Type back to Autodetect in %3$sAdvanced > Compatibility%4$s, unless your hosting company asked for %2$s."
 msgstr ""

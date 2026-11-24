@@ -55,7 +55,8 @@ class HMWP_Models_Compatibility_UltimateMember extends HMWP_Models_Compatibility
 		}
 
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_bruteforce_register' ) ) {
-			add_action( 'um_submit_form_register', array( $this, 'checkReCaptcha' ) );
+			// Check on the validation hook, before Ultimate Member creates the account
+			add_action( 'um_submit_form_errors_hook__registration', array( $this, 'checkReCaptcha' ), 9, 2 );
 			add_action( 'um_after_register_fields', array( $bruteforce, 'head' ), 99 );
 			add_action( 'um_after_register_fields', array( $bruteforce, 'form' ), 99 );
 		}
@@ -101,11 +102,12 @@ class HMWP_Models_Compatibility_UltimateMember extends HMWP_Models_Compatibility
 	 * Check the reCaptcha on login, register and password reset
 	 *
 	 * @param $args
+	 * @param $form_data
 	 *
 	 * @return void
 	 * @throws Exception
 	 */
-	public function checkReCaptcha( $args ) {
+	public function checkReCaptcha( $args, $form_data = array() ) {
 		if ( class_exists( 'UM' ) ) {
 
 			// Get the active brute force class
@@ -114,8 +116,11 @@ class HMWP_Models_Compatibility_UltimateMember extends HMWP_Models_Compatibility
 			$errors = $bruteforce->pre_authentication( false );
 
 			if ( is_wp_error( $errors ) ) {
-				if ( isset( $args['mode'] ) ) {
-					switch ( $args['mode'] ) {
+				// Newer Ultimate Member versions keep the form mode in the second argument
+				$mode = isset( $args['mode'] ) ? $args['mode'] : ( isset( $form_data['mode'] ) ? $form_data['mode'] : false );
+
+				if ( $mode ) {
+					switch ( $mode ) {
 						case 'login':
 							UM()->form()->add_error( 'username', wp_strip_all_tags( $errors->get_error_message() ) );
 							break;

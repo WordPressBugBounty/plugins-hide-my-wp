@@ -275,6 +275,7 @@ class HMWP_Controllers_Uniquelogin extends HMWP_Classes_FrontController {
 				$data = array(
 					'user_email'  => $found_user->user_email,
 					'redirect_to' => HMWP_Classes_Tools::getValue( 'redirect_to' ),
+					'throttle'    => true,
 				);
 
 				//create a unique link for the current user
@@ -292,8 +293,8 @@ class HMWP_Controllers_Uniquelogin extends HMWP_Classes_FrontController {
 					//Get the unique login URL
 					$unique_login_url = $this->model->getUniqueLoginUrl( $found_user->ID );
 
-					//Send the login by email
-					if ( $this->model->sendLoginUrl( $found_user, $unique_login_url ) ) {
+					//Send the login by email. A link sent a moment ago is not sent again and gets the same answer.
+					if ( ! empty( $login['held'] ) || $this->model->sendLoginUrl( $found_user, $unique_login_url ) ) {
 
 						//email sent with success
 						$success = esc_html__( 'Please verify your email and click on the magic login URL provided in the email.', 'hide-my-wp' );
@@ -309,6 +310,9 @@ class HMWP_Controllers_Uniquelogin extends HMWP_Classes_FrontController {
 							$this->model->showNotices( $success );
 						}
 					} else {
+						//the user can ask for the link again right away
+						$this->model->releaseLoginUrl();
+
 						//if there is a problem sending the email
 						$user = new WP_Error( 'authentication_failed', sprintf( esc_html__( 'The server was unable to send the email.', 'hide-my-wp' ), '<strong>', '</strong>' ) );
 					}

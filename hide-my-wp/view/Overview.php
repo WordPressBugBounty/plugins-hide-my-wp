@@ -225,7 +225,7 @@ if ( ! $sorted ) {
                                                                             <input type="hidden" name="<?php echo esc_attr( $feature['option'] ) ?>" value="0"/>
                                                                             <div class="checker col-sm-3 row m-0 p-0 ">
                                                                                 <div class="p-0 switch switch-sm text-right">
-                                                                                    <input type="checkbox" id="activate_<?php echo esc_attr( $index ) ?>" name="<?php echo esc_attr( $feature['option'] ) ?>" <?php echo( $feature['active'] ? 'checked="checked"' : '' ) ?> class="switch" value="1"/>
+                                                                                    <input type="checkbox" id="activate_<?php echo esc_attr( $index ) ?>" name="<?php echo esc_attr( $feature['option'] ) ?>" <?php echo( $feature['active'] ? 'checked="checked"' : '' ) ?> class="switch" value="1" aria-label="<?php echo esc_attr( wp_strip_all_tags( $feature['title'] ) ) ?>"/>
                                                                                     <label for="activate_<?php echo esc_attr( $index ) ?>" class="m-0"></label>
                                                                                 </div>
                                                                             </div>

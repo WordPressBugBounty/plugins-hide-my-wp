@@ -72,6 +72,42 @@ class HMWP_Controllers_Firewall extends HMWP_Classes_FrontController {
 	}
 
 	/**
+	 * Check a wp-cron.php call that carries more than WordPress sends with it // 11.2026
+	 *
+	 * @return void
+	 */
+	public function initCron() {
+
+		try {
+
+			// WordPress and the cron services call it with no fields, no body and no cookies: nothing to check
+			$query = isset( $_SERVER['QUERY_STRING'] ) ? (string) $_SERVER['QUERY_STRING'] : ''; //phpcs:ignore
+			if ( PHP_SAPI === 'cli' || ( empty( $_POST ) && empty( $_FILES ) && empty( $_COOKIE ) && empty( $_SERVER['CONTENT_LENGTH'] ) && empty( $_SERVER['HTTP_TRANSFER_ENCODING'] ) && preg_match( '/^(doing_wp_cron(=[0-9.]*)?)?$/', $query ) ) ) { //phpcs:ignore
+				return;
+			}
+
+			// Like init(), wait until a logged-in cookie can be verified
+			if ( HMWP_Classes_ObjController::getClass( 'HMWP_Models_Cookies' )->deferUntilVerified( array( $this, 'initCron' ) ) ) {
+				return;
+			}
+
+			if ( ! $this->doFirewall() ) {
+				return;
+			}
+
+			// Load the log first, so it records what the firewall finds
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_threats_log' ) ) {
+				HMWP_Classes_ObjController::getClass( 'HMWP_Controllers_ThreatsLog' );
+			}
+
+			$this->detectAllThreats();
+
+		} catch ( Exception $e ) {
+		}
+
+	}
+
+	/**
 	 * Check if it's valid to load firewall on the page
 	 *
 	 * @return bool

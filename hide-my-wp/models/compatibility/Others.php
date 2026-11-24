@@ -370,7 +370,7 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 	 */
 	public function fixHideUrls() {
 
-		$url = ( isset( $_SERVER['REQUEST_URI'] ) ? untrailingslashit( strtok( wp_unslash( $_SERVER["REQUEST_URI"] ), '?' ) ) : false ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$url = ( isset( $_SERVER['REQUEST_URI'] ) ? HMWP_Classes_Tools::getRequestPath() : false );
 
 		//Compatibility with iThemes Security, Temporary Login Plugin, LoginPress, Wordfence
 		if ( $url && ! HMWP_Classes_Tools::isLoggedInUser() ) {
@@ -473,7 +473,7 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 			return true;
 		}
 
-		$url       = ( isset( $_SERVER['REQUEST_URI'] ) ? untrailingslashit( strtok( wp_unslash( $_SERVER["REQUEST_URI"] ), '?' ) ) : false ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$url       = ( isset( $_SERVER['REQUEST_URI'] ) ? HMWP_Classes_Tools::getRequestPath() : false );
 
 		// AJAX login forms have no captcha field; the lockout and ban checks still apply to them
 		if ( HMWP_Classes_Tools::isAjax() ) {

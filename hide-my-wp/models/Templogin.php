@@ -29,7 +29,12 @@ class HMWP_Models_Templogin {
 	const USER_REDIRECT = '_hmwp_redirect_to';
 
 	public function __construct() {
-		add_action( 'init', array( $this, 'init' ) );
+		// Created after init (feature off, settings page): fill the list now
+		if ( did_action( 'init' ) ) {
+			$this->init();
+		} else {
+			add_action( 'init', array( $this, 'init' ) );
+		}
 	}
 
 	public function init() {

@@ -88,7 +88,7 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		add_filter( 'xmlrpc_enabled', '__return_false', PHP_INT_MAX );
 		add_filter( 'xmlrpc_methods', '__return_empty_array', PHP_INT_MAX );
 
-		$this->model->getNotFound( untrailingslashit( strtok( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ), '?' ) ) ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$this->model->getNotFound( HMWP_Classes_Tools::getRequestPath() );
 	}
 
 	/**
@@ -170,6 +170,11 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 		add_filter( 'query_vars', array( $this->model, 'addParams' ), 1, 1 );
 		add_filter( 'login_redirect', array( $this->model, 'sanitize_login_redirect' ), 9, 3 );
 		add_filter( 'wp_redirect', array( $this->model, 'sanitize_redirect' ), PHP_INT_MAX, 2 );
+
+		// Comments are visitor text: note the ones that name the old admin or login path
+		foreach ( array( 'get_comment_text', 'comment_text', 'get_comment_excerpt', 'comment_text_rss', 'get_comment_author', 'get_comment_author_url' ) as $hook ) {
+			add_filter( $hook, array( $this->model, 'checkVisitorText' ), PHP_INT_MAX, 1 );
+		}
 		add_filter( 'x_redirect_by', '__return_false', PHP_INT_MAX, 1 );
 
 		// Redirect based on the current user role
@@ -288,10 +293,18 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 				add_filter( 'wp_sitemaps_users_pre_url_list', '__return_false', 99, 0 );
 			}
 
+			// Disable Embeds also covers the oEmbed route on REST requests
+			if ( HMWP_Classes_Tools::getOption( 'hmwp_disable_embeds' ) ) {
+				add_filter( 'rest_endpoints', array( $this->model, 'disableEmbedRoute' ) );
+			}
+
 			// An author asked by user ID stays hidden wherever the ID sits in the request
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
 				add_action( 'template_redirect', array( $this->model, 'hideAuthorId' ), 1 );
 			}
+
+			// WordPress builds robots.txt from the admin URL: the custom admin and ajax paths stay out of it
+			add_filter( 'robots_txt', array( $this->model, 'hideRobotsPaths' ), PHP_INT_MAX );
 
 			// Robots.txt compatibility with other plugins
 			if ( isset($_SERVER['REQUEST_URI']) ){
@@ -314,6 +327,9 @@ class HMWP_Controllers_Rewrite extends HMWP_Classes_FrontController {
 			add_action( 'init', array( $this, 'hookChangePaths' ) );
 
 		}
+
+		// Login, error, redirect, REST and ajax answers carry the PHP version header too
+		add_action( 'plugins_loaded', array( $this->model, 'hidePoweredBy' ), 0 );
 
 		// Hide the URLs from admin and login
 		// Load the hook on plugins_loaded to prevent any wp redirect

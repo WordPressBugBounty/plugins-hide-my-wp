@@ -98,6 +98,93 @@ class HMWP_Models_Bruteforce_Database {
 	}
 
 	/**
+	 * Read the saved record of an IP again, without the copy kept in this request
+	 *
+	 * @param string $ip The verified IP address
+	 *
+	 * @return mixed
+	 */
+	public function getFresh( $ip ) {
+
+		if ( ! isset( $ip ) ) {
+			return false;
+		}
+
+		$transient = $this->prefix . md5( $ip );
+		$switch    = ( HMWP_Classes_Tools::isMultisites() && ! is_main_site() );
+
+		if ( $switch ) {
+			switch_to_blog( $this->getMainBlogId() );
+		}
+
+		if ( wp_using_ext_object_cache() ) {
+			// Ask the cache server, not the copy kept in this request
+			$return = wp_cache_get( $transient, 'transient', true );
+		} else {
+			// Forget the copies kept in this request, so the next read comes from the database
+			$options = array( '_transient_' . $transient, '_transient_timeout_' . $transient );
+
+			foreach ( array( 'notoptions', 'alloptions' ) as $list ) {
+				$cached = wp_cache_get( $list, 'options' );
+
+				if ( is_array( $cached ) && array_intersect_key( $cached, array_flip( $options ) ) ) {
+					wp_cache_set( $list, array_diff_key( $cached, array_flip( $options ) ), 'options' );
+				}
+			}
+
+			foreach ( $options as $option ) {
+				wp_cache_delete( $option, 'options' );
+			}
+
+			$return = get_transient( $transient );
+		}
+
+		if ( $switch ) {
+			restore_current_blog();
+		}
+
+		return $return;
+	}
+
+	/**
+	 * Take a short database lock, so one request at a time works on the same record
+	 *
+	 * @param string $key The IP address or the name of the record
+	 *
+	 * @return string|false The lock name, or false when the database gave no lock
+	 */
+	public function lock( $key ) {
+		global $wpdb;
+
+		// Lock names are shared by all sites on the database server, keep this one for this site only
+		$name = 'hmwp_' . md5( ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . $wpdb->base_prefix . $key );
+
+		// Wait 2 seconds at most. Without a lock the caller goes on as before.
+		$errors = $wpdb->suppress_errors( true );
+		$locked = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $name, 2 ) ); //phpcs:ignore
+		$wpdb->suppress_errors( $errors );
+
+		return ( (string) $locked === '1' ? $name : false );
+	}
+
+	/**
+	 * Release the lock taken with lock()
+	 *
+	 * @param string|false $name The lock name returned by lock()
+	 *
+	 * @return void
+	 */
+	public function unlock( $name ) {
+		global $wpdb;
+
+		if ( $name ) {
+			$errors = $wpdb->suppress_errors( true );
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) ); //phpcs:ignore
+			$wpdb->suppress_errors( $errors );
+		}
+	}
+
+	/**
 	 * If we're in a multisite network, return the blog ID of the primary blog
 	 *
 	 * @return int

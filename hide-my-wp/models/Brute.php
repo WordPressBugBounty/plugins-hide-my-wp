@@ -100,46 +100,107 @@ class HMWP_Models_Brute {
 
 			case 'failed_attempt':
 
-				// Get attempts
-				$attempts = (int) ( $response['attempts'] ?? 1 );
+				/** @var HMWP_Models_Bruteforce_Database $database */
+				$database = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' );
+				/** @var HMWP_Models_Firewall_Rules $firewallRules */
+				$firewallRules = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' );
 
-				// If reached the maximum number of fail attempts
-				if ( ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $ip ) && $attempts >= HMWP_Classes_Tools::getOption( 'brute_max_attempts' ) ) {
+				$blocked = false;
+				$limit   = false;
 
-					/** @var HMWP_Models_Firewall_Rules $firewallRules */
-					$firewallRules = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' );
-					if ( ! $firewallRules->checkWhitelistRule( 'BF_LOGIN_EXCEEDED' ) ) {
+				// One request at a time counts for this IP, on the record as it is saved now
+				$lock = $database->lock( $ip );
 
-						// Block the current IP address
-						$this->blockIp( $ip );
+				try {
 
-						do_action( 'hmwp_threat_detected', array(
-							'code'    => 'BF_LOGIN_EXCEEDED',
-							'area'    => 'login',
-						) );
-
-						// Show a blocked message
-						$this->bruteForceBlock();
+					if ( ! $response = $database->getFresh( $ip ) ) {
+						$response = array();
 					}
 
-				} else {
+					// Get attempts
+					$attempts    = (int) ( $response['attempts'] ?? 1 );
+					$whitelisted = $firewallRules->isWhitelistedIP( $ip );
 
-					// Increase fail attempts
-					$attempts = $attempts + 1;
+					if ( ! $whitelisted && ( $response['status'] ?? 'ok' ) == 'blocked' ) {
 
-					// Save the attempt in database for this IP address
-					$response['ip']       = $ip;
-					$response['attempts'] = $attempts;
-					$response['status']   = 'ok';
+						// The IP is blocked already, the record stays as it is
+						$blocked = true;
 
-					HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->save( $ip, $response );
+					} elseif ( ! $whitelisted && $attempts >= HMWP_Classes_Tools::getOption( 'brute_max_attempts' ) ) {
+
+						// If reached the maximum number of fail attempts
+						if ( ! $firewallRules->checkWhitelistRule( 'BF_LOGIN_EXCEEDED' ) ) {
+							// Block the current IP address
+							$this->saveBlockedIp( $ip, $response );
+
+							$blocked = true;
+							$limit   = true;
+						}
+
+					} else {
+
+						// Increase fail attempts
+						$attempts = $attempts + 1;
+
+						// Save the attempt in database for this IP address
+						$response['ip']       = $ip;
+						$response['attempts'] = $attempts;
+						$response['status']   = 'ok';
+
+						$database->save( $ip, $response );
+
+					}
+
+				} finally {
+					$database->unlock( $lock );
+				}
+
+				if ( $limit ) {
+
+					$this->logBlockedIp( $ip );
+
+					do_action( 'hmwp_threat_detected', array(
+						'code'    => 'BF_LOGIN_EXCEEDED',
+						'area'    => 'login',
+					) );
+
+				}
+
+				if ( $blocked ) {
+					// Show a blocked message
+					$this->bruteForceBlock();
 				}
 
 				break;
 
 			case 'clear_ip':
 
-				HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->delete( $ip );
+				/** @var HMWP_Models_Bruteforce_Database $database */
+				$database = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' );
+
+				$blocked = false;
+
+				$lock = $database->lock( $ip );
+
+				try {
+
+					$saved = $database->getFresh( $ip );
+
+					// A blocked IP stays blocked until the ban ends, a good login doesn't remove the ban
+					if ( is_array( $saved ) && ( $saved['status'] ?? 'ok' ) == 'blocked' && ! HMWP_Classes_ObjController::getClass( 'HMWP_Models_Firewall_Rules' )->isWhitelistedIP( $ip ) ) {
+						$blocked = true;
+					} else {
+						$database->delete( $ip );
+					}
+
+				} finally {
+					$database->unlock( $lock );
+				}
+
+				if ( $blocked ) {
+					// Show a blocked message
+					$this->bruteForceBlock();
+				}
 
 				break;
 
@@ -163,8 +224,39 @@ class HMWP_Models_Brute {
 			return;
 		}
 
-		// Get current IP info from database
-		if ( ! $response = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->get( $ip ) ) {
+		/** @var HMWP_Models_Bruteforce_Database $database */
+		$database = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' );
+
+		// One request at a time changes the record of this IP
+		$lock = $database->lock( $ip );
+
+		try {
+			$this->saveBlockedIp( $ip, $database->getFresh( $ip ) );
+		} finally {
+			$database->unlock( $lock );
+		}
+
+		$this->logBlockedIp( $ip );
+
+	}
+
+	/**
+	 * Save the IP as blocked, with the attempts counted so far
+	 *
+	 * @param string $ip
+	 * @param array|false $response The saved record of this IP
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	private function saveBlockedIp( $ip, $response ) {
+
+		// 127.0.0.1 is the server itself or the placeholder every unknown visitor shares, never ban it
+		if ( in_array( $ip, array( '127.0.0.1', '::1' ), true ) ) {
+			return;
+		}
+
+		if ( ! is_array( $response ) ) {
 			$response = array();
 		}
 
@@ -183,10 +275,26 @@ class HMWP_Models_Brute {
 		// Save the info into database
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->save( $ip, $response );
 
-		// Log the block IP on the server if the Events Log is active
+	}
+
+	/**
+	 * Log the blocked IP if the Events Log is active
+	 *
+	 * @param string $ip
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	private function logBlockedIp( $ip ) {
+
+		if ( in_array( $ip, array( '127.0.0.1', '::1' ), true ) ) {
+			return;
+		}
+
 		if ( HMWP_Classes_Tools::getOption( 'hmwp_activity_log' ) ) {
 			HMWP_Classes_ObjController::getClass( 'HMWP_Models_EventsLog' )->save( 'block_ip', array( 'ip' => $ip ) );
 		}
+
 	}
 
 	/**

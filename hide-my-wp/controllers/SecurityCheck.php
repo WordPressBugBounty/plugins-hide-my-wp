@@ -1273,7 +1273,8 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 					}
 
 					foreach ( $names as $index => $name ) {
-						if ( isset($values[$index] ) && in_array( $name, array_keys( $options ) ) ) {
+						// The fix buttons only send numbers
+						if ( isset($values[$index] ) && preg_match( '/^[0-9]+$/', (string) $values[$index] ) && in_array( $name, array_keys( $options ) ) ) {
 							HMWP_Classes_Tools::saveOptions( $name, $values[$index] );
 							//call it in case of rule change
 							HMWP_Classes_ObjController::getClass( 'HMWP_Models_Settings' )->saveRules();

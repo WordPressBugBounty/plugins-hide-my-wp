@@ -20,6 +20,27 @@ class HMWP_Controllers_Templogin extends HMWP_Classes_FrontController {
 		add_filter( 'allow_password_reset', array( $this, 'allowPasswordReset' ), 99, 2 );
 		add_filter( 'wp_is_application_passwords_available_for_user', array( $this, 'allowAppPasswords' ), 99, 2 );
 		add_filter( 'determine_current_user', array( $this, 'checkCurrentUser' ), 99 );
+		// No user changes from a temporary account on any route (REST, AJAX, screens)
+		add_filter( 'map_meta_cap', array( $this, 'blockUserChanges' ), 99, 3 );
+	}
+
+	/**
+	 * Refuse adding, editing, promoting and deleting users for a temporary account
+	 *
+	 * @param string[] $caps    The capabilities WordPress asks for.
+	 * @param string   $cap     The capability being checked.
+	 * @param int      $user_id The user ID.
+	 *
+	 * @return string[]
+	 */
+	public function blockUserChanges( $caps, $cap, $user_id ) {
+		$blocked = array( 'create_users', 'add_users', 'edit_users', 'edit_user', 'promote_users', 'promote_user', 'delete_users', 'delete_user', 'remove_users', 'remove_user' );
+
+		if ( in_array( $cap, $blocked, true ) && $this->model->isValidTempLogin( $user_id ) ) {
+			return array( 'do_not_allow' );
+		}
+
+		return $caps;
 	}
 
 	/**

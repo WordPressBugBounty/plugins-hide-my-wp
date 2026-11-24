@@ -591,9 +591,12 @@ class HMWP_Classes_Tools {
 		// Read before anything below saves the options: a website that never saved the firewall level
 		$keep_8g   = false;
 		$multisite = ( self::isMultisites() && defined( 'BLOG_ID_CURRENT_SITE' ) );
+		$first_run = false;
 		if ( self::$options['hmwp_ver'] < HMWP_VERSION_ID ) {
 			$saved   = json_decode( (string) ( $multisite ? get_blog_option( BLOG_ID_CURRENT_SITE, HMWP_OPTION ) : get_option( HMWP_OPTION ) ), true );
 			$keep_8g = ( is_array( $saved ) && ! isset( $saved['hmwp_sqlinjection_level'] ) );
+			// No saved version yet: the plugin never ran its update step on this website
+			$first_run = ( ! is_array( $saved ) || empty( $saved['hmwp_ver'] ) );
 		}
 
 		// X-XSS-Protection is deprecated and can open XSS holes, stop sending it (any version, re-packs included)
@@ -602,6 +605,12 @@ class HMWP_Classes_Tools {
 			self::saveOptions();
 			// Rebuild the config file rules on the next admin page
 			set_transient( 'hmwp_update', 1 );
+		}
+
+		// The help links moved to wpghost.com; older installs saved the old website (any version, re-packs included)
+		if ( isset( self::$options['hmwp_plugin_website'] ) && preg_match( '#^https?://(www\.)?hidemywpghost\.com/?$#i', (string) self::$options['hmwp_plugin_website'] ) ) {
+			self::$options['hmwp_plugin_website'] = 'https://wpghost.com';
+			self::saveOptions();
 		}
 
 		// Drop the file fallbacks saved from broken links, like a quote or a backslash in the address (any version, re-packs included)
@@ -645,13 +654,17 @@ class HMWP_Classes_Tools {
 		// Check if the plugin version is updated
 		if ( self::$options['hmwp_ver'] < HMWP_VERSION_ID ) {
 
-			// Upgrade from Old Version if hmwp_options exist in the database
+			// Settings of the old Lite plugin (hmw_ prefix), left in the database
 			if ( get_option( 'hmw_options_safe' ) ) {
-				$options = json_decode( get_option( 'hmw_options_safe' ), true );
-				// If options are not empty, migrate them to the new format
-				if ( ! empty( $options ) ) {
-					foreach ( $options as $key => $value ) {
-						self::$options[ str_replace( 'hmw_', 'hmwp_', $key ) ] = $value;
+				// Import them on the first run only, never over settings saved in the current format
+				if ( $first_run ) {
+					$old_options = json_decode( get_option( 'hmw_options_safe' ), true );
+					if ( ! empty( $old_options ) && is_array( $old_options ) ) {
+						foreach ( $old_options as $key => $value ) {
+							if ( $key <> 'hmw_ver' ) {
+								self::$options[ str_replace( 'hmw_', 'hmwp_', $key ) ] = $value;
+							}
+						}
 					}
 				}
 
@@ -1381,7 +1394,8 @@ class HMWP_Classes_Tools {
 
 			// Fix the root path on Multisite
 			$document_root_fix = str_replace( '\\', '/', realpath( wp_unslash( $_SERVER['DOCUMENT_ROOT'] ) ) ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			$slashed_home      = trailingslashit( get_option( 'home' ) );
+			// A subsite's home holds its site path, not a folder: use the main site's home
+			$slashed_home      = trailingslashit( defined( 'BLOG_ID_CURRENT_SITE' ) ? get_blog_option( BLOG_ID_CURRENT_SITE, 'home' ) : get_option( 'home' ) );
 			$base              = wp_parse_url( $slashed_home, PHP_URL_PATH );
 			$root_path         = ('' === $document_root_fix || 0 === strpos( $root_path, $document_root_fix )) ? $document_root_fix . $base : get_home_path();
 
@@ -1604,7 +1618,8 @@ class HMWP_Classes_Tools {
 		if ( ! empty( $params ) ) {
 			foreach ( $params as $key => $value ) {
 				if ( $key <> '' ) {
-					$parameters .= ( $parameters == "" ? "" : "&" ) . $key . "=" . $value;
+					// Encode the value: a + or a quote must reach the server as sent
+					$parameters .= ( $parameters == "" ? "" : "&" ) . $key . "=" . ( is_scalar( $value ) ? rawurlencode( (string) $value ) : '' );
 				}
 			}
 
@@ -2008,6 +2023,52 @@ class HMWP_Classes_Tools {
 		}
 
 		return ( $is_nginx || ( isset( $_SERVER['SERVER_SOFTWARE'] ) && ( stripos( $_SERVER['SERVER_SOFTWARE'], 'nginx' ) !== false || stripos( $_SERVER['SERVER_SOFTWARE'], 'TasteWP' ) !== false ) ) ); //phpcs:ignore
+	}
+
+	/**
+	 * Get the server the request runs on when it does not fit the selected Server Type.
+	 *
+	 * @return string Apache, LiteSpeed, Nginx or IIS. Empty when they fit or the server is not sure.
+	 */
+	public static function getServerMismatch() {
+		$type = HMWP_Classes_Tools::getOption( 'hmwp_server_type' );
+		$soft = isset( $_SERVER['SERVER_SOFTWARE'] ) ? strtolower( (string) $_SERVER['SERVER_SOFTWARE'] ) : ''; //phpcs:ignore
+
+		// Only the plain server choices are checked. Hosting presets can mix servers.
+		$selected = array(
+			'apache'     => 'htaccess',
+			'litespeed'  => 'htaccess',
+			'siteground' => 'htaccess',
+			'nginx'      => 'nginx',
+			'cloudpanel' => 'nginx',
+			'iis'        => 'iis',
+		);
+
+		if ( $soft === '' || ! isset( $selected[ $type ] ) ) {
+			return '';
+		}
+
+		$found = array();
+		$names = array(
+			'litespeed'     => array( 'LiteSpeed', 'htaccess' ),
+			'apache'        => array( 'Apache', 'htaccess' ),
+			'nginx'         => array( 'Nginx', 'nginx' ),
+			'microsoft-iis' => array( 'IIS', 'iis' ),
+		);
+		foreach ( $names as $key => $server ) {
+			if ( strpos( $soft, $key ) !== false ) {
+				$found[ $server[0] ] = $server[1];
+			}
+		}
+
+		// Sure only when the server names one kind, and it is not the selected kind
+		if ( count( array_unique( $found ) ) !== 1 || in_array( $selected[ $type ], $found, true ) ) {
+			return '';
+		}
+
+		$found = array_keys( $found );
+
+		return (string) $found[0];
 	}
 
 	/**
@@ -2474,6 +2535,33 @@ class HMWP_Classes_Tools {
 				do_action( 'litespeed_purge_all' );
 			}
 
+			// Page caches keep the HTML with the old paths, empty them too
+			if ( function_exists( 'WP_Optimize' ) && is_object( WP_Optimize() ) && method_exists( WP_Optimize(), 'get_page_cache' ) ) {
+				$wpo = WP_Optimize()->get_page_cache();
+				if ( is_object( $wpo ) && method_exists( $wpo, 'purge' ) ) {
+					$wpo->purge();
+				}
+			}
+			if ( function_exists( 'rocket_clean_domain' ) ) {
+				rocket_clean_domain();
+			}
+			if ( function_exists( 'w3tc_flush_all' ) ) {
+				w3tc_flush_all();
+			}
+			if ( function_exists( 'wp_cache_clear_cache' ) ) {
+				wp_cache_clear_cache();
+			}
+			if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+				sg_cachepress_purge_cache();
+			}
+			if ( class_exists( 'autoptimizeCache' ) && method_exists( 'autoptimizeCache', 'clearall' ) ) {
+				autoptimizeCache::clearall();
+			}
+			do_action( 'wpfc_clear_all_cache' );
+			do_action( 'breeze_clear_all_cache' );
+			do_action( 'wphb_clear_page_cache' );
+			do_action( 'cache_enabler_clear_complete_cache' );
+
 			// Redis Object Cache (Till Krüss plugin)
 			if ( function_exists( 'redis_cache_flush' ) ) {
 				redis_cache_flush();
@@ -2554,11 +2642,19 @@ class HMWP_Classes_Tools {
 		//clear the locked ips
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Bruteforce_Database' )->clearBlockedIPs();
 
+		// The flush below must not write the rules back
+		remove_filter( 'rewrite_rules_array', array( $this, 'checkRewriteUpdate' ), 11 );
+
 		//Build the redirect table
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rewrite' )->flushChanges();
 
 		//Delete the compatibility with other plugins
 		HMWP_Classes_ObjController::getClass( 'HMWP_Models_Compatibility' )->uninstall();
+
+		// Remove the scheduled tasks. They are added again on activation.
+		wp_clear_scheduled_hook( HMWP_CRON );
+		wp_clear_scheduled_hook( HMWP_CRON_ONCE );
+		wp_clear_scheduled_hook( 'hmwp_geoip_download_event' );
 	}
 
 	/**
@@ -2829,6 +2925,54 @@ class HMWP_Classes_Tools {
 		}
 
 		return ( sanitize_url( $url ) === $url );
+	}
+
+	/**
+	 * Get the path of the current request the way the server reads it
+	 *
+	 * @return string
+	 */
+	public static function getRequestPath() {
+		$path = (string) strtok( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ), '?' ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		// The server decodes the path once before it picks the file
+		return self::getSubsiteRequestPath( untrailingslashit( rawurldecode( $path ) ) );
+	}
+
+	/**
+	 * A subdirectory network serves /site/any/folder/wp-login.php from the root file.
+	 * Read such a request as /site/wp-login.php, so the hidden paths stay hidden on every site.
+	 *
+	 * @param string $path Decoded request path
+	 *
+	 * @return string
+	 */
+	public static function getSubsiteRequestPath( $path ) {
+		if ( ! is_multisite() || ( function_exists( 'is_subdomain_install' ) && is_subdomain_install() ) ) {
+			return $path;
+		}
+
+		// The file that runs, relative to the WordPress root
+		$files = get_included_files();
+		$root  = realpath( ABSPATH );
+		if ( empty( $files[0] ) || ! $root ) {
+			return $path;
+		}
+
+		$root   = trailingslashit( wp_normalize_path( $root ) );
+		$script = wp_normalize_path( $files[0] );
+		if ( strpos( $script, $root ) !== 0 ) {
+			return $path;
+		}
+
+		$tail = '/' . substr( $script, strlen( $root ) );
+		if ( $tail === '/index.php' || strlen( $path ) <= strlen( $tail ) || strcasecmp( substr( $path, - strlen( $tail ) ), $tail ) !== 0 ) {
+			return $path;
+		}
+
+		$site = isset( $GLOBALS['current_blog']->path ) ? (string) $GLOBALS['current_blog']->path : '/';
+
+		return untrailingslashit( $site ) . $tail;
 	}
 
 	public static function searchInString( $haystack, $needles ) {

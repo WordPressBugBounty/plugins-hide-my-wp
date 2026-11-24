@@ -52,6 +52,14 @@ class HMWP_Models_Rewrite {
 	protected $_keepcomments = null;
 
 	/**
+	 * Old admin and login names found in the request and in visitor text
+	 *
+	 * @var array|null Null until the request is checked
+	 */
+	protected $_inputpaths = null;
+	protected $_visitorpaths = array( 'admin' => false, 'login' => false );
+
+	/**
 	 * HMWP_Models_Rewrite constructor.
 	 */
 	public function __construct() {
@@ -78,6 +86,190 @@ class HMWP_Models_Rewrite {
 			//if not www prefix, add // to the domain
 			//don't add // when the www. is removed because it may not change the paths
 			$this->_siteurl =  '//' . trim( $this->_siteurl, '/' );
+		}
+	}
+
+	/**
+	 * Look for the old admin and login names in a text, however they are written
+	 *
+	 * @param string $text
+	 *
+	 * @return array The keys admin and login, true when the name is there
+	 */
+	public function findDefaultPaths( $text ) {
+		$found = array( 'admin' => false, 'login' => false );
+
+		if ( ! is_string( $text ) || $text === '' ) {
+			return $found;
+		}
+
+		$names = array(
+			'admin' => preg_replace( '/[^a-z0-9]+/', '', strtolower( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) ) ),
+			'login' => preg_replace( '/[^a-z0-9]+/', '', strtolower( HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) ) ),
+		);
+
+		for ( $round = 0; $round < 5; $round ++ ) {
+
+			// Read it with and without the parts a sanitizer would cut: encoded bytes and tags
+			$nobytes = preg_replace( '/%[0-9a-f]{2}/i', '', $text );
+			$notags  = preg_replace( '/<[^>]*>/', '', $text );
+			$neither = is_string( $nobytes ) ? preg_replace( '/<[^>]*>/', '', $nobytes ) : null;
+
+			foreach ( array( $text, $nobytes, $notags, $neither ) as $value ) {
+
+				// Letters and digits only, so separators can't split the name
+				$value = is_string( $value ) ? preg_replace( '/[^a-z0-9]+/', '', strtolower( $value ) ) : null;
+
+				// A text the server can't read counts as a match
+				if ( ! is_string( $value ) ) {
+					return array( 'admin' => true, 'login' => true );
+				}
+
+				foreach ( $names as $key => $name ) {
+					if ( $name <> '' && strpos( $value, $name ) !== false ) {
+						$found[ $key ] = true;
+					}
+				}
+			}
+
+			if ( $found['admin'] && $found['login'] ) {
+				break;
+			}
+
+			// Decode one more layer: URL encoding, HTML entities and \u00XX escapes
+			$decoded = rawurldecode( html_entity_decode( $text, ENT_QUOTES, 'UTF-8' ) );
+			$decoded = preg_replace_callback( '/\\\\+u00([0-9a-f]{2})/i', array( $this, 'decodeEscapedChar' ), $decoded );
+
+			if ( ! is_string( $decoded ) ) {
+				return array( 'admin' => true, 'login' => true );
+			}
+
+			if ( $decoded === $text ) {
+				break;
+			}
+
+			$text = $decoded;
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Turn one \u00XX escape into its character
+	 *
+	 * @param array $match
+	 *
+	 * @return string
+	 */
+	public function decodeEscapedChar( $match ) {
+		return chr( hexdec( $match[1] ) );
+	}
+
+	/**
+	 * Join the keys and the values of a request array into one text
+	 *
+	 * @param mixed $value
+	 *
+	 * @return string
+	 */
+	protected function flattenInput( $value ) {
+		if ( is_array( $value ) ) {
+			$text = '';
+			foreach ( $value as $key => $item ) {
+				$text .= ' ' . $key . ' ' . $this->flattenInput( $item );
+			}
+
+			return $text;
+		}
+
+		return is_scalar( $value ) ? (string) $value : '';
+	}
+
+	/**
+	 * Check if the request itself names the old admin or login path
+	 *
+	 * @return array The keys admin and login
+	 */
+	public function getInputPaths() {
+		if ( null === $this->_inputpaths ) {
+
+			// The URL, the query, the form fields, the cookies and the request headers
+			$text = $this->flattenInput( array( $_GET, $_POST, $_COOKIE ) ); //phpcs:ignore WordPress.Security.NonceVerification
+
+			foreach ( $_SERVER as $key => $value ) {
+				if ( is_string( $value ) && ( strpos( $key, 'HTTP_' ) === 0 || $key === 'REQUEST_URI' || $key === 'QUERY_STRING' ) ) {
+					$text .= ' ' . $value;
+				}
+			}
+
+			$this->_inputpaths = $this->findDefaultPaths( $text );
+		}
+
+		return $this->_inputpaths;
+	}
+
+	/**
+	 * Note the visitor text that names the old admin or login path (comments)
+	 *
+	 * @param string $text
+	 *
+	 * @return string The same text
+	 */
+	public function checkVisitorText( $text ) {
+		if ( is_string( $text ) && $text <> '' && ! ( $this->_visitorpaths['admin'] && $this->_visitorpaths['login'] ) ) {
+			$found = $this->findDefaultPaths( $text );
+
+			$this->_visitorpaths['admin'] = ( $this->_visitorpaths['admin'] || $found['admin'] );
+			$this->_visitorpaths['login'] = ( $this->_visitorpaths['login'] || $found['login'] );
+		}
+
+		return $text;
+	}
+
+	/**
+	 * Keep the custom admin and login paths out of a page that repeats visitor text
+	 * The old names stay on the page as the visitor wrote them
+	 *
+	 * @return void
+	 */
+	public function removePrivatePaths() {
+
+		if ( empty( $this->_replace['from'] ) || empty( $this->_replace['to'] ) ) {
+			return;
+		}
+
+		// A logged in user on a dashboard page knows both paths
+		if ( is_admin() && ! HMWP_Classes_Tools::isAjax() && function_exists( 'is_user_logged_in' ) && is_user_logged_in() ) {
+			return;
+		}
+
+		$input = $this->getInputPaths();
+		$admin = ( $input['admin'] || $this->_visitorpaths['admin'] );
+		$login = ( $input['login'] || $this->_visitorpaths['login'] );
+
+		if ( ( ! $admin && ! $login ) || ! apply_filters( 'hmwp_remove_private_paths', true ) ) {
+			return;
+		}
+
+		$adminpath = HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '/';
+		$loginpath = HMWP_Classes_Tools::getDefault( 'hmwp_login_url' );
+		$aligned   = ( isset( $this->_replace['rewrite'] ) && count( $this->_replace['rewrite'] ) === count( $this->_replace['from'] ) );
+
+		foreach ( $this->_replace['from'] as $index => $from ) {
+			if ( ( $admin && $from === $adminpath ) || ( $login && strpos( $from, $loginpath ) === 0 ) ) {
+				unset( $this->_replace['from'][ $index ], $this->_replace['to'][ $index ] );
+
+				if ( $aligned ) {
+					unset( $this->_replace['rewrite'][ $index ] );
+				}
+			}
+		}
+
+		$this->_replace['from'] = array_values( $this->_replace['from'] );
+		$this->_replace['to']   = array_values( $this->_replace['to'] );
+
+		if ( $aligned ) {
+			$this->_replace['rewrite'] = array_values( $this->_replace['rewrite'] );
 		}
 	}
 
@@ -140,6 +332,11 @@ class HMWP_Models_Rewrite {
 					//If there is no buffer
 					if ( strlen( $buffer ) < 255 ) {
 						return $buffer;
+					}
+
+					// Very large page: the rewrite needs a few copies of it in memory
+					if ( strlen( $buffer ) > 1048576 && function_exists( 'wp_raise_memory_limit' ) ) {
+						wp_raise_memory_limit( 'admin' );
 					}
 
 					//Check if other plugins already did the cache
@@ -850,7 +1047,7 @@ class HMWP_Models_Rewrite {
 				if ( HMW_DYNAMIC_FILES || ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) ) {
                     $rewritecode .= "<IfModule mod_rewrite.c>" . PHP_EOL;
                     $rewritecode .= "RewriteEngine On" . PHP_EOL;
-                    $rewritecode .= "RewriteCond %{HTTP:Cookie} !(wordpress_logged_in_|" . HMWP_LOGGED_IN_COOKIE . ") [NC]" . PHP_EOL;
+                    $rewritecode .= "RewriteCond %{HTTP:Cookie} !(" . join( '|', HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->whitelist_cookies ) . ") [NC]" . PHP_EOL;
                     $rewritecode .= "RewriteCond %{REQUEST_URI} ^" . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_wp-content_url' ) . "/[^\.]+\.[^\.]+ [NC,OR]" . PHP_EOL;
                     $rewritecode .= "RewriteCond %{REQUEST_URI} ^" . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_wp-includes_url' ) . "/[^\.]+\.[^\.]+ [NC,OR]" . PHP_EOL;
                     $rewritecode .= "RewriteCond %{REQUEST_URI} ^" . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_upload_url' ) . "/[^\.]+\.[^\.]+ [NC]" . PHP_EOL;
@@ -926,7 +1123,7 @@ class HMWP_Models_Rewrite {
 
 				if ( HMW_DYNAMIC_FILES || ( HMWP_Classes_Tools::getOption( 'hmwp_mapping_text_show' ) && HMWP_Classes_Tools::getOption( 'hmwp_mapping_file' ) ) ) {
                     $cachecode .= 'set $cond "";' . PHP_EOL;
-                    $cachecode .= 'if ($http_cookie !~* "wordpress_logged_in_|' . HMWP_LOGGED_IN_COOKIE . '" ) {  set $cond cookie; }' . PHP_EOL;
+                    $cachecode .= 'if ($http_cookie !~* "' . join( '|', HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->whitelist_cookies ) . '" ) {  set $cond cookie; }' . PHP_EOL;
                     $cachecode .= 'if ($request_uri ~* ^' . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_wp-content_url' ) . '/[^\.]+\.[^\.]+) { set $cond "${cond}+redirect_uri"; }' . PHP_EOL;
                     $cachecode .= 'if ($request_uri ~* ^' . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_wp-includes_url' ) . '/[^\.]+\.[^\.]+) { set $cond "${cond}+redirect_uri"; }' . PHP_EOL;
                     $cachecode .= 'if ($request_uri ~* ^' . $home_root . HMWP_Classes_Tools::getOption( 'hmwp_upload_url' ) . '/[^\.]+\.[^\.]+) { set $cond "${cond}+redirect_uri"; }' . PHP_EOL;
@@ -944,7 +1141,8 @@ class HMWP_Models_Rewrite {
 				//Add the URL Mapping rules
 				if ( ! empty( $this->_umrewrites ) ) {
 					foreach ( $this->_umrewrites as $rewrite ) {
-						$rewritecode .= 'rewrite ^/' . $rewrite['from'] . ' ' . $rewrite['to'] . ";<br />";
+						// Quoted: a mapped URL may hold ; which ends an unquoted Nginx rule
+						$rewritecode .= 'rewrite "^/' . str_replace( '"', '', $rewrite['from'] ) . '" "' . str_replace( '"', '', $rewrite['to'] ) . "\";<br />";
 					}
 				}
 
@@ -1048,6 +1246,26 @@ class HMWP_Models_Rewrite {
 	 **************************************************/
 
 	/**
+	 * Check if the request path is one of the given paths as a whole, not a part of it
+	 *
+	 * @param string $url Request path
+	 * @param array $paths Relative paths to compare with
+	 *
+	 * @return bool
+	 */
+	private function isSamePath( $url, $paths ) {
+		$url = strtolower( untrailingslashit( (string) $url ) );
+
+		foreach ( (array) $paths as $path ) {
+			if ( $path <> '' && $url === strtolower( untrailingslashit( $path ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Check if a real page uses the /login slug (membership plugins like Ultimate Member)
 	 *
 	 * @param string $path Last segment of the URL path
@@ -1083,6 +1301,11 @@ class HMWP_Models_Rewrite {
 		if ( ! isset( $scheme ) ) {
 			$scheme = ( ( ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] == "on" ) || ( defined( 'FORCE_SSL_ADMIN' ) && FORCE_SSL_ADMIN ) || ( function_exists( 'is_ssl' ) && is_ssl() ) ) ? 'https' : 'http' );
 			$url    = set_url_scheme( $url, $scheme );
+		}
+
+		// A nested path like account/login is the site's own page, not the WordPress login
+		if ( is_string( $path ) && strpos( trim( explode( '?', $path, 2 )[0], '/' ), '/' ) !== false ) {
+			return $url;
 		}
 
 		// Get the path from the URL
@@ -1174,6 +1397,11 @@ class HMWP_Models_Rewrite {
 		if ( ! isset( $scheme ) ) {
 			$scheme = ( ( ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] == "on" ) || ( defined( 'FORCE_SSL_ADMIN' ) && FORCE_SSL_ADMIN ) || ( function_exists( 'is_ssl' ) && is_ssl() ) ) ? 'https' : 'http' );
 			$url    = set_url_scheme( $url, $scheme );
+		}
+
+		// A nested path like account/login is the site's own page, not the WordPress login
+		if ( is_string( $path ) && strpos( trim( explode( '?', $path, 2 )[0], '/' ), '/' ) !== false ) {
+			return $url;
 		}
 
 		// Get the path from the URL
@@ -1753,7 +1981,7 @@ class HMWP_Models_Rewrite {
 
 				//if you do hide URLs is active
 				if ( HMWP_Classes_Tools::doHideURLs() ) {
-					$url = ( isset( $_SERVER['REQUEST_URI'] ) ? untrailingslashit( strtok( wp_unslash( $_SERVER["REQUEST_URI"] ), '?' ) ) : false ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+					$url = ( isset( $_SERVER['REQUEST_URI'] ) ? HMWP_Classes_Tools::getRequestPath() : false );
 					$path = HMWP_Classes_Tools::getRelativePath( $redirect );
 
 					if ( strpos( $path, '/' . HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) !== false ) {
@@ -1919,6 +2147,8 @@ class HMWP_Models_Rewrite {
 				add_filter( 'hmwp_change_home_url', '__return_false' );
 				add_filter( 'hmwp_change_site_url', '__return_false' );
 
+				$shortcuts = array();
+
 				if ( HMWP_Classes_Tools::isLoggedInUser()) {
 					$paths = array(
 						site_url( 'wp-login.php', 'relative' ),
@@ -1935,8 +2165,9 @@ class HMWP_Models_Rewrite {
 
 					if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_login' ) ) {
 
-						$paths[] = home_url( 'login', 'relative' );
-						$paths[] = site_url( 'login', 'relative' );
+						// Only the exact /login shortcut, not a page like /account/login/
+						$shortcuts[] = home_url( 'login', 'relative' );
+						$shortcuts[] = site_url( 'login', 'relative' );
 
 					}
 
@@ -1948,7 +2179,7 @@ class HMWP_Models_Rewrite {
 				add_filter( 'hmwp_change_site_url', '__return_true' );
 
 				$redirect_url = wp_parse_url( $url, PHP_URL_HOST ) . wp_parse_url( $url, PHP_URL_PATH );
-				if ( HMWP_Classes_Tools::searchInString( $redirect_url, $paths ) ) {
+				if ( HMWP_Classes_Tools::searchInString( $redirect_url, $paths ) || $this->isSamePath( wp_parse_url( $url, PHP_URL_PATH ), $shortcuts ) ) {
 					if ( site_url( HMWP_Classes_Tools::getOption( 'hmwp_login_url' ), 'relative' ) <> $redirect_url ) {
 						return add_query_arg( array( 'nordt' => true ), site_url( HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) );
 					}
@@ -1974,7 +2205,7 @@ class HMWP_Models_Rewrite {
 			add_filter( 'hmwp_change_home_url', '__return_false' );
 			add_filter( 'hmwp_change_site_url', '__return_false' );
 
-			$url       = untrailingslashit( strtok( wp_unslash( $_SERVER["REQUEST_URI"] ?? '' ), '?' ) ); //phpcs:ignore
+			$url       = HMWP_Classes_Tools::getRequestPath();
 			$http_post = ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' == $_SERVER['REQUEST_METHOD'] ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 			// If user is logged in and is not set to hide the admin urls
@@ -2041,15 +2272,19 @@ class HMWP_Models_Rewrite {
 
 						$paths = array(
 							home_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ), 'relative' ),
-							home_url( 'dashboard', 'relative' ),
-							home_url( 'admin', 'relative' ),
 							site_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ), 'relative' ),
-							site_url( 'dashboard', 'relative' ),
-							site_url( 'admin', 'relative' ),
 						);
 						$paths = array_unique( $paths );
 
-						if ( HMWP_Classes_Tools::searchInString( $url, $paths ) ) {
+						// WordPress redirects only the exact /admin and /dashboard, so pages like /docs/admin/ stay open
+						$shortcuts = array(
+							home_url( 'dashboard', 'relative' ),
+							home_url( 'admin', 'relative' ),
+							site_url( 'dashboard', 'relative' ),
+							site_url( 'admin', 'relative' ),
+						);
+
+						if ( HMWP_Classes_Tools::searchInString( $url, $paths ) || $this->isSamePath( $url, $shortcuts ) ) {
 							// While the safe fallback is on, pages print the default admin-ajax.php, so visitors must reach it
 							$ajax_fallback = ! empty( (array) HMWP_Classes_Tools::getOption( 'file_mappings' ) ) && HMWP_Classes_Tools::searchInString( $url, array(
 								home_url( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '/' . HMWP_Classes_Tools::getDefault( 'hmwp_admin-ajax_url' ), 'relative' ),
@@ -2132,6 +2367,8 @@ class HMWP_Models_Rewrite {
 
 						// Initiate paths
 						$paths = array();
+						// The /login shortcut counts only as the whole path, so pages like /account/login/ stay open
+						$shortcuts = array();
 
 						// If the current path is not the custom login path & wp-login path is changed in HMWP
 						if ( site_url( HMWP_Classes_Tools::getOption( 'hmwp_login_url' ), 'relative' ) <> $url && HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
@@ -2152,8 +2389,8 @@ class HMWP_Models_Rewrite {
 							// If there is a POST on login when it's hidden
 							// Allow access on CloudPanel and WP Engine to prevent errors
 							if ( ! $http_post && HMWP_Classes_Tools::getOption( 'hmwp_hide_login' ) ) {
-								$paths[] = home_url( 'login', 'relative' );
-								$paths[] = site_url( 'login', 'relative' );
+								$shortcuts[] = home_url( 'login', 'relative' );
+								$shortcuts[] = site_url( 'login', 'relative' );
 							}
 
 						} elseif ( defined( 'HMWP_DEFAULT_LOGIN' ) && // Custom login is set in other plugins
@@ -2171,8 +2408,8 @@ class HMWP_Models_Rewrite {
 							}
 
 							if ( HMWP_DEFAULT_LOGIN <> 'login' && HMWP_Classes_Tools::getOption( 'hmwp_hide_login' ) ) {
-								$paths[] = home_url( 'login', 'relative' );
-								$paths[] = site_url( 'login', 'relative' );
+								$shortcuts[] = home_url( 'login', 'relative' );
+								$shortcuts[] = site_url( 'login', 'relative' );
 							}
 
 						}
@@ -2182,7 +2419,7 @@ class HMWP_Models_Rewrite {
 
 						if ( ! empty( $paths ) ) {
 							// Search the paths in URL and show not found
-							if ( HMWP_Classes_Tools::searchInString( $url, $paths ) ) {
+							if ( HMWP_Classes_Tools::searchInString( $url, $paths ) || $this->isSamePath( $url, $shortcuts ) ) {
 								$this->getNotFound( $url );
 							}
 						}
@@ -2239,7 +2476,9 @@ class HMWP_Models_Rewrite {
 						site_url( 'upgrade.php', 'relative' ),
 						site_url( 'wp-config.php', 'relative' ),
 					);
-					if ( HMWP_Classes_Tools::searchInString( $url, $paths ) ) {
+					// On a network, core updates each site's database through the new admin path, with no login cookie
+					$upgrade = ( HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ) && $this->isSamePath( $url, array( site_url( HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ) . '/upgrade.php', 'relative' ) ) ) );
+					if ( ! $upgrade && HMWP_Classes_Tools::searchInString( $url, $paths ) ) {
 						$this->getNotFound( $url );
 					}
 
@@ -2325,6 +2564,8 @@ class HMWP_Models_Rewrite {
 
 		try {
 
+			$this->hidePoweredBy();
+
 			if ( function_exists( 'status_header' ) ) {
 				status_header( 404 );
 			} else {
@@ -2368,7 +2609,7 @@ class HMWP_Models_Rewrite {
 			}
 
 			/* translators: 1: Requested URI. */
-			echo '<html lang="' . esc_attr( $language ) . '"><meta<head><title>' . esc_html__( '404 Not Found', 'hide-my-wp' ) . '</title></head><body><h1>' . esc_html__( 'Page Not Found', 'hide-my-wp' ) . '</h1><p>' . sprintf( esc_html__( 'The requested URL %1$s was not found on this server.', 'hide-my-wp' ), ( isset( $_SERVER['REQUEST_URI'] ) ? esc_url( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) ) . ' </p></body></html>'; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			echo '<html lang="' . esc_attr( $language ) . '"><head><title>' . esc_html__( '404 Not Found', 'hide-my-wp' ) . '</title></head><body><h1>' . esc_html__( 'Page Not Found', 'hide-my-wp' ) . '</h1><p>' . sprintf( esc_html__( 'The requested URL %1$s was not found on this server.', 'hide-my-wp' ), ( isset( $_SERVER['REQUEST_URI'] ) ? esc_url( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) ) . ' </p></body></html>'; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			exit();
 
 		} catch ( Exception $e ) {
@@ -2384,6 +2625,8 @@ class HMWP_Models_Rewrite {
 	function get403Error() {
 
 		try {
+
+			$this->hidePoweredBy();
 
 			if ( function_exists( 'status_header' ) ) {
 				status_header( 403 );
@@ -2408,7 +2651,7 @@ class HMWP_Models_Rewrite {
 			}
 
 			/* translators: 1: Requested URI. */
-			echo '<html lang="' . esc_attr( $language ) . '"><meta<head><title>' . esc_html__( '403 Forbidden', 'hide-my-wp' ) . '</title></head><body><h1>' . esc_html__( 'Forbidden', 'hide-my-wp' ) . '</h1><p>' . sprintf( esc_html__( 'You don\'t have the permission to access %1$s on this server.', 'hide-my-wp' ), ( isset( $_SERVER['REQUEST_URI'] ) ? esc_url( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) ) . ' </p></body></html>'; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			echo '<html lang="' . esc_attr( $language ) . '"><head><title>' . esc_html__( '403 Forbidden', 'hide-my-wp' ) . '</title></head><body><h1>' . esc_html__( 'Forbidden', 'hide-my-wp' ) . '</h1><p>' . sprintf( esc_html__( 'You don\'t have the permission to access %1$s on this server.', 'hide-my-wp' ), ( isset( $_SERVER['REQUEST_URI'] ) ? esc_url( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '' ) ) . ' </p></body></html>'; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			exit();
 
 		} catch ( Exception $e ) {
@@ -2603,6 +2846,8 @@ class HMWP_Models_Rewrite {
 				$this->clearRedirect();
 				//builder the redirects
 				$this->buildRedirect();
+				// Visitor text never gets the custom admin and login paths
+				$this->removePrivatePaths();
 				//make sure to include the blog url
 				$this->prepareFindReplace();
 
@@ -2764,6 +3009,8 @@ class HMWP_Models_Rewrite {
 			if ( empty( $this->_replace ) ) {
 				//builder the redirects
 				$this->buildRedirect();
+				// Visitor text never gets the custom admin and login paths
+				$this->removePrivatePaths();
 
 				//make sure to include the blog url
 				$this->prepareFindReplace();
@@ -2866,6 +3113,11 @@ class HMWP_Models_Rewrite {
 		// A real href/src/url value never holds an angle bracket; if the capture
 		// has one, the regex ran past a tag boundary (CVE-2026-119159) - leave it.
 		if ( strpos( $url, '<' ) !== false || strpos( $url, '>' ) !== false ) {
+			return $found[0];
+		}
+
+		// A content attribute with spaces is text (a meta description), not a link
+		if ( isset( $found[2] ) && strtolower( $found[2] ) === 'content' && preg_match( '/\s/', trim( $url ) ) ) {
 			return $found[0];
 		}
 
@@ -3085,6 +3337,19 @@ class HMWP_Models_Rewrite {
 
 
 	/**
+	 * Remove the PHP version header from the current answer
+	 */
+	public function hidePoweredBy() {
+
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_unsafe_headers' ) && function_exists( 'header_remove' ) && ! headers_sent() ) {
+			header_remove( "x-powered-by" );
+			header_remove( "x-cf-powered-by" );
+			header_remove( "server" );
+		}
+
+	}
+
+	/**
 	 * Remove the page headers
 	 */
 	public function hideHeaders() {
@@ -3095,12 +3360,7 @@ class HMWP_Models_Rewrite {
 			//Remove WordPress link from headers
 			header( sprintf( '%s: %s', 'Link', '<' . home_url() . '>; rel=shortlink' ), true );
 
-			if ( function_exists( 'header_remove' ) ) {
-				header_remove( "x-powered-by" );
-				header_remove( "x-cf-powered-by" );
-				header_remove( "server" );
-				header( 'X-Powered-By: -' );
-			}
+			$this->hidePoweredBy();
 		}
 
 		//Remove Pingback from website header
@@ -3124,7 +3384,10 @@ class HMWP_Models_Rewrite {
 
 			if ( ! empty( $headers ) ) {
 				foreach ( $headers as $name => $value ) {
-					if ( $value <> '' ) {
+					// Header name: letters, digits, dash. Value: one line
+					$name  = preg_replace( '/[^A-Za-z0-9\-]/', '', (string) $name );
+					$value = is_scalar( $value ) ? preg_replace( '/[\x00-\x1F\x7F]/', '', (string) $value ) : '';
+					if ( $name <> '' && $value <> '' ) {
 						header( $name . ": " . $value );
 					}
 				}
@@ -3392,6 +3655,8 @@ class HMWP_Models_Rewrite {
 			$this->clearRedirect();
 			//builder the redirects
 			$this->buildRedirect();
+			// Visitor text never gets the custom admin and login paths
+			$this->removePrivatePaths();
 			//make sure to include the blog url
 			$this->prepareFindReplace();
 
@@ -3411,6 +3676,51 @@ class HMWP_Models_Rewrite {
 
 		}
 
+	}
+
+	/**
+	 * Keep the custom admin and ajax paths out of robots.txt
+	 *
+	 * @param string $output The robots.txt content
+	 *
+	 * @return string
+	 */
+	public function hideRobotsPaths( $output ) {
+
+		if ( ! is_string( $output ) || $output === '' ) {
+			return $output;
+		}
+
+		// WordPress writes these two paths from the admin URL
+		$root  = rtrim( (string) wp_parse_url( site_url(), PHP_URL_PATH ), '/' );
+		$admin = (string) wp_parse_url( admin_url(), PHP_URL_PATH );
+		$ajax  = (string) wp_parse_url( admin_url( 'admin-ajax.php' ), PHP_URL_PATH );
+
+		if ( $admin === $root . '/wp-admin/' && $ajax === $root . '/wp-admin/admin-ajax.php' ) {
+			return $output;
+		}
+
+		$lines = explode( "\n", $output );
+
+		foreach ( $lines as $index => $line ) {
+
+			$pos = strpos( $line, ':' );
+			if ( $pos === false ) {
+				continue;
+			}
+
+			$name  = substr( $line, 0, $pos + 1 );
+			$value = trim( substr( $line, $pos + 1 ) );
+
+			// The default path takes the place of the custom one
+			if ( $ajax <> '' && ( $value === $ajax || strpos( $value, $ajax . '?' ) === 0 ) ) {
+				$lines[ $index ] = $name . ' ' . $root . '/wp-admin/admin-ajax.php' . substr( $value, strlen( $ajax ) );
+			} elseif ( strlen( $admin ) > 1 && ( $value === rtrim( $admin, '/' ) || strpos( $value, $admin ) === 0 ) ) {
+				$lines[ $index ] = $name . ' ' . $root . '/wp-admin/' . (string) substr( $value, strlen( $admin ) );
+			}
+		}
+
+		return join( "\n", $lines );
 	}
 
 	/**
@@ -3436,8 +3746,20 @@ class HMWP_Models_Rewrite {
 
 					$array = explode( "\n", $content );
 
+					// Lines with the admin, login or ajax path go, the default ones and the custom ones a plugin may have written
+					$paths = array( 'wp-admin', 'wp-login.php' );
+					foreach ( array( 'hmwp_admin_url', 'hmwp_login_url', 'hmwp_admin-ajax_url' ) as $key ) {
+						$path = trim( (string) HMWP_Classes_Tools::getOption( $key ), '/' );
+						if ( $path !== '' && $path !== HMWP_Classes_Tools::getDefault( $key ) ) {
+							$paths[] = $path;
+						}
+					}
+					$pattern = '#/(?:' . join( '|', array_map( function ( $path ) {
+						return preg_quote( $path, '#' );
+					}, $paths ) ) . ')(?=[/?\s*$]|$)#i';
+
 					foreach ( $array as $index => $row ) {
-						if ( strpos( $row, '/wp-admin' ) !== false || strpos( $row, '/wp-login.php' ) !== false ) {
+						if ( strpos( $row, '/wp-admin' ) !== false || strpos( $row, '/wp-login.php' ) !== false || preg_match( $pattern, $row ) ) {
 							unset( $array[ $index ] );
 						}
 					}
@@ -3634,16 +3956,27 @@ class HMWP_Models_Rewrite {
 		remove_action( 'wp_head', 'wp_oembed_add_host_js' );
 
 		// Remove the oembed/1.0/embed REST route.
-		add_filter( 'rest_endpoints', function ( $endpoints ){
-			if( isset($endpoints['/oembed/1.0/embed']) ){
-				unset( $endpoints['/oembed/1.0/embed'] );
-			}
-			return $endpoints;
-		} );
+		add_filter( 'rest_endpoints', array( $this, 'disableEmbedRoute' ) );
 
 		// Turn off oEmbed auto discovery.
 		add_filter( 'embed_oembed_discover', '__return_false' );
 
+	}
+
+	/**
+	 * Remove the public oEmbed route from the REST API.
+	 * The proxy route stays, the editor uses it.
+	 *
+	 * @param array $endpoints
+	 *
+	 * @return array
+	 */
+	public function disableEmbedRoute( $endpoints ) {
+		if ( is_array( $endpoints ) && isset( $endpoints['/oembed/1.0/embed'] ) ) {
+			unset( $endpoints['/oembed/1.0/embed'] );
+		}
+
+		return $endpoints;
 	}
 
 	/**

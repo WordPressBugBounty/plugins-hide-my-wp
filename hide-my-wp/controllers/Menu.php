@@ -108,6 +108,12 @@ class HMWP_Controllers_Menu extends HMWP_Classes_FrontController {
 				}
 			} elseif ( strpos( HMWP_Classes_Tools::getValue( 'page' ), 'hmwp_' ) !== false && apply_filters('hmwp_showaccount', true) ) {
 				add_filter('hmwp_getview', function ($view){
+					// Print the help widget once per page, never in Ajax parts
+					static $printed = false;
+					if ( $printed || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
+						return $view;
+					}
+					$printed = true;
 					//phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 					$style = '<script src="https://cdn.crawlbrain.com/v2/widget.min.js" data-key="2543bc36-041a-4675-bc41-b22d72132205" data-mode="floating" async ></script>';
 					return $style . $view;

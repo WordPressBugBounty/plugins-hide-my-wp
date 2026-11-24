@@ -107,8 +107,9 @@ abstract class HMWP_Models_Bruteforce_Abstract {
 				//show how many attempts remained
 				$attempts_left = max(((int)HMWP_Classes_Tools::getOption('brute_max_attempts') - $response['attempts']), 1);
 
+				// Keep the original error code, so other plugins can still mask the login error
 				/* translators: 1: Number of attempts left before lockout. */
-				$user = new WP_Error( 'authentication_failed', wp_kses_post( $user->get_error_message() . '<br />' . sprintf( esc_html__( 'You got %1$d attempts left before lockout.', 'hide-my-wp' ), (int) $attempts_left ) ) );
+				$user = new WP_Error( $user->get_error_code(), wp_kses_post( $user->get_error_message() . '<br />' . sprintf( esc_html__( 'You got %1$d attempts left before lockout.', 'hide-my-wp' ), (int) $attempts_left ) ) );
 			}
 
 		}

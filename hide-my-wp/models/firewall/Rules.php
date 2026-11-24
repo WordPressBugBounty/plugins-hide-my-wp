@@ -233,124 +233,52 @@ class HMWP_Models_Firewall_Rules {
 	}
 
 	/**
-	 * Level 5 (2026 Ghost Firewall) - checks inside the request: role fields, uploads, serialized objects and SSRF targets
+	 * Level 5 (2026 Ghost Firewall) - checks inside the request: fields, body, uploads and cookies
 	 *
 	 * @return array|false
 	 */
 	protected function detectRulesGhost() {
 
-		$whitelist = $this->getWhitelistRules();
-		$fields    = $this->getRequestFields();
-
-		// Exploit tools, object and database operators, SQL clauses and tags in the referrer
+		// Exploit tools, object and database operators, SQL clauses and tags in the referrer // 11.2026
 		if ( ( $hit = $this->matchRules( $this->ua, $this->getRulesGhostUserAgent(), 'user_agent', true ) ) ||
 		     ( $hit = $this->matchRules( $this->qs, $this->getRulesGhostQuery(), 'query', true ) ) ||
 		     ( $hit = $this->matchRules( $this->ref, $this->getRulesGhostReferer(), 'referer', true ) ) ) {
 			return $hit;
 		}
 
-		// A batch call carries plain REST paths, never another batch // 11.2026
-		if ( ! in_array( 'FW_GHOST_REST_BATCH', $whitelist, true ) ) {
-			foreach ( $fields as $field ) {
-				list( $key, $value ) = $field;
+		$skip = array_flip( array_filter( (array) $this->getWhitelistRules(), 'is_string' ) );
 
-				if ( preg_match( '/\[body\]\[requests\]/i', (string) $key ) ) {
-					return array( 'code' => 'FW_GHOST_REST_BATCH', 'area' => 'request', 'pattern' => 'nested batch' );
-				}
-
-				if ( ! preg_match( '/^requests\[\d+\]\[path\]$/i', (string) $key ) ) {
-					continue;
-				}
-
-				$parts = explode( '?', (string) $value, 2 );
-				if ( ! preg_match( '#^/[a-z0-9]#i', $parts[0] ) || preg_match( '#(//|/\.\.?(/|$)|(^|/)batch(/v\d+)?/?$)#i', $parts[0] ) ) {
-					return array( 'code' => 'FW_GHOST_REST_BATCH', 'area' => 'request', 'pattern' => 'batch path' );
-				}
-
-				// The query of an inner path is checked like the query of the request
-				if ( isset( $parts[1] ) && $parts[1] !== '' ) {
-					$hit = $this->matchRules( str_replace( ' ', '+', $parts[1] ), $this->getRulesL4Query() + $this->getRulesMediumQuery() + $this->getRulesGhostQuery(), 'query', true );
-					if ( $hit ) {
-						return $hit;
-					}
-
-					parse_str( $parts[1], $inner );
-					$this->flattenFields( (array) $inner, '', $fields );
-				}
-			}
+		// Every query and form field is read, then the body that PHP left unparsed // 11.2026
+		if ( ( $hit = $this->walkFields( wp_unslash( (array) $_GET ), '', $skip ) ) || //phpcs:ignore
+		     ( $hit = $this->walkFields( wp_unslash( (array) $_POST ), '', $skip ) ) || //phpcs:ignore
+		     ( $hit = $this->detectBodyGhost( $skip ) ) ) {
+			return $hit;
 		}
 
-		// A visitor never sets an account role, capabilities or the registration options
-		if ( ! in_array( 'FW_GHOST_ROLE_ESCALATION', $whitelist, true ) ) {
-			foreach ( $fields as $field ) {
-				list( $key, $value ) = $field;
-				// The body of a request inside a batch call is read the same way
-				$key  = preg_replace( '/^requests\[\d+\]\[body\]\[([^\]]+)\]/i', '$1', (string) $key );
-				$root = strtolower( (string) strtok( $key, '[' ) );
-
-				if ( in_array( $root, array( 'wp_capabilities', 'wp_user_level', 'default_role', 'users_can_register' ), true ) ||
-				     ( in_array( $root, array( 'role', 'roles', 'user_role', 'new_role' ), true ) && preg_match( '/^(administrator|editor|shop_manager|super_admin)$/i', trim( (string) $value ) ) ) ) {
-					return array( 'code' => 'FW_GHOST_ROLE_ESCALATION', 'area' => 'request', 'pattern' => $root );
-				}
-			}
-		}
-
-		// The author filters only take user IDs // 11.2026
-		if ( ! in_array( 'FW_GHOST_QS_AUTHOR_SQLI', $whitelist, true ) ) {
-			foreach ( $fields as $field ) {
-				$key  = preg_replace( '/^requests\[\d+\]\[body\]\[([^\]]+)\]/i', '$1', (string) $field[0] );
-				$root = strtolower( (string) strtok( $key, '[' ) );
-
-				if ( in_array( $root, array( 'author_exclude', 'author__not_in' ), true ) && preg_match( '/[^0-9,\s-]/', (string) $field[1] ) ) {
-					return array( 'code' => 'FW_GHOST_QS_AUTHOR_SQLI', 'area' => 'request', 'pattern' => $root );
-				}
-			}
-		}
-
-		// No PHP files from visitors, also when the PHP code hides inside an image
-		if ( ! in_array( 'FW_GHOST_UPLOAD_PHP_SHELL', $whitelist, true ) && ! empty( $_FILES ) ) {
+		// No PHP files from visitors, also when the PHP code hides inside an image // 11.2026
+		if ( ! isset( $skip['FW_GHOST_UPLOAD_PHP_SHELL'] ) && ! empty( $_FILES ) ) {
 			foreach ( $this->getUploadedFiles( $_FILES ) as $file ) {
-				list( $name, $tmp ) = $file;
-
-				if ( preg_match( '/(\.(php\d*|phtml|pht|phar|phps|pgif|shtml)$|\.php\d*\.|^\.htaccess$|^\.user\.ini$)/i', basename( (string) $name ) ) ) {
+				if ( $this->isPhpFileName( $file[0] ) ) {
 					return array( 'code' => 'FW_GHOST_UPLOAD_PHP_SHELL', 'area' => 'upload', 'pattern' => 'extension' );
 				}
 
-				if ( $tmp <> '' && is_uploaded_file( $tmp ) && ( $handle = @fopen( $tmp, 'rb' ) ) ) { //phpcs:ignore
-					$head = (string) fread( $handle, 65536 ); //phpcs:ignore
-					fclose( $handle ); //phpcs:ignore
-
-					if ( stripos( $head, '<?php' ) !== false ) {
-						return array( 'code' => 'FW_GHOST_UPLOAD_PHP_SHELL', 'area' => 'upload', 'pattern' => 'content' );
-					}
+				// A page or a drawing that a browser opens is also checked for its own script
+				if ( $this->hasPhpCode( $file[1], $this->matchGhost( $this->getGhostRegex( 'markup' ), (string) $file[0] ) ) ) {
+					return array( 'code' => 'FW_GHOST_UPLOAD_PHP_SHELL', 'area' => 'upload', 'pattern' => 'content' );
 				}
 			}
 		}
 
-		// Serialized PHP objects, in parameters and cookies
-		if ( ! in_array( 'FW_GHOST_OBJECT_INJECTION', $whitelist, true ) ) {
-			$values = array();
-			foreach ( $fields as $field ) {
-				$values[] = $field[1];
-			}
-			foreach ( (array) $_COOKIE as $cookie ) { //phpcs:ignore
-				if ( is_string( $cookie ) ) {
-					$values[] = rawurldecode( $cookie );
-				}
-			}
+		// Serialized PHP objects in cookies // 11.2026
+		if ( ! isset( $skip['FW_GHOST_OBJECT_INJECTION'] ) && ! empty( $_COOKIE ) ) {
+			$cookies = array();
+			array_walk_recursive( $_COOKIE, function ( $cookie ) use ( &$cookies ) { //phpcs:ignore
+				$cookies[] = rawurldecode( (string) $cookie );
+			} );
 
-			foreach ( $values as $value ) {
-				if ( preg_match( '/(^|[^a-z0-9_])[oc]:\+?\d+:"[a-z_\\\\][a-z0-9_\\\\]*":\d+:\{/i', (string) $value ) ) {
+			foreach ( $cookies as $cookie ) {
+				if ( isset( $cookie[10] ) && $this->matchGhost( $this->getGhostRegex( 'object' ), $cookie ) ) {
 					return array( 'code' => 'FW_GHOST_OBJECT_INJECTION', 'area' => 'request', 'pattern' => 'serialized object' );
-				}
-			}
-		}
-
-		// Cloud metadata addresses and non-web URL schemes used for SSRF
-		if ( ! in_array( 'FW_GHOST_SSRF', $whitelist, true ) ) {
-			foreach ( $fields as $field ) {
-				if ( preg_match( '/(169\.254\.169\.254|metadata\.google\.internal|100\.100\.100\.200|fd00:ec2::254|\b(gopher|dict|ldap|tftp):\/\/)/i', (string) $field[1] ) ) {
-					return array( 'code' => 'FW_GHOST_SSRF', 'area' => 'request', 'pattern' => 'ssrf' );
 				}
 			}
 		}
@@ -359,56 +287,458 @@ class HMWP_Models_Firewall_Rules {
 	}
 
 	/**
-	 * Get the request fields as key and value pairs: query, form fields and JSON body
+	 * The patterns of the Level 5 field checks. All of them run in linear time.
 	 *
-	 * @return array
+	 * @param string $name
+	 *
+	 * @return string
 	 */
-	protected function getRequestFields() {
+	protected function getGhostRegex( $name ) {
 
-		$fields = array();
-		$this->flattenFields( wp_unslash( (array) $_GET ), '', $fields ); //phpcs:ignore
-		$this->flattenFields( wp_unslash( (array) $_POST ), '', $fields ); //phpcs:ignore
+		static $rules = array();
 
-		// REST calls send JSON, so read the body when there are no form fields
-		$type = isset( $_SERVER['CONTENT_TYPE'] ) ? (string) $_SERVER['CONTENT_TYPE'] : ''; //phpcs:ignore
-		$size = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
-		if ( empty( $_POST ) && stripos( $type, 'json' ) !== false && $size > 0 && $size <= 65536 ) { //phpcs:ignore
-			$json = json_decode( (string) file_get_contents( 'php://input' ), true );
-			if ( is_array( $json ) ) {
-				$this->flattenFields( $json, '', $fields );
-			}
+		if ( isset( $rules[ $name ] ) ) {
+			return $rules[ $name ];
 		}
 
-		return $fields;
+		// PHP stream wrappers, PHP code as a data URL and system files // 11.2026
+		$file = '(?:(?:php|phar|expect|zip|glob|rar|ogg|ssh2\.\w{1,10}|compress\.(?:zlib|bzip2))(?::|%3a)(?:\/|%2f){2}|data:[a-z0-9\/.+-]{0,40}+;base64,\s*+(?:PD9waH|PD89|PD8g)|(?:file:\/\/)?\/(?:etc\/(?:passwd|shadow)|proc\/self\/(?:environ|cmdline|fd\/)))';
+
+		$rules = array(
+			'object'    => '/(?<![a-z0-9_])[oc]:\+?\d{1,9}:"[a-z_\x7f-\xff\\\\][a-z0-9_\x7f-\xff\\\\]*+":\d{1,9}:\{/i', // 11.2026
+			'base64'    => '/^(?:Tzo|Qzo|YTo)[A-Za-z0-9+\/_-]{20,}+={0,2}$/', // 11.2026
+			'ssrf'      => '/(169\.254\.169\.254|169\.254\.170\.2\b|metadata\.google\.internal|instance-data\.ec2\.internal|100\.100\.100\.200|fd00:ec2::254|::ffff:a9fe:a9fe|0251\.0376\.0251\.0376|0xa9\.0xfe\.0xa9\.0xfe|(\/\/|@)(2852039166|0xa9fea9fe)\b|(?<![a-z0-9_])(gopher|dict|ldaps?|tftp|sftp):\/\/)/i', // 11.2026
+			'file'      => '/^[\s"\']*+(?:' . $file . '|\S{0,200}[\/\\\\]wp-config\.php\S{0,20}\s*+$)/i', // 11.2026
+			'file_body' => '/(?:^|["\'=>])\s*+' . $file . '/i', // 11.2026
+			'traversal' => '/(?:\.\.|%2e%2e|\.%2e|%2e\.)(?:;|%3b)?(?:\/|\\\\|%2f|%5c)/i', // 11.2026
+			'secret'    => '/(?:etc(?:\/|%2f)(?:passwd|shadow)|wp-config\.php|win\.ini|boot\.ini|proc(?:\/|%2f)self|id_rsa|\.aws(?:\/|%2f)|\.ssh(?:\/|%2f)|\.env\b|\.htpasswd)/i', // 11.2026
+			'command'   => '/(?:^|[;&|`\n]|\$\()\s*+(?:\$\{?IFS\}?)*+(?:cat|type|more|less|head|tail|nl|tac|strings)(?:\s++|\$\{?IFS\}?|<)++(?:[a-z]:)?[\/\\\\.~]\S{0,200}?(?:etc[\/\\\\](?:passwd|shadow)|wp-config\.php|win\.ini|boot\.ini|\.env\b|id_rsa)/i', // 11.2026
+			'xml'       => '/<!ENTITY\s++(?:%\s++)?[^\s>]{1,80}\s++(?:SYSTEM|PUBLIC)\s|<[a-z0-9_-]{1,20}:include\s[^<>]{0,300}?\bhref\s*+=/i', // 11.2026
+			'role'      => '/^(administrator|editor|shop_manager|super_admin)$/i', // 11.2026
+			'caps'      => '/^(administrator|super_admin|manage_options|manage_network|edit_users|create_users|promote_users|delete_users|install_plugins|activate_plugins|edit_plugins|edit_themes|install_themes|unfiltered_html|unfiltered_upload|update_core|level_10)$/', // 11.2026
+			'option'    => '/^(siteurl|home|admin_email|new_admin_email|active_plugins|template|stylesheet|[a-z0-9]{1,20}_user_roles)$/', // 11.2026
+			'call'      => '/^(shell_exec|passthru|proc_open|pcntl_exec|call_user_func(_array)?|create_function|phpinfo|file_put_contents|wp_(insert|create|update|delete)_user|wp_set_(auth_cookie|current_user|password))$/i', // 11.2026
+			'call_short' => '/^(system|exec|assert|eval|popen|include|require|array_map|usort|register_shutdown_function)$/i', // 11.2026
+			'role_body' => '/"(wp_capabilities|wp_user_level|default_role|users_can_register)"\s*+:|"(role|roles|user_role|new_role)"\s*+:\s*+\[?\s*+"(administrator|editor|shop_manager|super_admin)"/i', // 11.2026
+			'upload'    => '/(\.(php\d*|phtml?|pht|phar|phps|pgif|shtml?|cgi|aspx?|jspx?|hphp)$|\.(php\d*|phtml?|pht|phar)\.|^\.ht|^\.user\.ini$|^php\.ini$|^web\.config$)/i', // 11.2026
+			'markup'    => '/\.(?:svg|x?html?|xht)[\s.\x00]*+$/i', // 11.2026
+			'script'    => '/<script\b|javascript\s*+:|\son(?:load|error|click|begin|end|repeat|activate|toggle|mouse[a-z]{2,6}|focus[a-z]{0,3}|key[a-z]{2,5}|pointer[a-z]{2,6}|animation[a-z]{3,9})\s*+=/i', // 11.2026
+			'php'       => '/<\?(?:php|=\s*+[@(]*+(?:\$_|`\s*+[a-z$\/.]|(?:eval|assert|system|exec|passthru|shell_exec|popen|proc_open|include|require|base64_decode|file_put_contents|phpinfo)\b)|\s++[@(]*+(?:\$_(?:GET|POST|REQUEST|COOKIE|SERVER|FILES)|(?:eval|assert|system|exec|passthru|shell_exec|popen|proc_open|include(?:_once)?|require(?:_once)?|base64_decode|file_put_contents|phpinfo|echo|print|if|function)\s*+[(\$"\'`]))|__HALT_COMPILER\s*+\(/i', // 11.2026
+		);
+
+		return isset( $rules[ $name ] ) ? $rules[ $name ] : '';
 	}
 
 	/**
-	 * Flatten nested fields into key and value pairs, at most 300 fields and 6 levels deep
+	 * Run a Level 5 pattern. An input that runs the regex engine out of its limits is refused.
+	 *
+	 * @param string $regex
+	 * @param string $value
+	 *
+	 * @return bool
+	 */
+	protected function matchGhost( $regex, $value ) {
+
+		$found = preg_match( $regex, $value );
+
+		if ( $found === false && in_array( preg_last_error(), array( PREG_BACKTRACK_LIMIT_ERROR, PREG_RECURSION_LIMIT_ERROR, PREG_JIT_STACKLIMIT_ERROR ), true ) ) {
+			return true;
+		}
+
+		return (bool) $found;
+	}
+
+	/**
+	 * Check every field of an array, however many fields it has and however deep they sit
 	 *
 	 * @param array $array
 	 * @param string $prefix
-	 * @param array $fields
+	 * @param array $skip The whitelisted rule codes as keys
 	 * @param int $depth
 	 *
-	 * @return void
+	 * @return array|false
 	 */
-	protected function flattenFields( $array, $prefix, &$fields, $depth = 0 ) {
+	protected function walkFields( $array, $prefix, $skip, $depth = 0 ) {
 
-		foreach ( $array as $key => $value ) {
-			if ( count( $fields ) >= 300 ) {
-				return;
-			}
-
+		foreach ( (array) $array as $key => $value ) {
 			$name = ( $prefix === '' ) ? (string) $key : $prefix . '[' . $key . ']';
 
 			if ( is_array( $value ) ) {
-				if ( $depth < 6 ) {
-					$this->flattenFields( $value, $name, $fields, $depth + 1 );
+				// PHP and JSON never nest deeper than this
+				if ( $depth < 512 && ( $hit = $this->walkFields( $value, $name, $skip, $depth + 1 ) ) ) {
+					return $hit;
 				}
 			} elseif ( is_scalar( $value ) ) {
-				$fields[] = array( $name, substr( (string) $value, 0, 8192 ) );
+				$value = (string) $value;
+
+				// A short value is only checked when the field name itself matters
+				if ( ( isset( $value[5] ) || preg_match( '/requests\[|capabilities|caps\b|user_level|users_can_register|default_role|author_|call_?back|func|\b(cb|fn)\b|opt(ion)?_?(name|key|id)/i', $name ) ) &&
+				     ( $hit = $this->checkFieldGhost( $name, $value, $skip ) ) ) {
+					return $hit;
+				}
 			}
 		}
+
+		return false;
+	}
+
+	/**
+	 * Check one request field: its name, then its value
+	 *
+	 * @param string $name
+	 * @param string $value
+	 * @param array $skip
+	 *
+	 * @return array|false
+	 */
+	protected function checkFieldGhost( $name, $value, $skip ) {
+
+		$name = strtolower( $name );
+
+		if ( strpos( $name, 'requests[' ) !== false ) {
+			// A batch call carries plain REST paths, never another batch // 11.2026
+			if ( ! isset( $skip['FW_GHOST_REST_BATCH'] ) ) {
+				if ( strpos( $name, '[body][requests]' ) !== false ) {
+					return array( 'code' => 'FW_GHOST_REST_BATCH', 'area' => 'request', 'pattern' => 'nested batch' );
+				}
+
+				if ( preg_match( '/^requests\[\d+\]\[path\]$/', $name ) ) {
+					$parts = explode( '?', $value, 2 );
+					if ( ! preg_match( '#^/[a-z0-9]#i', $parts[0] ) || preg_match( '#(//|/\.\.?(/|$)|(^|/)batch(/v\d+)?/?$)#i', $parts[0] ) ) {
+						return array( 'code' => 'FW_GHOST_REST_BATCH', 'area' => 'request', 'pattern' => 'batch path' );
+					}
+
+					// The query of an inner path is checked like the query of the request
+					if ( isset( $parts[1] ) && $parts[1] !== '' ) {
+						$hit = $this->matchRules( str_replace( ' ', '+', $parts[1] ), $this->getRulesL4Query() + $this->getRulesMediumQuery() + $this->getRulesGhostQuery(), 'query', true );
+						if ( $hit ) {
+							return $hit;
+						}
+
+						parse_str( $parts[1], $inner );
+						if ( $hit = $this->walkFields( (array) $inner, '', $skip ) ) {
+							return $hit;
+						}
+					}
+				}
+			}
+
+			// The body of a request inside a batch call is read like the request itself
+			$name = (string) preg_replace( '/^requests\[\d+\]\[body\]\[([^\]]+)\]/', '$1', $name );
+		}
+
+		// A visitor never sets an account role, capabilities or the registration options // 11.2026
+		if ( ! isset( $skip['FW_GHOST_ROLE_ESCALATION'] ) ) {
+			$keys = array();
+
+			if ( preg_match( '/role|capabilities|caps\b|user_level|users_can_register/', $name ) ) {
+				global $wpdb;
+
+				$keys  = (array) preg_split( '/[\[\]]+/', $name, - 1, PREG_SPLIT_NO_EMPTY );
+				$fixed = array( 'wp_capabilities', 'wp_user_level', 'default_role', 'users_can_register' );
+				if ( isset( $wpdb->prefix ) && is_string( $wpdb->prefix ) ) {
+					$fixed[] = strtolower( $wpdb->prefix ) . 'capabilities';
+					$fixed[] = strtolower( $wpdb->prefix ) . 'user_level';
+				}
+
+				if ( array_intersect( $keys, $fixed ) ||
+				     ( array_intersect( $keys, array( 'role', 'roles', 'user_role', 'new_role' ) ) && preg_match( $this->getGhostRegex( 'role' ), trim( $value ) ) ) ) {
+					return array( 'code' => 'FW_GHOST_ROLE_ESCALATION', 'area' => 'request', 'pattern' => (string) $keys[0] );
+				}
+
+				// Any other role field that asks for a full access role // 11.2026
+				if ( preg_grep( '/(^|_)roles?$/', $keys ) && preg_match( '/^(administrator|super_admin|shop_manager)$/i', trim( $value ) ) ) {
+					return array( 'code' => 'FW_GHOST_ROLE_ESCALATION', 'area' => 'request', 'pattern' => 'role field' );
+				}
+
+				// A capability list that names an admin capability or role // 11.2026
+				if ( array_intersect( $keys, array( 'capabilities', 'caps', 'allcaps' ) ) && preg_grep( $this->getGhostRegex( 'caps' ), $keys ) ) {
+					return array( 'code' => 'FW_GHOST_ROLE_ESCALATION', 'area' => 'request', 'pattern' => 'capability' );
+				}
+			}
+
+			// The same names sent as the value of a key, name or option field // 11.2026
+			if ( isset( $value[11] ) && ! isset( $value[40] ) && preg_match( '/(key|name|option|opt|meta|field)[^\[]*$/', $name ) &&
+			     preg_match( '/^([a-z0-9]{1,20}_(capabilities|user_level)|default_role|users_can_register)$/i', trim( $value ) ) ) {
+				return array( 'code' => 'FW_GHOST_ROLE_ESCALATION', 'area' => 'request', 'pattern' => 'option name' );
+			}
+
+			// A core option named in an option field: site address, admin email, active plugins // 11.2026
+			if ( isset( $value[3] ) && ! isset( $value[40] ) && strpos( $name, 'opt' ) !== false &&
+			     preg_match( '/(^|\[)(option|opt)_?(name|key|id)\]?$/', $name ) && preg_match( $this->getGhostRegex( 'option' ), trim( $value ) ) ) {
+				return array( 'code' => 'FW_GHOST_ROLE_ESCALATION', 'area' => 'request', 'pattern' => 'core option' );
+			}
+		}
+
+		// A PHP or WordPress function name sent as the whole value of a field // 11.2026
+		if ( ! isset( $skip['FW_GHOST_CALLBACK'] ) && isset( $value[3] ) && ! isset( $value[30] ) ) {
+			$last = (string) preg_replace( '/^.*\[([^\]]*)\]$/', '$1', $name );
+
+			if ( ! in_array( $last, array( 's', 'q', 'k', 'search', 'query', 'keyword', 'keywords', 'term' ), true ) ) {
+				$call = ltrim( trim( $value ), '\\' );
+
+				if ( preg_match( $this->getGhostRegex( 'call' ), $call ) ||
+				     ( preg_match( '/^(call_?back|function|func|fn|cb|callable|handler|hook)$/', $last ) && preg_match( $this->getGhostRegex( 'call_short' ), $call ) ) ) {
+					return array( 'code' => 'FW_GHOST_CALLBACK', 'area' => 'request', 'pattern' => 'function name' );
+				}
+			}
+		}
+
+		// A remote zip handed to a plugin, theme or package field // 11.2026
+		if ( ! isset( $skip['FW_GHOST_PACKAGE_URL'] ) && isset( $value[15] ) && stripos( $value, '.zip' ) !== false &&
+		     preg_match( '/(^|[_\[])(plugin|theme|package|pkg)(_[a-z]{1,10})?\]?$/', $name ) && preg_match( '/^\s*+https?:\/\/[^\s"\'<>]{1,400}\.zip(?:[?#]\S{0,200})?\s*+$/i', $value ) ) {
+			return array( 'code' => 'FW_GHOST_PACKAGE_URL', 'area' => 'request', 'pattern' => 'package' );
+		}
+
+		// The author filters only take user IDs // 11.2026
+		if ( ! isset( $skip['FW_GHOST_QS_AUTHOR_SQLI'] ) && strpos( $name, 'author_' ) === 0 ) {
+			$root = (string) strtok( $name, '[' );
+
+			if ( in_array( $root, array( 'author_exclude', 'author__not_in' ), true ) && preg_match( '/[^0-9,\s-]/', $value ) ) {
+				return array( 'code' => 'FW_GHOST_QS_AUTHOR_SQLI', 'area' => 'request', 'pattern' => $root );
+			}
+		}
+
+		// The value, as sent and URL-decoded once more
+		if ( isset( $value[5] ) ) {
+			if ( $hit = $this->checkValueGhost( $value, $skip ) ) {
+				return $hit;
+			}
+
+			if ( strpos( $value, '%' ) !== false && ( $decoded = rawurldecode( $value ) ) !== $value ) {
+				return $this->checkValueGhost( $decoded, $skip );
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check a value, or a piece of the raw body, for objects, SSRF targets and file reads
+	 *
+	 * @param string $value
+	 * @param array $skip
+	 * @param bool $body True for a piece of the raw body
+	 *
+	 * @return array|false
+	 */
+	protected function checkValueGhost( $value, $skip, $body = false ) {
+
+		// Serialized PHP objects, plain or base64 encoded // 11.2026
+		if ( ! isset( $skip['FW_GHOST_OBJECT_INJECTION'] ) ) {
+			if ( $this->matchGhost( $this->getGhostRegex( 'object' ), $value ) ) {
+				return array( 'code' => 'FW_GHOST_OBJECT_INJECTION', 'area' => 'request', 'pattern' => 'serialized object' );
+			}
+
+			if ( ! $body && isset( $value[23] ) && ! isset( $value[65536] ) && $this->matchGhost( $this->getGhostRegex( 'base64' ), $value ) ) {
+				$plain = base64_decode( strtr( $value, '-_', '+/' ) ); //phpcs:ignore
+				if ( $plain && $this->matchGhost( $this->getGhostRegex( 'object' ), $plain ) ) {
+					return array( 'code' => 'FW_GHOST_OBJECT_INJECTION', 'area' => 'request', 'pattern' => 'base64 object' );
+				}
+			}
+		}
+
+		// Cloud metadata addresses and non-web URL schemes used for SSRF // 11.2026
+		if ( ! isset( $skip['FW_GHOST_SSRF'] ) && $this->matchGhost( $this->getGhostRegex( 'ssrf' ), $value ) ) {
+			return array( 'code' => 'FW_GHOST_SSRF', 'area' => 'request', 'pattern' => 'ssrf' );
+		}
+
+		// PHP stream wrappers, system files and a path that climbs to a secret file // 11.2026
+		if ( ! isset( $skip['FW_GHOST_FIELD_LFI'] ) ) {
+			if ( $this->matchGhost( $this->getGhostRegex( $body ? 'file_body' : 'file' ), $value ) ) {
+				return array( 'code' => 'FW_GHOST_FIELD_LFI', 'area' => 'request', 'pattern' => 'wrapper' );
+			}
+
+			if ( $this->hasTraversalGhost( $value ) ) {
+				return array( 'code' => 'FW_GHOST_FIELD_LFI', 'area' => 'request', 'pattern' => 'traversal' );
+			}
+
+			// An XML entity or include that loads a file, and a shell command that prints a secret file // 11.2026
+			if ( $this->matchGhost( $this->getGhostRegex( 'xml' ), $value ) ) {
+				return array( 'code' => 'FW_GHOST_FIELD_LFI', 'area' => 'request', 'pattern' => 'entity' );
+			}
+
+			if ( $this->matchGhost( $this->getGhostRegex( 'command' ), $value ) ) {
+				return array( 'code' => 'FW_GHOST_FIELD_LFI', 'area' => 'request', 'pattern' => 'command' );
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if a path climbs out of its folder to reach a system or secret file
+	 *
+	 * @param string $value
+	 *
+	 * @return bool
+	 */
+	protected function hasTraversalGhost( $value ) {
+
+		$offset = 0;
+		$climb  = $this->getGhostRegex( 'traversal' );
+		$secret = $this->getGhostRegex( 'secret' );
+
+		// The file name must follow the climb in the same unbroken piece of text
+		while ( preg_match( $climb, $value, $match, PREG_OFFSET_CAPTURE, $offset ) ) {
+			$start  = $match[0][1];
+			$length = strcspn( $value, " \t\r\n\"'<>", $start, 300 );
+
+			if ( $length > 6 && preg_match( $secret, substr( $value, $start, $length ) ) ) {
+				return true;
+			}
+
+			$offset = $start + max( $length, 1 );
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check the request body that PHP did not parse into form fields: JSON, PUT and PATCH forms, XML and text
+	 *
+	 * @param array $skip
+	 *
+	 * @return array|false
+	 */
+	protected function detectBodyGhost( $skip ) {
+
+		// Empty for a multipart form, PHP has already read it into the fields and files
+		if ( ! ( $handle = @fopen( 'php://input', 'rb' ) ) ) { //phpcs:ignore
+			return false;
+		}
+
+		$hit  = false;
+		$body = (string) stream_get_contents( $handle, 524289 );
+		$type = isset( $_SERVER['CONTENT_TYPE'] ) ? (string) $_SERVER['CONTENT_TYPE'] : ''; //phpcs:ignore
+		$text = true;
+
+		// A body that fits is parsed the way WordPress will parse it
+		if ( $body !== '' && ! isset( $body[524288] ) ) {
+			$first = substr( ltrim( $body ), 0, 1 );
+
+			if ( stripos( $type, 'json' ) !== false || $first === '{' || $first === '[' ) {
+				// A body with too many levels is searched as text, parsing it could use up the memory
+				if ( substr_count( $body, '{' ) + substr_count( $body, '[' ) <= 10000 ) {
+					$json = json_decode( $body, true );
+					if ( is_array( $json ) ) {
+						$hit  = $this->walkFields( $json, '', $skip );
+						$text = false;
+					}
+				}
+			} elseif ( $first !== '<' && stripos( $type, 'x-www-form-urlencoded' ) !== false ) {
+				// PHP leaves the form of a PUT, PATCH or DELETE request unparsed
+				if ( empty( $_POST ) ) { //phpcs:ignore
+					@parse_str( $body, $form ); //phpcs:ignore
+					$hit = $this->walkFields( (array) $form, '', $skip );
+				}
+
+				$text = false;
+			}
+		}
+
+		// Anything else is searched as text, piece by piece, so a large body is never skipped
+		$tail = '';
+		while ( ! $hit && $text && $body !== '' ) {
+			$hit  = $this->scanRawBody( $tail . $body, $skip );
+			$tail = substr( $body, - 1024 );
+			$body = (string) stream_get_contents( $handle, 262144 );
+		}
+
+		fclose( $handle ); //phpcs:ignore
+
+		return $hit;
+	}
+
+	/**
+	 * Search a piece of the raw body
+	 *
+	 * @param string $text
+	 * @param array $skip
+	 *
+	 * @return array|false
+	 */
+	protected function scanRawBody( $text, $skip ) {
+
+		// JSON escapes are undone first, so an escaped payload reads like a plain one
+		if ( strpos( $text, '\\' ) !== false ) {
+			$clean = preg_replace_callback( '/\\\\u00([0-9a-f]{2})/i', function ( $match ) {
+				return chr( hexdec( $match[1] ) );
+			}, $text );
+
+			$text = str_replace( array( '\\/', '\\"' ), array( '/', '"' ), is_string( $clean ) ? $clean : $text );
+		}
+
+		if ( $hit = $this->checkValueGhost( $text, $skip, true ) ) {
+			return $hit;
+		}
+
+		// The field rules for a JSON body that was too large or too deep to parse
+		if ( ! isset( $skip['FW_GHOST_ROLE_ESCALATION'] ) && $this->matchGhost( $this->getGhostRegex( 'role_body' ), $text ) ) {
+			return array( 'code' => 'FW_GHOST_ROLE_ESCALATION', 'area' => 'request', 'pattern' => 'body' );
+		}
+
+		if ( ! isset( $skip['FW_GHOST_REST_BATCH'] ) && $this->matchGhost( '/"requests"\s*+:\s*+\[/i', $text ) && $this->matchGhost( '/"path"\s*+:/i', $text ) ) {
+			return array( 'code' => 'FW_GHOST_REST_BATCH', 'area' => 'request', 'pattern' => 'batch size' );
+		}
+
+		if ( ! isset( $skip['FW_GHOST_QS_AUTHOR_SQLI'] ) && $this->matchGhost( '/"author_(?:exclude|_not_in)"\s*+:\s*+\[?\s*+"[0-9,\s-]*+[^0-9,\s"-]/i', $text ) ) {
+			return array( 'code' => 'FW_GHOST_QS_AUTHOR_SQLI', 'area' => 'request', 'pattern' => 'body' );
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if an uploaded file name can run as code or change the server settings
+	 *
+	 * @param string $name
+	 *
+	 * @return bool
+	 */
+	protected function isPhpFileName( $name ) {
+
+		// The name as sent, and as a server reads it after a null byte, a space, a colon or a semicolon
+		$name = rtrim( basename( str_replace( '\\', '/', (string) $name ) ), ". \t\r\n\0" );
+		$cut  = rtrim( (string) preg_replace( '/(\x00|%00|[\s;:]).*$/s', '', $name ), '.' );
+
+		return ( $this->matchGhost( $this->getGhostRegex( 'upload' ), $name ) || ( $cut !== $name && $this->matchGhost( $this->getGhostRegex( 'upload' ), $cut ) ) );
+	}
+
+	/**
+	 * Search a whole uploaded file for PHP code, also in the short tag forms
+	 *
+	 * @param string $tmp
+	 * @param bool $markup Search also for browser script, for an SVG or HTML file
+	 *
+	 * @return bool
+	 */
+	protected function hasPhpCode( $tmp, $markup = false ) {
+
+		if ( $tmp === '' || ! is_uploaded_file( $tmp ) || ! ( $handle = @fopen( $tmp, 'rb' ) ) ) { //phpcs:ignore
+			return false;
+		}
+
+		$found = false;
+		$tail  = '';
+
+		while ( ! $found && ( $chunk = (string) fread( $handle, 262144 ) ) !== '' ) { //phpcs:ignore
+			$text = $tail . $chunk;
+
+			if ( strpos( $text, '<?' ) !== false || stripos( $text, '__halt_compiler' ) !== false ) {
+				$found = $this->matchGhost( $this->getGhostRegex( 'php' ), $text );
+			}
+
+			if ( ! $found && $markup ) {
+				$found = $this->matchGhost( $this->getGhostRegex( 'script' ), $text );
+			}
+
+			$tail = substr( $chunk, - 64 );
+		}
+
+		fclose( $handle ); //phpcs:ignore
+
+		return $found;
 	}
 
 	/**
@@ -443,7 +773,7 @@ class HMWP_Models_Firewall_Rules {
 			} );
 		}
 
-		return array_slice( $out, 0, 50 );
+		return $out;
 	}
 
 	/**
@@ -543,13 +873,13 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_GLOBALS'           => '/GLOBALS(=|\[|%[0-9A-Z]{0,2})/i',
 			'FW_QS_REQUEST'           => '/(?<![a-z])_REQUEST(=|\[|%[0-9A-Z]{0,2})/i',
 			'FW_QS_CTRL_BYTES'        => '/[\x00\x04\x08\x0d\x1b\x20\x3c\x3e\x7f]/',
-			'FW_QS_NULL_OUTFILE'      => '/((^|[^a-z0-9_]|%(25)?[0-9a-f]{2})(outfile|load_file)([^a-z0-9_]|%(25)?[0-9a-f]{2}|$)|(^|[^a-z0-9_]|%(25)?[0-9a-f]{2})null(\+|%(25)?[0-9a-f]{2}|\/\*|\*\/)*(,|%(25)?2c)(\+|%(25)?[0-9a-f]{2}|\/\*|\*\/)*null([^a-z0-9_]|$))/i',
+			'FW_QS_NULL_OUTFILE'      => '/(?:^|[^a-z0-9_]|%(?:25)?[0-9a-f]{2})(?:(?:outfile|load_file)(?:[^a-z0-9_]|%(?:25)?[0-9a-f]{2}|$)|null(?:\+|%(?!(?:25)?2c)(?:25)?[0-9a-f]{2}|\/\*|\*\/)*+(?:,|%(?:25)?2c)(?:\+|,|%(?:25)?[0-9a-f]{2}|\/\*|\*\/)*+null(?:[^a-z0-9_]|$))/i',
 			'FW_QS_DOTSLASH_MOTD'     => '/\.\/(motd|etc|bin)/i',
 			'FW_QS_SQL_KEYWORDS_1'    => $this->getUnionSelectRegex(),
 			'FW_QS_EVAL_CONCAT'       => '/(?:(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[ce])(concat|eval)(?![a-z])(?=.))|(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[ce])(concat|eval)(?!.)[^a-z]).*(\(|%28)/i',
 			'FW_QS_PHP_INI_OVERRIDES' => '/(?<!.)(?>.*?-[sdcr]).*(allow_url_include|allow_url_fopen|safe_mode|disable_functions|auto_prepend_file)/i',
 			'FW_QS_SP_EXECUTESQL'     => '/sp_executesql/i',
-			'FW_QS_PHP_FUNC_CALLS'    => '/(^|[^a-z0-9_]|%(25)?[0-9a-f]{2})(passthru|shell_exec|proc_open|popen|pcntl_exec|curl_exec|ini_set|phpinfo|unserialize|file_(get|put)_contents|fopen|fwrite|fputs|call_user_func(_array)?|create_function|gzinflate|gzuncompress|str_rot13|pg_sleep|extractvalue|updatexml|group_concat)((\(|%28)|(\+|%20)+(\(|%28)(\+|%20)*(\'|"|%2[247]|\$|`|%60))/i',
+			'FW_QS_PHP_FUNC_CALLS'    => '/(?:^|[^a-z0-9_]|%(?:25)?[0-9a-f]{2})(?:passthru|shell_exec|proc_open|popen|pcntl_exec|curl_exec|ini_set|phpinfo|unserialize|file_(?:get|put)_contents|fopen|fwrite|fputs|call_user_func(?:_array)?|create_function|gzinflate|gzuncompress|str_rot13|pg_sleep|extractvalue|updatexml|group_concat)(?:\(|%28|(?:\+|%20)++(?:\(|%28)(?:\+|%20)*+(?:\'|"|%2[247]|\$|`|%60))/i',
 			'FW_QS_ARG_FUNC_CALLS'    => '/(^|[^a-z0-9_]|%(25)?[0-9a-f]{2})((system|exec)(\(|%28)(?!s?(\)|%29))|(assert|sleep|benchmark|char|chr)(\(|%28)(\+|%20)*(\'|"|%2[247]|\$|`|%60|[0-9.]|\(|%28|\)|%29|[a-z_][a-z0-9_]*(\(|%28)))/i',
 			'FW_QS_ENC_EVAL'          => '/(^|[^a-z]|%(25)?[0-9a-f]{2})(e|%65|%45)(v|%76|%56)(a|%61|%41)(l|%6c|%4c)(\(|%28)/i',
 			'FW_QS_CLOUD_METADATA'    => '/(169(\.|%2e)254(\.|%2e)169(\.|%2e)254|metadata(\.|%2e)google(\.|%2e)internal)/i',
@@ -557,7 +887,7 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_JS_PROTOCOL_CALL'  => '/(?:^|&)(?>[^&]*?javascript(:|%3a))(?!(\+|%20)*void(\(|%28)0(\)|%29)(;|%3b)?(&|$))[^&]*([a-z0-9_$\])]|%29|%5d)(\(|%28|`|%60)/i',
 			'FW_QS_EVENT_ATTR'        => '/(?:(\'|"|`|%2[27]|%60)|(?:^|&)(?>[^&]*?(\'|"|`|%2[27]|%60))[^&]*(\+|%20|%09|%0[acd]|\/|%2f))on[a-z]{3,20}(\+|%20|%09|%0[acd])*(=|%3d)/i', // 11.2026
 			'FW_QS_REMOTE_INCLUDE'    => '/[a-z0-9_]=https?:\/\/[^&?]*(\?|%3f|%00)(&|$)/i',
-			'FW_QS_CRLF_HEADER'       => '/(%0a|%0d)(\+|%20)*((set-cookie|location|refresh|bcc|cc|cache-control|access-control-[a-z-]+|content-[a-z-]+|x-[a-z0-9-]+)(\+|%20)*(:|%3a)|HTTP(\/|%2f)[0-9])/i',
+			'FW_QS_CRLF_HEADER'       => '/%0[ad](?:\+|%20)*+(?:(?:set-cookie|location|refresh|bcc|cc|cache-control|access-control-[a-z-]++|content-[a-z-]++|x-[a-z0-9-]++)(?:\+|%20)*+(?::|%3a)|HTTP(?:\/|%2f)[0-9])/i',
 		);
 
 		return $rules;
@@ -597,7 +927,7 @@ class HMWP_Models_Firewall_Rules {
 		return array(
 			'FW_GHOST_QS_PROTO_POLLUTION' => '/((_|%5f){2}proto(_|%5f){2}|constructor(\[|%5b)prototype)/i', // 11.2026
 			'FW_GHOST_QS_NOSQL_OPERATORS' => '/(\[|%5b)(\$|%24)(ne|gt|gte|lt|lte|regex|where|nin|in|exists|or|and)(\]|%5d)/i', // 11.2026
-			'FW_GHOST_QS_SQLI_CLAUSE'     => '/(order(\+|%20)+by(\+|%20)+[0-9]+(\+|%20)*(--|#|%23|\/\*)|having(\+|%20)+[0-9]+(\+|%20)*(=|%3d)(\+|%20)*[0-9]+)/i', // 11.2026
+			'FW_GHOST_QS_SQLI_CLAUSE'     => '/(?:order(?:\+|%20)++by(?:\+|%20)++[0-9]++(?:\+|%20)*+(?:--|#|%23|\/\*)|having(?:\+|%20)++[0-9]++(?:\+|%20)*+(?:=|%3d)(?:\+|%20)*+[0-9])/i', // 11.2026
 			'FW_GHOST_QS_BACKTICK'        => '/(`|%60)/i', // 11.2026
 		);
 	}
@@ -630,7 +960,7 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_IFRAME_TAG'     => '/(?<!.)(?>.*?(<|%3C))(?>.*?iframe).*(>|%3E)/i',
 			'FW_QS_OBF_IFRAME'     => '/^(?>[\s\S]*?(<|%3C))(?:.*(?!.)[\s\S])*?(?>.*?iframe).*(>|%3E)/i',
 			'FW_QS_ANGLE_QUOTES'   => '/(\'|%00)/i',
-			'FW_QS_TAG_OPEN'       => '/(<|%3c)(!|%21|\?|%3f|(\/|%2f)([a-z]|%[46][1-9a-f]|%[57][0-9a])|([a-z]|%[46][1-9a-f]|%[57][0-9a])([a-z0-9:-]|%[46][1-9a-f]|%[57][0-9a]|%3[0-9])*(\+|%20|%09|%0[acd]|\/|%2f|>|%3e))|(>|%3e)(<|%3c)([a-z]|%[46][1-9a-f]|%[57][0-9a])/i',
+			'FW_QS_TAG_OPEN'       => '/(?:<|%3c)(?:!|%21|\?|%3f|(?:\/|%2f)(?:[a-z]|%[46][1-9a-f]|%[57][0-9a])|(?:[a-z]|%[46][1-9a-f]|%[57][0-9a])(?:[a-z0-9:-]|%[46][1-9a-f]|%[57][0-9a]|%3[0-9])*+(?:\+|%20|%09|%0[acd]|\/|%2f|>|%3e))|(?:>|%3e)(?:<|%3c)(?:[a-z]|%[46][1-9a-f]|%[57][0-9a])/i',
 			'FW_QS_SQLI_XSS_MIX'   => '/(?:^|&)(?>[^&]*?(;|<|>|\'|"|\)|%0A|%0D|%22|%27|%3C|%3E|%00))(?:[^&]*(\/\*|script([^a-z&]|$))|([^&]*([^a-z&]|%(25)?[0-9a-f]{2}))?(?=[acdi])((drop|create|alter)(?:\+|%20|%0[9a-d])++(table|database|schema|user|view|index|function|procedure|trigger)|delete(?:\+|%20|%0[9a-d])++from|insert(?:\+|%20|%0[9a-d])++into)|(?>(?:[^&]*?([^a-z&]|%(25)?[0-9a-f]{2}))??(?=[abcdeimsu])(union|select|insert|drop|delete|cast|create|char|convert|alter|declare|set|md5|benchmark|encode)(?=[^a-z&]))[^&]*(\(|\)|=|@|\*|--|#|%(25)?(28|29|3d|40|2a|23))|(?>(?:[^&]*?([^a-z&]|%(25)?[0-9a-f]{2}))??(?=[su])(union|select)(?=[^a-z&]))[^&]*(,|%(25)?2c))/i',
 		);
 
@@ -683,13 +1013,13 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_TRAVERSAL_HEAVY'  => '/(((\/|%2f){3,3})((\.|%2e){3,3})|((\.|%2e){2,2})(\/|%2f|%u2215))/i',
 			'FW_QS_FUNC_CALLS'       => '/(?:(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefh])(benchmark|char|exec|fopen|function|html)(?![a-z])(?=.))|(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefh])(benchmark|char|exec|fopen|function|html)(?!.)[^a-z])(?>.*?(\(|%28)).*(\)|%29)/i',
 			'FW_QS_PHP_UUID'         => '/(php)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i',
-			'FW_QS_OBF_EVAL'         => '/(^|[^a-z]|%(25)?[0-9a-f]{2})(e|%65|%45)(v|%76|%56)(a|%61|%31)(l|%6c|%4c)([^a-z].*)?(\(|%28)(.*)(\)|%29)/i',
+			'FW_QS_OBF_EVAL'         => '/(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?:e|%65|%45)(?:v|%76|%56)(?:a|%61|%41)(?:l|%6c|%4c)(?![a-z]))(?>.*?(?:\(|%28)).*(?:\)|%29)/i',
 			'FW_QS_PATH_EQ_MOD'      => '/(\/|%2f)(=|%3d|_mm|inurl(:|%3a)(\/|%2f)|(mod|path)(=|%3d)(\.|%2e))/i',
 			'FW_QS_EMBED_TAG'        => '/(?<!.)(?>.*?(<|%3c))(?>.*?(e|%65|%45)(m|%6d|%4d)(b|%62|%42)(e|%65|%45)(d|%64|%44)).*(>|%3e)/i',
 			'FW_QS_IFRAME_TAG'       => '/(?<!.)(?>.*?(<|%3c))(?>.*?(i|%69|%49)(f|%66|%46)(r|%72|%52)(a|%61|%41)(m|%6d|%4d)(e|%65|%45)).*(>|%3e)/i',
 			'FW_QS_OBJECT_TAG'       => '/(?<!.)(?>.*?(<|%3c))(?>.*?(o|%4f|%6f)(b|%62|%42)(j|%4a|%6a)(e|%65|%45)(c|%63|%43)(t|%74|%54)).*(>|%3e)/i',
 			'FW_QS_SCRIPT_TAG'       => '/(?<!.)(?>.*?(<|%3c))(?>.*?(s|%73|%53)(c|%63|%43)(r|%72|%52)(i|%69|%49)(p|%70|%50)(t|%74|%54)).*(>|%3e)/i',
-			'FW_QS_TAG_OPEN'         => '/(<|%3c)(!|%21|\?|%3f|(\/|%2f)([a-z]|%[46][1-9a-f]|%[57][0-9a])|([a-z]|%[46][1-9a-f]|%[57][0-9a])([a-z0-9:-]|%[46][1-9a-f]|%[57][0-9a]|%3[0-9])*(\+|%20|%09|%0[acd]|\/|%2f|>|%3e))|(>|%3e)(<|%3c)([a-z]|%[46][1-9a-f]|%[57][0-9a])/i',
+			'FW_QS_TAG_OPEN'         => '/(?:<|%3c)(?:!|%21|\?|%3f|(?:\/|%2f)(?:[a-z]|%[46][1-9a-f]|%[57][0-9a])|(?:[a-z]|%[46][1-9a-f]|%[57][0-9a])(?:[a-z0-9:-]|%[46][1-9a-f]|%[57][0-9a]|%3[0-9])*+(?:\+|%20|%09|%0[acd]|\/|%2f|>|%3e))|(?:>|%3e)(?:<|%3c)(?:[a-z]|%[46][1-9a-f]|%[57][0-9a])/i',
 			'FW_QS_CAST_OR_1EQ1'     => '/(\\\\x00|("|%22|\'|%27)?0("|%22|\'|%27)?(=|%3d)("|%22|\'|%27)?0|cast(\(|%28)0x|or%201(=|%3d)1)/i',
 			'FW_QS_GLOBALS_ENC'      => '/(g|%67|%47)(l|%6c|%4c)(o|%6f|%4f)(b|%62|%42)(a|%61|%41)(l|%6c|%4c)(s|%73|%53)(=|\[|%[0-9A-Z]{0,2})/i',
 			'FW_QS_REQUEST_ENC'      => '/(?<![a-z])(_|%5f)(r|%72|%52)(e|%65|%45)(q|%71|%51)(u|%75|%55)(e|%65|%45)(s|%73|%53)(t|%74|%54)(=|\[|%[0-9A-Z]{2,})/i',
@@ -701,7 +1031,7 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_SQLI_MIX'         => '/(?<!.)(?>.*?(;|<|>|\'|"|\)|%0a|%0d|%22|%27|%3c|%3e|%00))((.*)(\/\*|base64|(benchmark|concat|encode|script|union)([^a-z]|$))|(.*([^a-z]|%(25)?[0-9a-f]{2}))?(alter|cast|convert|create|declare|delete|drop|insert|md5|(?<![a-z]_)request|select|set|update)([^a-z]|$))/i',
 			'FW_QS_DOUBLE_ENC_TRAV'  => '/(%252e%252e|(\.\.|%2e%2e)(%252f|%255c)|%252e(%252f|%255c))/i',
 			'FW_QS_EVENT_HANDLER'    => '/(?<!.)(?>.*?(<|%3c)).*(\s|%20|\+|%09)on(load|error|focus|blur|toggle|mouseover|mouseenter|mouseout|click|dblclick|keydown|keyup|keypress|submit|change|input|scroll|contextmenu|animationstart|animationend|transitionend|pointerover|pointerdown|wheel|beforeunload|hashchange|play|canplay|loadstart|progress|resize|select|drag)(=|%3d)/i',
-			'FW_QS_STACKED_SQL'      => '/(;|%3b)(\+|%20|\s)*((drop|truncate|alter|rename|create)(\+|%20|\s)+(table|database)|delete(\+|%20|\s)+from|insert(\+|%20|\s)+into|update(\+|%20|\s)+[a-z0-9_]+(\+|%20|\s)+set)/i',
+			'FW_QS_STACKED_SQL'      => '/(?:;|%3b)(?:\+|%20|\s)*+(?:(?:drop|truncate|alter|rename|create)(?:\+|%20|\s)++(?:table|database)|delete(?:\+|%20|\s)++from|insert(?:\+|%20|\s)++into|update(?:\+|%20|\s)++[a-z0-9_]++(?:\+|%20|\s)++set)/i',
 			'FW_QS_BOOLEAN_NUM'      => '/(=|%3d|\+|%20|\s)[0-9]+(\+|%20|\s)+(and|or)(\+|%20|\s)+[0-9]+(\+|%20|\s)*(=|%3d|%3c|%3e|<|>)(\+|%20|\s)*[0-9]+/i',
 			'FW_QS_STACKED_SELECT'   => '/(;|%3b)(\+|%20|\s)*select(\+|%20|\s)+[^\s;&%]+(\+|%20|\s)+from(\+|%20|\s)/i',
 			'FW_QS_B64_SERIALIZED'   => '/(Tzo[0-9wxyz])/',
@@ -837,13 +1167,13 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_TRAVERSAL_HEAVY'  => '/(((\/|%2f){3,3})((\.|%2e){3,3})|((\.|%2e){2,2})(\/|%2f|%u2215))/i',
 			'FW_QS_FUNC_CALLS'       => '/(?:(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefh])(benchmark|char|exec|fopen|function|html)(?![a-z])(?=.))|(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefh])(benchmark|char|exec|fopen|function|html)(?!.)[^a-z])(?>.*?(\(|%28)).*(\)|%29)/i',
 			'FW_QS_PHP_UUID'         => '/(php)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i',
-			'FW_QS_OBF_EVAL'         => '/(^|[^a-z]|%(25)?[0-9a-f]{2})(e|%65|%45)(v|%76|%56)(a|%61|%31)(l|%6c|%4c)([^a-z].*)?(\(|%28)(.*)(\)|%29)/i',
+			'FW_QS_OBF_EVAL'         => '/(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?:e|%65|%45)(?:v|%76|%56)(?:a|%61|%41)(?:l|%6c|%4c)(?![a-z]))(?>.*?(?:\(|%28)).*(?:\)|%29)/i',
 			'FW_QS_PATH_EQ_MOD'      => '/(\/|%2f)(=|%3d|\$&|_mm|inurl(:|%3a)(\/|%2f)|(mod|path)(=|%3d)(\.|%2e))/i',
 			'FW_QS_EMBED_TAG'        => '/(?<!.)(?>.*?(<|%3c))(?>.*?(e|%65|%45)(m|%6d|%4d)(b|%62|%42)(e|%65|%45)(d|%64|%44)).*(>|%3e)/i',
 			'FW_QS_IFRAME_TAG'       => '/(?<!.)(?>.*?(<|%3c))(?>.*?(i|%69|%49)(f|%66|%46)(r|%72|%52)(a|%61|%41)(m|%6d|%4d)(e|%65|%45)).*(>|%3e)/i',
 			'FW_QS_OBJECT_TAG'       => '/(?<!.)(?>.*?(<|%3c))(?>.*?(o|%4f|%6f)(b|%62|%42)(j|%4a|%6a)(e|%65|%45)(c|%63|%43)(t|%74|%54)).*(>|%3e)/i',
 			'FW_QS_SCRIPT_TAG'       => '/(?<!.)(?>.*?(<|%3c))(?>.*?(s|%73|%53)(c|%63|%43)(r|%72|%52)(i|%69|%49)(p|%70|%50)(t|%74|%54)).*(>|%3e)/i',
-			'FW_QS_TAG_OPEN'         => '/(<|%3c)(!|%21|\?|%3f|(\/|%2f)([a-z]|%[46][1-9a-f]|%[57][0-9a])|([a-z]|%[46][1-9a-f]|%[57][0-9a])([a-z0-9:-]|%[46][1-9a-f]|%[57][0-9a]|%3[0-9])*(\+|%20|%09|%0[acd]|\/|%2f|>|%3e))|(>|%3e)(<|%3c)([a-z]|%[46][1-9a-f]|%[57][0-9a])/i',
+			'FW_QS_TAG_OPEN'         => '/(?:<|%3c)(?:!|%21|\?|%3f|(?:\/|%2f)(?:[a-z]|%[46][1-9a-f]|%[57][0-9a])|(?:[a-z]|%[46][1-9a-f]|%[57][0-9a])(?:[a-z0-9:-]|%[46][1-9a-f]|%[57][0-9a]|%3[0-9])*+(?:\+|%20|%09|%0[acd]|\/|%2f|>|%3e))|(?:>|%3e)(?:<|%3c)(?:[a-z]|%[46][1-9a-f]|%[57][0-9a])/i',
 			'FW_QS_CAST_OR_1EQ1'     => '/(\\\\x00|("|%22|\'|%27)?0("|%22|\'|%27)?(=|%3d)("|%22|\'|%27)?0|cast(\(|%28)0x|or%201(=|%3d)1)/i',
 			'FW_QS_GLOBALS_ENC'      => '/(g|%67|%47)(l|%6c|%4c)(o|%6f|%4f)(b|%62|%42)(a|%61|%41)(l|%6c|%4c)(s|%73|%53)(=|\[|%[0-9A-Z]{0,2})/i',
 			'FW_QS_REQUEST_ENC'      => '/(?<![a-z])(_|%5f)(r|%72|%52)(e|%65|%45)(q|%71|%51)(u|%75|%55)(e|%65|%45)(s|%73|%53)(t|%74|%54)(=|\[|%[0-9A-Z]{2,})/i',
@@ -858,7 +1188,7 @@ class HMWP_Models_Firewall_Rules {
 			'FW_QS_SQLI_MIX'         => '/(?<!.)(?>.*?(;|<|>|\'|"|\)|%0a|%0d|%22|%27|%3c|%3e|%00))((.*)(\/\*|base64|(benchmark|concat|encode|script)([^a-z]|$))|(.*([^a-z]|%(25)?[0-9a-f]{2}))?(alter|cast|convert|create|declare|delay|delete|drop|hex|insert|load(?!_(?!file))|md5|null|replace|(?<![a-z]_)request|select|set|sleep|truncate|unhex|update)([^a-z]|$))/i',
 			'FW_QS_DOUBLE_ENC_TRAV'  => '/(%252e%252e|(\.\.|%2e%2e)(%252f|%255c)|%252e(%252f|%255c))/i',
 			'FW_QS_EVENT_HANDLER'    => '/(?<!.)(?>.*?(<|%3c)).*(\s|%20|\+|%09)on(load|error|focus|blur|toggle|mouseover|mouseenter|mouseout|click|dblclick|keydown|keyup|keypress|submit|change|input|scroll|contextmenu|animationstart|animationend|transitionend|pointerover|pointerdown|wheel|beforeunload|hashchange|play|canplay|loadstart|progress|resize|select|drag)(=|%3d)/i',
-			'FW_QS_STACKED_SQL'      => '/(;|%3b)(\+|%20|\s)*((drop|truncate|alter|rename|create)(\+|%20|\s)+(table|database)|delete(\+|%20|\s)+from|insert(\+|%20|\s)+into|update(\+|%20|\s)+[a-z0-9_]+(\+|%20|\s)+set)/i',
+			'FW_QS_STACKED_SQL'      => '/(?:;|%3b)(?:\+|%20|\s)*+(?:(?:drop|truncate|alter|rename|create)(?:\+|%20|\s)++(?:table|database)|delete(?:\+|%20|\s)++from|insert(?:\+|%20|\s)++into|update(?:\+|%20|\s)++[a-z0-9_]++(?:\+|%20|\s)++set)/i',
 			'FW_QS_BOOLEAN_NUM'      => '/(=|%3d|\+|%20|\s)[0-9]+(\+|%20|\s)+(and|or)(\+|%20|\s)+[0-9]+(\+|%20|\s)*(=|%3d|%3c|%3e|<|>)(\+|%20|\s)*[0-9]+/i',
 			'FW_QS_STACKED_SELECT'   => '/(;|%3b)(\+|%20|\s)*select(\+|%20|\s)+[^\s;&%]+(\+|%20|\s)+from(\+|%20|\s)/i',
 			'FW_QS_B64_SERIALIZED'   => '/(Tzo[0-9wxyz])/',
@@ -919,7 +1249,7 @@ class HMWP_Models_Firewall_Rules {
 			'FW_URI_TYPO_FILENAMES'   => '/(\/)(haders|head|hello|helpear|incahe|includes?|indo(sec)?|infos?|install|ioptimizes?|jmail|js|king|kiss|kodox|kro|legion|libsoft)(\.php)/i',
 			'FW_URI_PHPUNIT_REMOTE'   => '/(\/)(awstats|document_root|dologin\.action|error.log|extension\/ext|htaccess\.|lib\/php|listinfo|phpunit\/php|remoteview|server\/php|www\.root\.)/i',
 			'FW_URI_FUNC_CALLS_1'     => '/(?:(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefhlp])(base64_(en|de)code|benchmark|curl_exec|e?chr|eval|function|fwrite|(f|p)open|html|leak|passthru|p?fsockopen|phpinfo)(?![a-z])(?=.))|(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefhlp])(base64_(en|de)code|benchmark|curl_exec|e?chr|eval|function|fwrite|(f|p)open|html|leak|passthru|p?fsockopen|phpinfo)(?!.)[^a-z])(?>.*?(\(|%28)).*(\)|%29)/i',
-			'FW_URI_FUNC_CALLS_2'     => '/(^|[^a-z]|%(25)?[0-9a-f]{2})(posix_(kill|mkfifo|setpgid|setsid|setuid)|(child|proc)_(close|get_status|nice|open|terminate)|(shell_)?exec|system)([^a-z].*)?(\(|%28)(.*)(\)|%29)/i',
+			'FW_URI_FUNC_CALLS_2'     => '/(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?:posix_(?:kill|mkfifo|setpgid|setsid|setuid)|(?:child|proc)_(?:close|get_status|nice|open|terminate)|(?:shell_)?exec|system)(?![a-z]))(?>.*?(?:\(|%28)).*(?:\)|%29)/i',
 			'FW_URI_SHELL_FILES'      => '/(?<!.)(?>.*?(\/)((c99|php|web)?shell|crossdomain|fileditor|locus7|nstview|php(get|remoteview|writer)|r57|remview|sshphp|storm7|webadmin)).*(\.|%2e|\(|%28)/i',
 			'FW_URI_WP_FAKE_FILES'    => '/(\/)((wp-)((201\d|202\d|[0-9]{2})|ad|admin(fx|rss|setup)|booking|confirm|crons|data|file|mail|one|plugins?|readindex|reset|setups?|story))(\.php)/i',
 
@@ -1185,28 +1515,72 @@ class HMWP_Models_Firewall_Rules {
 
 			if ( ! empty( $whitelist_urls ) ) {
 				foreach ( $whitelist_urls as $path ) {
-					if ( strpos( $path, ',' ) ) {
-						$paths = explode( ',', $path );
-
-						foreach ( $paths as $spath ) {
-							if ( HMWP_Classes_Tools::searchInString( $uri, array( $spath ) ) ) {
-                                // Apply whitelist level of security
-								$this->whitelistLevel( HMWP_Classes_Tools::getOption( 'whitelist_level' ) );
-							}
-						}
-
-					} else {
-						if ( HMWP_Classes_Tools::searchInString( $uri, array( $path ) ) ) {
-                            // Apply whitelist level of security
+					foreach ( explode( ',', (string) $path ) as $spath ) {
+						if ( $this->isWhitelistPath( $uri, $spath ) ) {
+							// Apply whitelist level of security
 							$this->whitelistLevel( HMWP_Classes_Tools::getOption( 'whitelist_level' ) );
+							break 2;
 						}
 					}
-
 				}
 			}
 
 		}
 
+	}
+
+	/**
+	 * Check if the request path starts with a whitelisted path
+	 *
+	 * @param  string  $uri  Request path without the query
+	 * @param  string  $path  Whitelisted path or URL
+	 *
+	 * @return bool
+	 */
+	private function isWhitelistPath( $uri, $path ) {
+
+		$path = trim( (string) $path );
+
+		// A full URL counts by its path
+		if ( strpos( $path, '://' ) !== false ) {
+			$path = (string) wp_parse_url( $path, PHP_URL_PATH );
+		}
+
+		$path = '/' . trim( strtolower( $path ), '/' ) . '/';
+
+		// Dot segments and encoded dots or slashes reach another file than the path names // 11.2026
+		if ( $path === '//' || ! is_string( $uri ) || ! HMWP_Classes_Tools::isCleanUrlPath( $uri ) || preg_match( '#%(?:2e|2f|5c|00|25)|\\\\#i', $uri ) ) {
+			return false;
+		}
+
+		$uri  = '/' . trim( strtolower( $uri ), '/' ) . '/';
+		$uris = array( $uri );
+
+		// The same page inside the site folder and with index.php permalinks
+		$root = wp_parse_url( get_option( 'home' ), PHP_URL_PATH );
+		$root = is_string( $root ) ? '/' . trim( strtolower( $root ), '/' ) . '/' : '/';
+		if ( $root !== '//' && $root !== '/' && strpos( $uri, $root ) === 0 ) {
+			$uris[] = $uri = '/' . substr( $uri, strlen( $root ) );
+		}
+		if ( strpos( $uri, '/index.php/' ) === 0 ) {
+			$uris[] = substr( $uri, 10 );
+		}
+
+		// The same page behind a language folder like /fr/ or /pt-br/
+		foreach ( $uris as $item ) {
+			if ( preg_match( '#^/[a-z]{2,3}(?:-[a-z0-9]{2,4})?(/.+)$#', $item, $match ) ) {
+				$uris[] = $match[1];
+			}
+		}
+
+		// Only the start of the request path counts, never a part inside it
+		foreach ( $uris as $item ) {
+			if ( strpos( $item, $path ) === 0 ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 

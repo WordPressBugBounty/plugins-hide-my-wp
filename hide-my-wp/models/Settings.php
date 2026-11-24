@@ -504,6 +504,11 @@ class HMWP_Models_Settings {
 
 			if ( in_array( $key, $this->validate_keys ) ) {
 
+				// A name this site already uses was accepted before: an unchanged save keeps it
+				if ( is_string( $name ) && $name !== '' && $name === HMWP_Classes_Tools::getOption( $key ) ) {
+					return true;
+				}
+
 				// Avoid names that lead to WordPress errors
 				if ( ( $key <> 'hmwp_themes_url' && $name == 'themes' ) || ( $key == 'hmwp_themes_url' && $name == 'assets' ) || ( $key <> 'hmwp_upload_url' && $name == 'uploads' ) || in_array( $name, $this->invalid_names ) ) {
 
@@ -704,7 +709,10 @@ class HMWP_Models_Settings {
 					do_action( 'hmwp_apply_permalink_changes' );
 
 					if ( $redirect && ! HMWP_Classes_Tools::isNginx() && ! HMWP_Classes_Tools::isCloudPanel() ) {
-						if ( wp_safe_redirect( esc_url_raw( HMWP_Classes_Tools::getSettingsUrl( HMWP_Classes_Tools::getValue( 'page' ) . '&tab=' . HMWP_Classes_Tools::getValue( 'tab' ) ) ) ) ) {
+						// Keep the save confirmation over this redirect, the next page shows it
+						set_transient( 'hmwp_saved_' . get_current_user_id(), HMWP_Classes_Tools::getValue( 'action', 'saved' ), 60 );
+						$tab = HMWP_Classes_Tools::getValue( 'tab' );
+						if ( wp_safe_redirect( esc_url_raw( HMWP_Classes_Tools::getSettingsUrl( HMWP_Classes_Tools::getValue( 'page' ) . ( $tab ? '&tab=' . $tab : '' ) ) ) ) ) {
 							exit;
 						}
 					}

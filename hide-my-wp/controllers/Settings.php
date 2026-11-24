@@ -116,6 +116,14 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 			include_once ABSPATH . '/wp-admin/includes/plugin.php';
 		}
 
+		// Warn when the selected Server Type does not fit the server that answers
+		if ( $server = HMWP_Classes_Tools::getServerMismatch() ) {
+			$types = array( 'apache' => 'Apache', 'litespeed' => 'LiteSpeed', 'siteground' => 'SiteGround', 'nginx' => 'Nginx', 'cloudpanel' => 'CloudPanel', 'iis' => 'IIS Windows' );
+			$type  = HMWP_Classes_Tools::getOption( 'hmwp_server_type' );
+			/* translators: 1: Detected server name. 2: Selected server type. 3: Opening link HTML. 4: Closing link HTML. */
+			HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'This website runs on %1$s, but Server Type is set to %2$s. WP Ghost now writes its rules for %2$s, so the path changes may stop working. Set Server Type back to Autodetect in %3$sAdvanced > Compatibility%4$s, unless your hosting company asked for %2$s.', 'hide-my-wp' ), '<strong>' . esc_html( $server ) . '</strong>', '<strong>' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : $type ) . '</strong>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_advanced&tab=compatibility' ) ) . '" class="text-white" style="text-decoration: underline">', '</a>' ) ), 'danger', false );
+		}
+
 		if ( HMWP_Classes_Tools::isNginx() && HMWP_Classes_Tools::getOption( 'test_frontend' ) && HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' && $this->hasNginxRules() ) {
 			$config_file = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getConfFile();
 			if ( HMWP_Classes_Tools::isLocalFlywheel() ) {
@@ -128,6 +136,21 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
                 /* translators: 1: Code snippet and tutorial link HTML. */
                 HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'NGINX detected. In case you didn\'t add the code in the NGINX config already, please add the following line. %1$s', 'hide-my-wp' ), '<br /><br /><code><strong>include ' . esc_html( $config_file ) . ';</strong></code> <br /><strong><br /><a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/setup-wp-ghost-on-nginx-server/' ) ) . '" target="_blank">' . esc_html__( 'Learn how to setup on Nginx server', 'hide-my-wp' ) . ' >></a></strong>' ) , 'notice', false );
             }
+		}
+
+		// Show the confirmation of a save that ended in a redirect
+		if ( $saved = get_transient( 'hmwp_saved_' . get_current_user_id() ) ) {
+			delete_transient( 'hmwp_saved_' . get_current_user_id() );
+			if ( $saved == 'hmwp_restore' ) {
+				HMWP_Classes_Error::setNotification( esc_html__( 'Great! The backup is restored.', 'hide-my-wp' ), 'success' );
+			} else {
+				HMWP_Classes_Error::setNotification( esc_html__( 'Saved', 'hide-my-wp' ), 'success' );
+			}
+		}
+
+		// The login test is waiting: say it on every settings page, the gate is on Change Paths
+		if ( $page <> 'hmwp_permalinks' && HMWP_Classes_Tools::getOption( 'test_frontend' ) && HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' ) {
+			HMWP_Classes_Error::setNotification( esc_html__( 'Your paths have changed. Confirm you can still log in.', 'hide-my-wp' ) . ' <a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '" class="btn btn-default btn-sm ml-3">' . esc_html__( 'Change Paths', 'hide-my-wp' ) . '</a>' );
 		}
 
 		// Setting Alerts based on Logout and Error statements
@@ -223,8 +246,9 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
             $this->eventsListTable = HMWP_Classes_ObjController::getClass( 'HMWP_Models_EventsListTable' );
 		}
 
+        // Only the plugin's own message is shown, never text from the URL
         if ( HMWP_Classes_Tools::getValue( 'hmwp_message' ) ) {
-            HMWP_Classes_Error::setNotification( HMWP_Classes_Tools::getValue( 'hmwp_message', false, true ), 'success' );
+            HMWP_Classes_Error::setNotification( esc_html__( 'Saved', 'hide-my-wp' ), 'success' );
         }
 
 	}
@@ -252,8 +276,9 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 			}
 		}
 
+		// Only the plugin's own message is shown, never text from the URL
 		if ( HMWP_Classes_Tools::getValue( 'hmwp_message' ) ) {
-			HMWP_Classes_Error::setNotification( HMWP_Classes_Tools::getValue( 'hmwp_message', false, true ), 'success' );
+			HMWP_Classes_Error::setNotification( esc_html__( 'Saved', 'hide-my-wp' ), 'success' );
 		}
 
 	}
@@ -805,7 +830,13 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
                 // Add action for later use
                 do_action( 'hmwp_logsettings_saved' );
 
-                if ( wp_safe_redirect( esc_url_raw( remove_query_arg( array( 'hmwp_nonce', 'action' ) ) ) ) ) {
+                // The notice above is lost on redirect, pass it in the URL like the whitelist actions
+                $redirect = remove_query_arg( array( 'hmwp_nonce', 'action', 'hmwp_message' ) );
+                if ( ! HMWP_Classes_Tools::getOption( 'error' ) ) {
+                    $redirect = add_query_arg( 'hmwp_message', esc_html__( 'Saved', 'hide-my-wp' ), $redirect );
+                }
+
+                if ( wp_safe_redirect( esc_url_raw( $redirect ) ) ) {
                     exit;
                 }
 
@@ -891,6 +922,9 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 
 				// Add action for later use
 				do_action( 'hmwp_confirmed_settings' );
+
+				// Tell the user the confirmation was taken
+				HMWP_Classes_Error::setNotification( esc_html__( 'Great! The new paths are loading correctly.', 'hide-my-wp' ), 'success' );
 
 				break;
 			case 'hmwp_manualrewrite':
@@ -1053,6 +1087,14 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 				} else {
 					if ( $data = json_decode( wp_remote_retrieve_body( $response ) ) ) {
 
+						// Install only an https package from the account server, into a plain folder name
+						$package = isset( $data->download_url ) ? (string) $data->download_url : '';
+						if ( ! isset( $data->slug, $data->name, $data->version ) || ! preg_match( '/^[a-z0-9\-]+$/', (string) $data->slug )
+						     || wp_parse_url( $package, PHP_URL_SCHEME ) !== 'https' || ! HMWP_Classes_Tools::isAccountUrl( $package ) ) {
+							HMWP_Classes_Error::setNotification( esc_html__( "Can't download the plugin.", 'hide-my-wp' ) );
+							break;
+						}
+
                         /** @var HMWP_Models_Rollback $rollback */
 						$rollback = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rollback' );
 
@@ -1086,6 +1128,11 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 
                 set_transient( 'hmwp_disable', 1, 300 );
 
+                // Clean URL, so a refresh does not start the 5 minutes again
+                if ( wp_safe_redirect( esc_url_raw( remove_query_arg( array( 'hmwp_nonce', 'action' ) ) ) ) ) {
+                    exit;
+                }
+
                 break;
             case 'hmwp_pause_disable':
 
@@ -1094,6 +1141,11 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
                 }
 
                 delete_transient( 'hmwp_disable' );
+
+                // Clean URL, so the nonce does not stay in the address bar
+                if ( wp_safe_redirect( esc_url_raw( remove_query_arg( array( 'hmwp_nonce', 'action' ) ) ) ) ) {
+                    exit;
+                }
 
                 break;
             case 'hmwp_update_product_name':
@@ -1376,6 +1428,33 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 			}
 
 			return $value;
+		}
+
+		// Mapping lists and file lists: the same characters a normal save keeps
+		$lists = array(
+			'hmwp_url_mapping'            => '/[^A-Za-z0-9-_;:=%.#\/\?]/',
+			'hmwp_text_mapping'           => '/[^A-Za-z0-9-_.+*#:;~{}\!\s\/]/',
+			'hmwp_cdn_urls'               => '/[^A-Za-z0-9-_.:\/]/',
+			'hmwp_hide_commonfiles_files' => '/[^A-Za-z0-9\-_.]/',
+			'hmwp_hide_oldpaths_types'    => '/[^A-Za-z0-9]/',
+		);
+		if ( isset( $lists[ $key ] ) ) {
+			$pattern = $lists[ $key ];
+			$strip   = function ( $item ) use ( &$strip, $pattern ) {
+				if ( is_array( $item ) ) {
+					return array_map( $strip, $item );
+				}
+
+				return is_scalar( $item ) ? preg_replace( $pattern, '', (string) $item ) : '';
+			};
+
+			if ( is_array( $value ) ) {
+				return array_values( array_filter( $strip( $value ), 'strlen' ) );
+			}
+
+			$list = json_decode( (string) $value, true );
+
+			return wp_json_encode( is_array( $list ) ? $strip( $list ) : array() );
 		}
 
 		$clean = function ( $item, $is_key = false ) use ( &$clean, $key ) {

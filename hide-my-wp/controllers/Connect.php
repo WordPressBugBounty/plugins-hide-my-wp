@@ -48,16 +48,18 @@ class HMWP_Controllers_Connect extends HMWP_Classes_FrontController {
 
 		if ( $response && $response = json_decode( $response, true ) ) {
 
-			HMWP_Classes_Tools::saveOptions( 'hmwp_token', ( $response['token'] ?? 0 ) );
-			HMWP_Classes_Tools::saveOptions( 'api_token', ( $response['api_token'] ?? false ) );
-			HMWP_Classes_Tools::saveOptions( 'error', isset( $response['error'] ) );
-
 			if ( ! isset( $response['error'] ) ) {
+				// Save the connection only on success. An API error must not
+				// clear it or switch the path changes off.
+				HMWP_Classes_Tools::saveOptions( 'hmwp_token', ( $response['token'] ?? 0 ) );
+				HMWP_Classes_Tools::saveOptions( 'api_token', ( $response['api_token'] ?? false ) );
+				HMWP_Classes_Tools::saveOptions( 'error', false );
+
 				if ( $redirect_to <> '' ) {
 					wp_safe_redirect( $redirect_to );
 					exit();
 				}
-			} elseif ( isset( $response['message'] ) ) {
+			} elseif ( isset( $response['message'] ) && is_string( $response['message'] ) ) {
 				HMWP_Classes_Error::setNotification( $response['message'], 'notice', false );
 			}
 		} else {

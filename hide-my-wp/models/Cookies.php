@@ -330,6 +330,10 @@ class HMWP_Models_Cookies {
 
 		// Ensure cookie constants if possible (default-constants.php).
 		if ( ! defined( 'LOGGED_IN_COOKIE' ) && function_exists( 'wp_cookie_constants' ) ) {
+			// A network sets its own cookie paths first, as WordPress does
+			if ( is_multisite() && function_exists( 'ms_cookie_constants' ) ) {
+				ms_cookie_constants();
+			}
 			wp_cookie_constants();
 		}
 
@@ -412,6 +416,10 @@ class HMWP_Models_Cookies {
 		}
 
 		if ( ! defined( 'LOGGED_IN_COOKIE' ) && function_exists( 'wp_cookie_constants' ) ) {
+			// A network sets its own cookie paths first, as WordPress does
+			if ( is_multisite() && function_exists( 'ms_cookie_constants' ) ) {
+				ms_cookie_constants();
+			}
 			wp_cookie_constants();
 		}
 

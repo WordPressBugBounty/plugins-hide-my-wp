@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.20
+Stable tag: 7.0.21
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -201,7 +201,7 @@ See all <a href="https://wpghost.com/features/">WP Ghost Premium features</a>.
 
 The full policy is in the plugin's `SECURITY.md` file, and bundled third-party components are listed in `sbom.json`.
 
-**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.20, released November 2026, is supported until November 2031.
+**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.21, released November 2026, is supported until November 2031.
 
 = Documentation and guides =
 
@@ -304,6 +304,41 @@ WP Ghost Premium includes crawler controls, but blocking search crawlers such as
 
 == Changelog ==
 
+= 7.0.21 (24 Nov 2026) =
+* Update - Security update: hidden paths cover every spelling of an address
+* Update - Security update: Hide Old Paths accepts real WordPress login cookies only
+* Update - Security update: whitelisted paths match from the site root
+* Update - Security update: login limits count sign-ins sent at the same time
+* Update - Security update: Magic Link emails are limited per address
+* Update - Security update: temporary users keep to their own account
+* Update - Security update: connection replies show text only
+* Update - Security update: Ultimate Member sign-up form checks the math answer first
+* Update - Custom login and admin paths stay private in visitor pages
+* New - 2026 Ghost Firewall rules for the newest attack patterns
+* Update - Firewall patterns stay fast on very long query strings
+* Update - Hide /admin, /login and /dashboard leave nested pages like /shop/admin/ open
+* Update - Hide upgrade.php on the old admin path on Apache servers
+* Update - Disable Embeds also closes the oEmbed REST route
+* Fix - Robots.txt keeps the default admin lines with custom paths
+* Update - Meta descriptions that mention WordPress paths keep their exact text
+* Update - Updates from older versions keep your current settings
+* Update - Hidden login and admin paths stay hidden on every network site
+* Fix - Network database updates run with a custom admin path
+* Fix - Network updates write the new server rules from any site
+* Fix - One login opens every subsite dashboard on a network
+* Update - Missing core files on Apache networks return the 404 page
+* Update - Uninstall removes the plugin data from every network site
+* Update - Uninstall also removes the security threats log table
+* Update - Deactivation also removes the scheduled tasks
+* New - Notice when the selected Server Type differs from the server
+* Update - Server Type works with Cloud Panel and Local on NGINX
+* Update - X-Powered-By header is fully removed on NGINX
+* Update - Temporary Login users open the dashboard when 2FA setup is required
+* Update - Login error keeps its WordPress code with the attempts left notice
+* Update - Change Paths saves with a custom path set in an older version
+* Update - Settings screens fit phones, dark mode and right-to-left languages
+* Update - Help links and labels match the current settings
+* Update - Change Paths keeps the full Hide Common Files list on every save
 = 7.0.20 (20 Nov 2026) =
 
 * Update - Security update: file delivery follows the server folder rules
@@ -323,6 +358,9 @@ WP Ghost Premium includes crawler controls, but blocking search crawlers such as
 * Update - Visitor AJAX calls work with Prevent Broken Website Layout
 * Update - Speculative loading rules keep page links intact
 * Update - Translations cover the new texts
+* Update - Cache clear also empties page cache plugins
+* Update - Help links open on wpghost.com
+* Update - Hide Paths in Robots.txt covers custom admin and login paths
 
 = 7.0.19 (12 Nov 2026) =
 

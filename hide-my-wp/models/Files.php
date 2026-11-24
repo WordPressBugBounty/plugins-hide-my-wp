@@ -16,6 +16,10 @@ class HMWP_Models_Files {
 	protected $_safe_files = array();
 	protected $_replace = array();
 	protected $_rewrites = array();
+	/**
+	 * @var bool True when the last mapped address held a changed path
+	 */
+	protected $_mapped = false;
 	protected $_site_url = null;
 	protected $_site_hosts = array();
 	protected $_fingerprint = null;
@@ -707,6 +711,8 @@ class HMWP_Models_Files {
 	 * @throws Exception
 	 */
 	public function getOriginalUrl( $url, $exact = false ) {
+		$this->_mapped = false;
+
 		// Build the rewrite rules if they are not already built
 		if ( empty( $this->_rewrites ) ) {
 			$this->buildRedirect();
@@ -737,7 +743,11 @@ class HMWP_Models_Files {
 		if ( isset( $this->_rewrites['from'] ) && isset( $this->_rewrites['to'] ) && ! empty( $this->_rewrites['from'] ) && ! empty( $this->_rewrites['to'] ) ) {
 			$from = ( $exact && isset( $this->_rewrites['exact'] ) ? $this->_rewrites['exact'] : $this->_rewrites['from'] );
 
+			$old_path          = $parse_url['path'];
 			$parse_url['path'] = preg_replace( $from, $this->_rewrites['to'], $parse_url['path'], 1 );
+
+			// Remember if a changed path was found in this address
+			$this->_mapped = ( $old_path !== $parse_url['path'] );
 		}
 
 		// Default to https if the scheme is not set
@@ -2586,6 +2596,7 @@ class HMWP_Models_Files {
 		//Get the original URL and path based on rewrite rules
 		$url_no_query     = ( ( strpos( $url, '?' ) !== false ) ? substr( $url, 0, strpos( $url, '?' ) ) : $url );
 		$new_url          = $this->getOriginalUrl( $url );
+		$mapped           = $this->_mapped;
 		$new_url_no_query = ( ( strpos( $new_url, '?' ) !== false ) ? substr( $new_url, 0, strpos( $new_url, '?' ) ) : $new_url );
 		$new_path         = $this->getOriginalPath( $new_url );
 		$mime             = false;
@@ -2758,6 +2769,11 @@ class HMWP_Models_Files {
 					echo $content; //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					exit();
 				}
+
+			} elseif ( ! $mapped ) {
+
+				// No changed path in the address: it only looks like an old path once it is cleaned
+				return;
 
 			} elseif ( stripos( trailingslashit( $new_url_no_query ), '/' . HMWP_Classes_Tools::getDefault( 'hmwp_wp-json' ) . '/' ) !== false ) {
 

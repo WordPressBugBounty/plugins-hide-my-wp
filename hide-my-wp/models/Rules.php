@@ -50,8 +50,10 @@ class HMWP_Models_Rules {
 		}
 
 		//Set known logged in cookies
-		$this->whitelist_cookies[] = 'wordpress_logged_in_';
-		$this->whitelist_cookies[] = HMWP_LOGGED_IN_COOKIE;
+		// The cookie counts with a value written like WordPress does: user|expiration|token|hmac // 11.2026
+		$shape = '[0-9a-zA-Z_]*=[^;|=]{1,800}(?:%7[cC]|\\|)[0-9]{9,12}(?:%7[cC]|\\|)[^;|%]+(?:%7[cC]|\\|)[^;|%]+';
+		$this->whitelist_cookies[] = 'wordpress_logged_in_' . $shape;
+		$this->whitelist_cookies[] = preg_quote( HMWP_LOGGED_IN_COOKIE, '/' ) . $shape;
 		//Let third party cookie check
 		$this->whitelist_cookies = apply_filters( 'hmwp_rules_whitelisted_cookies' , $this->whitelist_cookies );
 		$this->whitelist_cookies = array_unique( $this->whitelist_cookies );
@@ -256,11 +258,38 @@ class HMWP_Models_Rules {
 	 * @return bool
 	 */
 	public function writeInHtaccess( $rules, $header = 'HMWP_RULES' ) {
+		// The server reads .htaccess, so an old Nginx rules file must not stay readable
+		$this->clearNginxConf();
+
 		if ( HMWP_Classes_Tools::isModeRewrite() ) {
 			return $this->insertWithMarkers( $header, $rules );
 		}
 
 		return false;
+	}
+
+	/**
+	 * Remove the WP Ghost rules from an Nginx rules file left in the web root.
+	 * The file stays, so an Nginx include of it keeps working.
+	 *
+	 * @return void
+	 */
+	public function clearNginxConf() {
+		$file = $this->root_path . 'hidemywp.conf';
+
+		if ( ! @is_file( $file ) || @filesize( $file ) < 10 || ! @is_writable( $file ) ) { //phpcs:ignore
+			return;
+		}
+
+		$content = @file_get_contents( $file ); //phpcs:ignore
+		if ( $content === false || strpos( $content, '# BEGIN HMWP_' ) === false ) {
+			return;
+		}
+
+		$clean = preg_replace( '/# BEGIN (HMWP_[A-Z_]+).*?# END \\1\s*/s', '', $content );
+		if ( $clean !== null && $clean !== $content ) {
+			@file_put_contents( $file, $clean, LOCK_EX ); //phpcs:ignore
+		}
 	}
 
 	/**
@@ -464,13 +493,19 @@ class HMWP_Models_Rules {
 		$extensions = array();
 		$types      = (array) HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths_types' );
 		$files      = (array) HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles_files' );
+		// File names only: these go into the server rules
+		$files = array_filter( $files, function ( $file ) {
+			return is_string( $file ) && preg_match( '/^[A-Za-z0-9\-_.]+$/', $file );
+		} );
 
 		if ( ! empty( $files ) && ( $key = array_search( HMWP_Classes_Tools::getDefault( 'hmwp_wp-comments-post' ), $files ) ) !== false ) {
 			unset( $files[ $key ] );
 		}
 
 		//Do not hide upgrade.php file from logged users
+		$hide_upgrade = false;
 		if ( ! empty( $files ) && ( $key = array_search( 'upgrade.php', $files ) ) !== false ) {
+			$hide_upgrade = (bool) HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' );
 			unset( $files[ $key ] );
 		}
 
@@ -538,7 +573,28 @@ class HMWP_Models_Rules {
 		$hide_includes = ( HMWP_Classes_Tools::getDefault( 'hmwp_wp-includes_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_wp-includes_url' ) );
 		$hide_php      = in_array( '\\.php', $extensions, true );
 		// CSS and JS files with more dots in the name or the folder, like style.min.css
-		$assets        = array_values( array_intersect( $extensions, array( '\.css', '\.scss', '\.js' ) ) );
+		$assets        = array_values( array_intersect( $extensions, array( '\.css', '\.scss', '\.js', '\.jpg', '\.jpeg', '\.tiff', '\.gif', '\.bmp', '\.png', '\.svg', '\.webp' ) ) );
+		// Files only a browser or a scanner asks for, matched at the end of the path // 11.2026
+		if ( in_array( 'font', $types ) ) {
+			array_push( $assets, '\.eot', '\.ttf', '\.otf', '\.woff', '\.woff2' );
+		}
+		if ( in_array( 'css', $types ) || in_array( 'js', $types ) ) {
+			$assets[] = '\.map';
+		}
+		if ( in_array( 'txt', $types ) ) {
+			array_push( $assets, '\.md', '\.pot', '\.po', '\.mo' );
+		}
+		if ( in_array( 'image', $types ) ) {
+			array_push( $assets, '\.ico', '\.avif' );
+		}
+		// With a new admin path, visitors need nothing from the old admin folder // 11.2026
+		$old_admin = false;
+		if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_admin' ) && HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_admin_url' ) ) {
+			// A subdirectory network serves the admin files from under any number of folders
+			$folders   = ( is_multisite() && function_exists( 'is_subdomain_install' ) && ! is_subdomain_install() ) ? '*' : '?';
+			$old_admin = '([_0-9a-zA-Z-]+/)' . $folders . HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '/';
+		}
+		$admin_dirs = '(css|js|images|includes|maint)';
 
 		if ( HMWP_Classes_Tools::isNginx() ) {
 
@@ -579,6 +635,16 @@ class HMWP_Models_Rules {
 					}
 					if ( $hide_includes ) {
 						$rules .= 'if ($hmwp_path ~* ^' . $home_root . $wp_includes . '/?$) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+						$rules .= 'if ($hmwp_path ~* ^' . $home_root . $wp_includes . '/[^\.]+/?$) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+					}
+					if ( $old_admin ) {
+						$rules .= 'if ($hmwp_path ~* "^' . $home_root . $old_admin . $admin_dirs . '(/[^.]*)?$") { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+						if ( ! empty( $assets ) ) {
+							$rules .= 'if ($hmwp_path ~* "^' . $home_root . $old_admin . '.+(' . join( '|', $assets ) . ')$") { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+						}
+						if ( $hide_php ) {
+							$rules .= 'if ($hmwp_path ~* "^' . $home_root . $old_admin . '(?!admin-(ajax|post)\.php(/|$)).+\.php(/|$)") { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+						}
 					}
 					if ( ! empty( $extensions ) ) {
 						foreach ( $old_paths as $old_path ) {
@@ -595,6 +661,11 @@ class HMWP_Models_Rules {
 
 					//hide the installation and upgrade files for not loggedin users
 					$rules .= 'if ($hmwp_path ~* ^' . $home_root . 'wp-admin/(install.php|upgrade.php)) { set $cond "${cond}+deny_uri"; }' . PHP_EOL;
+					// The old admin folder typed without the slash is answered like the one with it // 11.2026
+					if ( $old_admin ) {
+						$rules .= 'if ($hmwp_path ~* "^' . $home_root . rtrim( $old_admin, '/' ) . '(/network|/user)?$") { set $cond "${cond}+admin_dir"; }' . PHP_EOL;
+						$rules .= 'if ($cond = "cookie+admin_dir") { rewrite ^(.*)$ $1/ last; }' . PHP_EOL;
+					}
 					// More than one line can match the same path
 					$rules .= 'if ($cond ~ "^cookie(\+deny_uri)+$") {  return 404; } ' . PHP_EOL;
 				}
@@ -653,7 +724,20 @@ class HMWP_Models_Rules {
 					$rules .= "RewriteCond %{REQUEST_URI} ^" . $home_root . $wp_content . "/[^\.]+/?$ [NC,OR]" . PHP_EOL;
 				}
 				if ( HMWP_Classes_Tools::getDefault( 'hmwp_wp-includes_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_wp-includes_url' ) ) {
-					$rules .= "RewriteCond %{THE_REQUEST} " . $home_root . $wp_includes . "/?$ [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} ^" . $home_root . $wp_includes . "/?$ [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} ^" . $home_root . $wp_includes . "/[^\.]+/?$ [NC,OR]" . PHP_EOL;
+				}
+				if ( $old_admin ) {
+					// Without the slash the server would answer an admin folder with a redirect to the old path // 11.2026
+					$rules .= "RewriteCond %{REQUEST_URI} ^" . $home_root . rtrim( $old_admin, '/' ) . "(/network|/user)?$ [NC,OR]" . PHP_EOL;
+					$rules .= "RewriteCond %{REQUEST_URI} ^" . $home_root . $old_admin . $admin_dirs . "(/[^.]*)?$ [NC,OR]" . PHP_EOL;
+					if ( ! empty( $assets ) ) {
+						$rules .= "RewriteCond %{THE_REQUEST} ^\\S+\\s" . $home_root . $old_admin . "[^\\s?]+(" . join( '|', $assets ) . ")[\\s?] [NC,OR]" . PHP_EOL;
+					}
+					if ( $hide_php ) {
+						// Many admin files answer without loading WordPress, so the server has to hide them // 11.2026
+						$rules .= "RewriteCond %{THE_REQUEST} ^\\S+\\s" . $home_root . $old_admin . "(?!admin-(ajax|post)\\.php[\\s?/])[^\\s?]+\\.php[\\s?/] [NC,OR]" . PHP_EOL;
+					}
 				}
 				if ( ! empty( $extensions ) ) {
 
@@ -688,6 +772,10 @@ class HMWP_Models_Rules {
 			}
 
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_commonfiles' ) && ! empty( $files ) ) {
+				if ( $hide_upgrade && $old_admin && ! $hide_php ) {
+					// Hidden in the old admin folder only: WordPress calls it on the new admin path after an update
+					$rules .= "RewriteCond %{THE_REQUEST} ^\\S+\\s" . $home_root . $old_admin . "upgrade\\.php[\\s?/] [NC,OR]" . PHP_EOL;
+				}
 				$rules .= "RewriteCond %{THE_REQUEST} /([_0-9a-zA-Z-]+/)?(" . str_replace( '.', '\\.', join( '|', $files ) ) . ") [NC]" . PHP_EOL;
 			} else {
 				$rules .= "RewriteCond %{THE_REQUEST} /([_0-9a-zA-Z-]+/)?(upgrade\\.php|install\\.php) [NC]" . PHP_EOL;
@@ -704,7 +792,10 @@ class HMWP_Models_Rules {
 					$clean[] = $wp_content . '(/[^.]+)?/?$';
 				}
 				if ( $hide_includes ) {
-					$clean[] = $wp_includes . '/?$';
+					$clean[] = $wp_includes . '(/[^.]+)?/?$';
+				}
+				if ( $old_admin ) {
+					$clean[] = HMWP_Classes_Tools::getDefault( 'hmwp_admin_url' ) . '/(' . $admin_dirs . '(/[^.]*)?$' . ( ! empty( $assets ) ? '|.+(' . join( '|', $assets ) . ')(/|$)' : '' ) . ( $hide_php ? '|(?!admin-(ajax|post)\\.php(/|$)).+\\.php(/|$)' : ( $hide_upgrade ? '|upgrade\\.php(/|$)' : '' ) ) . ')';
 				}
 				if ( ! empty( $extensions ) && ! empty( $old_paths ) ) {
 					$clean[] = '(' . join( '|', $old_paths ) . ')/([^.]+(' . join( '|', $extensions ) . ')' . ( $hide_php ? '|.+\\.php(/|$)' : '' ) . ( ! empty( $assets ) ? '|.+(' . join( '|', $assets ) . ')(/|$)' : '' ) . ')';
@@ -738,6 +829,16 @@ class HMWP_Models_Rules {
 				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
 			}
 
+			// On a network, a missing file in a core folder gets the 404 answer, not a server error // 11.2026
+			if ( is_multisite() ) {
+				$rules .= "<IfModule mod_rewrite.c>" . PHP_EOL;
+				$rules .= "RewriteEngine On" . PHP_EOL;
+				$rules .= "RewriteCond %{ENV:REDIRECT_STATUS} ^200$" . PHP_EOL;
+				$rules .= "RewriteCond %{REQUEST_FILENAME} !-f" . PHP_EOL;
+				$rules .= "RewriteCond %{REQUEST_FILENAME} !-d" . PHP_EOL;
+				$rules .= "RewriteRule ^wp-(content|admin|includes)/ - [L,R=404]" . PHP_EOL;
+				$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
+			}
 
 		} elseif ( HMWP_Classes_Tools::isIIS() ) {
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_oldpaths' ) ) {
@@ -957,7 +1058,7 @@ class HMWP_Models_Rules {
 				$rules .= "RewriteCond %{QUERY_STRING} (((/|%2f){3,3})((\.|%2e){3,3})|((\.|%2e){2,2})(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (?:(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefh])(benchmark|char|exec|fopen|function|html)(?![a-z])(?=.))|(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefh])(benchmark|char|exec|fopen|function|html)(?!.)[^a-z])(?>.*?(\\(|%28)).*(\\)|%29) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (php)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) [NC,OR]" . PHP_EOL;
-				$rules .= "RewriteCond %{QUERY_STRING} (^|[^a-z]|%(25)?[0-9a-f]{2})(e|%65|%45)(v|%76|%56)(a|%61|%31)(l|%6c|%4c)([^a-z].*)?(\(|%28)(.*)(\)|%29) [NC,OR]" . PHP_EOL;
+				$rules .= "RewriteCond %{QUERY_STRING} (?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?:e|%65|%45)(?:v|%76|%56)(?:a|%61|%41)(?:l|%6c|%4c)(?![a-z]))(?>.*?(?:\(|%28)).*(?:\)|%29) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)(=|%3d|$&|_mm|inurl(:|%3a)(/|%2f)|(mod|path)(=|%3d)(\.|%2e)) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (g|%67|%47)(l|%6c|%4c)(o|%6f|%4f)(b|%62|%42)(a|%61|%41)(l|%6c|%4c)(s|%73|%53)(=|\[|%[0-9A-Z]{0,2}) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (?<![a-z])(_|%5f)(r|%72|%52)(e|%65|%45)(q|%71|%51)(u|%75|%55)(e|%65|%45)(s|%73|%53)(t|%74|%54)(=|\[|%[0-9A-Z]{2,}) [NC,OR]" . PHP_EOL;
@@ -1059,7 +1160,7 @@ class HMWP_Models_Rules {
 				$rules .= "RewriteCond %{QUERY_STRING} (((/|%2f){3,3})((\.|%2e){3,3})|((\.|%2e){2,2})(/|%2f|%u2215)) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (?:(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefh])(benchmark|char|exec|fopen|function|html)(?![a-z])(?=.))|(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefh])(benchmark|char|exec|fopen|function|html)(?!.)[^a-z])(?>.*?(\\(|%28)).*(\\)|%29) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (php)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) [NC,OR]" . PHP_EOL;
-				$rules .= "RewriteCond %{QUERY_STRING} (^|[^a-z]|%(25)?[0-9a-f]{2})(e|%65|%45)(v|%76|%56)(a|%61|%31)(l|%6c|%4c)([^a-z].*)?(\(|%28)(.*)(\)|%29) [NC,OR]" . PHP_EOL;
+				$rules .= "RewriteCond %{QUERY_STRING} (?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?:e|%65|%45)(?:v|%76|%56)(?:a|%61|%41)(?:l|%6c|%4c)(?![a-z]))(?>.*?(?:\(|%28)).*(?:\)|%29) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (/|%2f)(=|%3d|$&|_mm|inurl(:|%3a)(/|%2f)|(mod|path)(=|%3d)(\.|%2e)) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (\\\\x00|(\\\"|%22|\'|%27)?0(\\\"|%22|\'|%27)?(=|%3d)(\\\"|%22|\'|%27)?0|cast(\(|%28)0x|or%201(=|%3d)1) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{QUERY_STRING} (g|%67|%47)(l|%6c|%4c)(o|%6f|%4f)(b|%62|%42)(a|%61|%41)(l|%6c|%4c)(s|%73|%53)(=|\[|%[0-9A-Z]{0,2}) [NC,OR]" . PHP_EOL;
@@ -1124,7 +1225,7 @@ class HMWP_Models_Rules {
 				$rules .= "RewriteCond %{REQUEST_URI} (/)(haders|head|hello|helpear|incahe|includes?|indo(sec)?|infos?|install|ioptimizes?|jmail|js|king|kiss|kodox|kro|legion|libsoft)(\.php) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{REQUEST_URI} (/)(awstats|document_root|dologin\.action|error.log|extension/ext|htaccess\.|lib/php|listinfo|phpunit/php|remoteview|server/php|www\.root\.) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{REQUEST_URI} (?:(?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefhlp])(base64_(en|de)code|benchmark|curl_exec|e?chr|eval|function|fwrite|(f|p)open|html|leak|passthru|p?fsockopen|phpinfo)(?![a-z])(?=.))|(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?=[bcefhlp])(base64_(en|de)code|benchmark|curl_exec|e?chr|eval|function|fwrite|(f|p)open|html|leak|passthru|p?fsockopen|phpinfo)(?!.)[^a-z])(?>.*?(\\(|%28)).*(\\)|%29) [NC,OR]" . PHP_EOL;
-				$rules .= "RewriteCond %{REQUEST_URI} (^|[^a-z]|%(25)?[0-9a-f]{2})(posix_(kill|mkfifo|setpgid|setsid|setuid)|(child|proc)_(close|get_status|nice|open|terminate)|(shell_)?exec|system)([^a-z].*)?(\(|%28)(.*)(\)|%29) [NC,OR]" . PHP_EOL;
+				$rules .= "RewriteCond %{REQUEST_URI} (?<!.)(?>.*?(?:(?<!.)|[^a-z]|%(?:25)?[0-9a-f]{2})(?:posix_(?:kill|mkfifo|setpgid|setsid|setuid)|(?:child|proc)_(?:close|get_status|nice|open|terminate)|(?:shell_)?exec|system)(?![a-z]))(?>.*?(?:\(|%28)).*(?:\)|%29) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{REQUEST_URI} (?<!.)(?>.*?(/)((c99|php|web)?shell|crossdomain|fileditor|locus7|nstview|php(get|remoteview|writer)|r57|remview|sshphp|storm7|webadmin)).*(\\.|%2e|\\(|%28) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{REQUEST_URI} /((wp-)((201\d|202\d|[0-9]{2})|ad|admin(fx|rss|setup)|booking|confirm|crons|data|file|mail|one|plugins?|readindex|reset|setups?|story))(\.php) [NC,OR]" . PHP_EOL;
 				$rules .= "RewriteCond %{REQUEST_URI} (/)(^$|-|\!|\w|\.(.*)|100|123|([^iI])?ndex|index\.php/index|3xp|777|7yn|90sec|99|active|aill|ajs\.delivery|al277|alexuse?|ali|allwrite)(\.php) [NC,OR]" . PHP_EOL;
@@ -1506,7 +1607,10 @@ class HMWP_Models_Rules {
 
 				if ( ! empty( $headers ) ) {
 					foreach ( $headers as $name => $value ) {
-						if ( $value <> '' ) {
+						// Header name: letters, digits, dash. Value: one line, no backslash or Nginx variable
+						$name  = preg_replace( '/[^A-Za-z0-9\-]/', '', (string) $name );
+						$value = is_scalar( $value ) ? preg_replace( '/[\x00-\x1F\x7F\\\\$]/', '', (string) $value ) : '';
+						if ( $name <> '' && $value <> '' ) {
 							$rules .= 'add_header ' . $name . ' "' . str_replace( '"', '\"', $value ) . '";' . PHP_EOL;
 						}
 					}
@@ -1524,6 +1628,12 @@ class HMWP_Models_Rules {
 			}
 
 		} elseif ( HMWP_Classes_Tools::isApache() || HMWP_Classes_Tools::isLitespeed() ) {
+
+			// An Nginx rules file in the web root is never served
+			$rules .= "<IfModule mod_rewrite.c>" . PHP_EOL;
+			$rules .= "RewriteEngine On" . PHP_EOL;
+			$rules .= "RewriteRule ^hidemywp\\.conf$ - [L,R=404]" . PHP_EOL;
+			$rules .= "</IfModule>" . PHP_EOL . PHP_EOL;
 
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_authors' ) ) {
 				$rules .= "<IfModule mod_rewrite.c>" . PHP_EOL;
@@ -1556,6 +1666,8 @@ class HMWP_Models_Rules {
 
 			if ( HMWP_Classes_Tools::getOption( 'hmwp_hide_unsafe_headers' ) ) {
 				$rules .= "<IfModule mod_headers.c>" . PHP_EOL;
+				// PHP modules keep this header in the table that "always" does not reach
+				$rules .= 'Header unset x-powered-by' . PHP_EOL;
 				$rules .= 'Header always unset x-powered-by' . PHP_EOL;
 				$rules .= 'Header always unset server' . PHP_EOL;
 				$rules .= 'ServerSignature Off' . PHP_EOL;
@@ -1571,7 +1683,10 @@ class HMWP_Models_Rules {
 					$rules .= "<IfModule mod_headers.c>" . PHP_EOL;
 
 					foreach ( $headers as $name => $value ) {
-						if ( $value <> '' ) {
+						// Header name: letters, digits, dash. Value: one line, no backslash
+						$name  = preg_replace( '/[^A-Za-z0-9\-]/', '', (string) $name );
+						$value = is_scalar( $value ) ? preg_replace( '/[\x00-\x1F\x7F\\\\]/', '', (string) $value ) : '';
+						if ( $name <> '' && $value <> '' ) {
 							$rules .= 'Header set ' . $name . ' "' . str_replace( '"', '\"', $value ) . '"' . PHP_EOL;
 						}
 					}
