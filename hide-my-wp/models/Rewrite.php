@@ -970,7 +970,7 @@ class HMWP_Models_Rewrite {
 
 		$config_file = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getConfFile();
 
-		$form = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_manualrewrite' ), 'action'     => 'hmwp_manualrewrite' ) ) ) . '" class="btn rounded-0 btn-success save" />' . esc_html__( "Okay, I set it up", 'hide-my-wp' ) . '</a>';
+		$form = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_manualrewrite' ), 'action'     => 'hmwp_manualrewrite' ) ) ) . '" class="btn rounded-0 btn-success save">' . esc_html__( "Okay, I set it up", 'hide-my-wp' ) . '</a>';
 
 
 		//If Windows Server

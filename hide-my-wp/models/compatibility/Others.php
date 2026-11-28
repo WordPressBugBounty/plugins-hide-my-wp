@@ -485,10 +485,16 @@ class HMWP_Models_Compatibility_Others extends HMWP_Models_Compatibility_Abstrac
 		//check the brute force
 		if ( $check && $url && $http_post && ! HMWP_Classes_Tools::getIsset( 'brute_ck' ) && ! HMWP_Classes_Tools::getIsset( 'g-recaptcha-response' ) ) {
 
-			if ( HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) <> HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
+			// Only the login, lost password and register pages print the captcha; a form on any other page is not checked
+			if ( $url ) {
 				$paths   = array();
 				$paths[] = '/' . HMWP_Classes_Tools::getDefault( 'hmwp_login_url' );
 				$paths[] = '/' . HMWP_Classes_Tools::getOption( 'hmwp_login_url' );
+
+				// With the default login path, XML-RPC logins stay checked as before
+				if ( HMWP_Classes_Tools::getDefault( 'hmwp_login_url' ) == HMWP_Classes_Tools::getOption( 'hmwp_login_url' ) ) {
+					$paths[] = '/xmlrpc.php';
+				}
 
 				//add lostpass path
 				if ( HMWP_Classes_Tools::getOption( 'hmwp_lostpassword_url' ) <> '' ) {

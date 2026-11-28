@@ -117,12 +117,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 		}
 
 		// Warn when the selected Server Type does not fit the server that answers
-		if ( $server = HMWP_Classes_Tools::getServerMismatch() ) {
-			$types = array( 'apache' => 'Apache', 'litespeed' => 'LiteSpeed', 'siteground' => 'SiteGround', 'nginx' => 'Nginx', 'cloudpanel' => 'CloudPanel', 'iis' => 'IIS Windows' );
-			$type  = HMWP_Classes_Tools::getOption( 'hmwp_server_type' );
-			/* translators: 1: Detected server name. 2: Selected server type. 3: Opening link HTML. 4: Closing link HTML. */
-			HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'This website runs on %1$s, but Server Type is set to %2$s. WP Ghost now writes its rules for %2$s, so the path changes may stop working. Set Server Type back to Autodetect in %3$sAdvanced > Compatibility%4$s, unless your hosting company asked for %2$s.', 'hide-my-wp' ), '<strong>' . esc_html( $server ) . '</strong>', '<strong>' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : $type ) . '</strong>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_advanced&tab=compatibility' ) ) . '" class="text-white" style="text-decoration: underline">', '</a>' ) ), 'danger', false );
-		}
+		HMWP_Classes_Tools::showServerMismatch();
 
 		if ( HMWP_Classes_Tools::isNginx() && HMWP_Classes_Tools::getOption( 'test_frontend' ) && HMWP_Classes_Tools::getOption( 'hmwp_mode' ) <> 'default' && $this->hasNginxRules() ) {
 			$config_file = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Rules' )->getConfFile();
@@ -155,7 +150,7 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 
 		// Setting Alerts based on Logout and Error statements
 		if ( get_transient( 'hmwp_restore' ) == 1 ) {
-			$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_restore_settings' ), 'action'     => 'hmwp_restore_settings' ) ) ) . '" class="btn btn-default btn-sm ml-3" />' . esc_html__( "Restore Settings", 'hide-my-wp' ) . '</a>';
+			$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_restore_settings' ), 'action'     => 'hmwp_restore_settings' ) ) ) . '" class="btn btn-default btn-sm ml-3">' . esc_html__( "Restore Settings", 'hide-my-wp' ) . '</a>';
 			HMWP_Classes_Error::setNotification( esc_html__( 'Do you want to restore the last saved settings?', 'hide-my-wp' ) . $restoreLink );
 		}
 
@@ -1412,6 +1407,26 @@ class HMWP_Controllers_Settings extends HMWP_Classes_FrontController {
 		// Unknown settings, or a different type than the plugin uses, are skipped
 		if ( ! array_key_exists( $key, (array) HMWP_Classes_Tools::$options ) ) {
 			return null;
+		}
+
+		// Lists a save stores as JSON text: restored also over their empty default
+		$json_lists = array( 'hmwp_geoblock_countries', 'hmwp_geoblock_urls', 'whitelist_ip', 'whitelist_urls', 'whitelist_rules', 'banlist_ip', 'banlist_hostname', 'banlist_user_agent', 'banlist_referrer' );
+		if ( in_array( $key, $json_lists, true ) ) {
+			$list = is_array( $value ) ? $value : json_decode( (string) $value, true );
+			if ( ! is_array( $list ) ) {
+				return null;
+			}
+			$items = array();
+			foreach ( $list as $item ) {
+				if ( is_scalar( $item ) ) {
+					$item = ( $key === 'hmwp_geoblock_countries' ) ? preg_replace( '/[^A-Za-z]/', '', (string) $item ) : wp_strip_all_tags( str_replace( array( "\r", "\n" ), ' ', (string) $item ) );
+					if ( $item !== '' ) {
+						$items[] = $item;
+					}
+				}
+			}
+
+			return wp_json_encode( $items );
 		}
 
 		$current = HMWP_Classes_Tools::$options[ $key ];

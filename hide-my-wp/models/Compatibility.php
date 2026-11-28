@@ -70,6 +70,8 @@ class HMWP_Models_Compatibility {
 			'hcaptcha-for-forms-and-more/hcaptcha.php'                                      => 'HMWP_Models_Compatibility_hCaptcha',
 			'mainwp-child/mainwp-child.php'                                                 => 'HMWP_Models_Compatibility_MainWP',
 			'elementor/elementor.php'                                                       => 'HMWP_Models_Compatibility_Elementor',
+			'essential-addons-for-elementor-lite/essential_adons_elementor.php'             => 'HMWP_Models_Compatibility_EssentialAddons',
+			'blocksy-companion/blocksy-companion.php'                                       => 'HMWP_Models_Compatibility_Blocksy',
 			'userswp/userswp.php'                                                           => 'HMWP_Models_Compatibility_UsersWP',
 			'litespeed-cache/litespeed-cache.php'                                           => 'HMWP_Models_Compatibility_LiteSpeed',
 			'wp-social-pro/wp-social-pro.php'                                               => 'HMWP_Models_Compatibility_WPSocial',
@@ -91,6 +93,11 @@ class HMWP_Models_Compatibility {
 		//Refresh rewrites when a new website or new term is created on Litespeed server
 		if ( HMWP_Classes_Tools::isLitespeed() ) {
 			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Compatibility_LiteSpeed' );
+		}
+
+		// Bricks Builder forms: the WP Ghost captcha and the 2FA step
+		if ( HMWP_Classes_Tools::isThemeActive( 'Bricks' ) ) {
+			HMWP_Classes_ObjController::getClass( 'HMWP_Models_Compatibility_Bricks' );
 		}
 
 		//Compatibility with More plugin
@@ -681,7 +688,7 @@ class HMWP_Models_Compatibility {
 		if ( $geoLocator->isDatabaseNeeded() && ! file_exists( $geoLocator->getDatabasePath() ) ) {
 			// Show the notice only when a download failed, otherwise download it in the background
 			if ( $geoLocator->isDownloadFailed() ) {
-				$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_geo_download' ), 'action' => 'hmwp_geo_download' ) ) ) . '" class="btn btn-default btn-sm ml-3" />' . esc_html__( "Click to retry the download", 'hide-my-wp' ) . '</a>';
+				$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_geo_download' ), 'action' => 'hmwp_geo_download' ) ) ) . '" class="btn btn-default btn-sm ml-3">' . esc_html__( "Click to retry the download", 'hide-my-wp' ) . '</a>';
 				HMWP_Classes_Error::setNotification( esc_html__( 'The Country database has not been downloaded, preventing the User Events Log and Security Threats Log features from working properly.', 'hide-my-wp' ) . $restoreLink );
 			} else {
 				$geoLocator->scheduleDownload();
@@ -690,7 +697,7 @@ class HMWP_Models_Compatibility {
 
 		// Announce the plugin name change
 		if( HMWP_Classes_Tools::getOption('hmwp_plugin_name') == 'Hide My WP Ghost' && $page == 'hmwp_settings' ){
-			$link = '<a href="' . esc_url(add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_update_product_name' ), 'action' => 'hmwp_update_product_name' ) )) . '" class="btn btn-default btn-small py-1 ml-2" style="font-size: 14px;" />' . esc_html__( "Update Now", 'hide-my-wp' ) . '</a>';
+			$link = '<a href="' . esc_url(add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_update_product_name' ), 'action' => 'hmwp_update_product_name' ) )) . '" class="btn btn-default btn-small py-1 ml-2" style="font-size: 14px;">' . esc_html__( "Update Now", 'hide-my-wp' ) . '</a>';
 			/* translators: 1: Opening <strong> tag, 2: Closing </strong> tag, 3: Opening <strong> tag, 4: Closing </strong> tag, 5: Opening <strong> tag, 6: Closing </strong> tag, 7: Update link HTML. */
 			HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( '%1$s Good News! %2$s You can now update the plugin name from %3$s Hide My WP Ghost %4$s to %5$s WP Ghost %6$s on your website! %7$s', 'hide-my-wp' ), '<strong>', '</strong>', '<strong>', '</strong>', '<strong>', '</strong>', $link ) ) );
 		}
@@ -844,7 +851,7 @@ class HMWP_Models_Compatibility {
 				$breaks_layout = (bool) preg_grep( '/\.(css|js|svg|woff2?|ttf|eot)(\?|$)/i', (array) $mappings );
 
 				$checkLink   = '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_permalinks' ) ) . '" class="btn btn-default btn-sm mt-3 mr-2">' . esc_html__( "Run Frontend Check", 'hide-my-wp' ) . '</a>';
-				$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_ignore_errors' ), 'action'     => 'hmwp_ignore_errors' ) ) ) . '" class="btn btn-default btn-sm mt-3" />' . esc_html__( "Close Error", 'hide-my-wp' ) . '</a>';
+				$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_ignore_errors' ), 'action'     => 'hmwp_ignore_errors' ) ) ) . '" class="btn btn-default btn-sm mt-3">' . esc_html__( "Close Error", 'hide-my-wp' ) . '</a>';
 
 				$kbLink = '<a href="' . esc_url( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) . '/kb/theme-not-loading-correctly-website-loads-slower/' ) . '" target="_blank" class="text-warning">' . esc_html( HMWP_Classes_Tools::getOption( 'hmwp_plugin_website' ) ) . '/kb/theme-not-loading-correctly-website-loads-slower/</a>';
 

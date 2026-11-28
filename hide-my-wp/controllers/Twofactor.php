@@ -252,6 +252,11 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 		if ( $this->model->isRememberDevice( $user->ID ) ) {
 			return;
 		}
+
+		// The login form already ran its own second factor (e.g. an email code from a page builder)
+		if ( apply_filters( 'hmwp_2fa_skip_login', false, $user ) ) {
+			return;
+		}
 		/** @var HMWP_Models_Twofactor_Passkey $passkeyService */
 		$passkeyService = HMWP_Classes_ObjController::getClass( 'HMWP_Models_Twofactor_Passkey' );
 
@@ -268,6 +273,14 @@ class HMWP_Controllers_Twofactor extends HMWP_Classes_FrontController {
 
 		// Invalidate the current login session to prevent from being re-used.
 		$this->model->destroyCurrentSession( $user );
+
+		// An AJAX login form can't show the 2FA form: the builder's module answers with the 2FA step address in its own format
+		if ( HMWP_Classes_Tools::isAjax() && has_filter( 'hmwp_2fa_ajax_response' ) ) {
+			$url = $this->model->getTwoFactorStepUrl( $user );
+			if ( $url && is_array( $response = apply_filters( 'hmwp_2fa_ajax_response', null, $url, $user ) ) ) {
+				wp_send_json_success( $response );
+			}
+		}
 
 		$this->model->showTwoFactorLogin( $user );
 		exit();

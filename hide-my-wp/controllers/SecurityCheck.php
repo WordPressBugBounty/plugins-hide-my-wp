@@ -51,6 +51,9 @@ class HMWP_Controllers_SecurityCheck extends HMWP_Classes_FrontController {
 		// Initiate security
 		$this->initSecurity();
 
+		// Warn when the selected Server Type does not fit the server that answers
+		HMWP_Classes_Tools::showServerMismatch();
+
 		// Add the Menu Tabs in variable
 		if ( is_rtl() ) {
 			HMWP_Classes_ObjController::getClass( 'HMWP_Classes_DisplayController' )->loadMedia( 'bootstrap.rtl' );

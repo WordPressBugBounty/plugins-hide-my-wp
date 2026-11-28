@@ -4,7 +4,7 @@ Tags: security,firewall,brute force,login,hide my wp
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 7.0.21
+Stable tag: 7.0.22
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -37,20 +37,37 @@ WP Ghost **changes and secures over 30 default WordPress paths**, including `wp-
 
 Paths Security rewrites public routes and can block requests to their old addresses. Changing a URL does not fix vulnerable plugin code or replace login authentication.
 
-= 2026 Ghost Firewall in version 7.0.15 =
+= 2026 Ghost Firewall =
 
-Version 7.0.15 adds the 2026 Ghost Firewall as the default filter on new installs. Choose it under **WP Ghost > Firewall & Headers > Firewall Strength**.
+Version 7.0.15 made the 2026 Ghost Firewall the default filter on new installs. Version 7.0.21 adds checks inside the request: form fields, JSON and XML bodies, file uploads and cookies. Choose it under **WP Ghost > Firewall & Headers > Firewall Strength**.
 
 WP Ghost uses server rules and application checks, depending on the request and configuration. Test forms and checkout after changing firewall settings.
 
+= Firewall levels =
+
+* **Minimal:** checks query strings
+* **Medium:** 6G rules for query strings and user agents
+* **7G Firewall:** 7G rules for query strings, URLs and user agents
+* **8G Firewall:** 8G rules for query strings, URLs, user agents and referrers
+* **2026 Ghost Firewall** (recommended): the 8G rules plus the request checks below
+
+From the 7G level up, WP Ghost also blocks probes for exposed files such as `.env`, `.git` and `composer.json`, and checks visitor comment and form submissions.
+
 = What the 2026 Ghost Firewall checks =
 
-* **SQL injection, cross-site scripting (XSS), directory traversal, and scanner probes** in URLs and query strings
-* **Unauthenticated exploit payloads** sent to `admin-ajax.php` and the `/wp-json` REST API
-* **File uploads containing PHP shells** or scripts disguised as images
-* **Visitor comment and form submissions** on firewall levels 3 and 4
-* **Privilege-escalation attempts** on user registration endpoints
-* **PHP object injection and Server-Side Request Forgery (SSRF)** requests
+* **SQL injection, cross-site scripting (XSS), directory traversal and scanner probes** in URLs, query strings, user agents and referrers
+* **Every query and form field, plus JSON and XML request bodies**, also on `admin-ajax.php`, `admin-post.php` and the `/wp-json` REST API, for visitors who are not logged in
+* **File uploads with PHP code:** `.php`, `.phtml` and `.phar` files, double extensions such as `.php.jpg`, `.htaccess` and `.user.ini` files, PHP code hidden inside images, and scripts inside SVG and HTML uploads
+* **Privilege escalation:** requests that try to set an admin role, admin capabilities, the registration options, or core options such as the site address, admin email and active plugins
+* **PHP object injection** in fields, request bodies and cookies, plain or base64 encoded
+* **Server-Side Request Forgery (SSRF):** cloud metadata addresses and non-web URL schemes
+* **File inclusion and secret files:** PHP stream wrappers, PHP code sent as a data URL, and paths to `wp-config.php`, `/etc/passwd`, `.env` or SSH keys
+* **XML external entities (XXE)** and shell commands that print a secret file
+* **Plugin exploit inputs:** a PHP function name sent as a field value, a remote zip in a plugin or theme field, an author filter that is not a user ID, and REST batch calls nested in a batch
+* **Query string tricks:** prototype pollution, NoSQL operators, SQL `ORDER BY` and `HAVING` probes, and backticks
+* **Exploit and scanner tools** by user agent, and tags or SQL in the referrer
+
+Every 2026 check runs in linear time, so very long requests stay fast. A request that blocks a real form can pass: add its rule code from the **Security Threats Log** to **Whitelist Rules**, or whitelist the IP address or path.
 
 Read the <a href="https://wpghost.com/kb/2026-ghost-firewall/">2026 Ghost Firewall documentation</a>.
 
@@ -112,7 +129,9 @@ Only the findings on your Security Check screen and six setup parameters (server
 
 = 2. Firewall and login security =
 
-* Filter requests with the **2026 Ghost, 8G, or 7G Firewall rules**
+* Filter requests with **5 firewall levels**: Minimal, Medium (6G), 7G, 8G and the **2026 Ghost Firewall**
+* Block **Theme Detectors** crawlers that look up your theme and plugins
+* Whitelist trusted **IP addresses, paths and firewall rule codes**
 * Log in without passwords using **Passkey 2FA** (Face ID, Touch ID, Windows Hello, or hardware keys)
 * Enable Authenticator app codes, email 2FA codes, backup codes, browser trust, and **forced 2FA setup by user role**
 * Send **HTTP security headers:** Content-Security-Policy (CSP), HSTS, X-Frame-Options, and X-Content-Type-Options
@@ -201,7 +220,7 @@ See all <a href="https://wpghost.com/features/">WP Ghost Premium features</a>.
 
 The full policy is in the plugin's `SECURITY.md` file, and bundled third-party components are listed in `sbom.json`.
 
-**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.21, released November 2026, is supported until November 2031.
+**Support period:** We provide **security updates for 5 years** from each version's release date. Version 7.0.22, released November 2026, is supported until November 2031.
 
 = Documentation and guides =
 
@@ -260,7 +279,7 @@ Check which protections your host provides, then use WP Ghost for missing contro
 WP Ghost can limit repeated checkout submissions and failed payment attempts from the same IP address; distributed attacks may need controls from your payment provider or host.
 
 = What does the free 2026 Ghost Firewall check? =
-From version 7.0.15, WP Ghost includes checks for injection patterns, AJAX and REST requests, and malicious uploads, with comment and form checks on levels 3 and 4.
+It checks URLs, query strings, user agents, referrers, form fields, JSON and XML bodies, uploads and cookies for injection, file inclusion, privilege escalation, PHP object injection and SSRF patterns. Comment and form checks run from the 7G level up.
 
 = How does Ghost Doctor fix broken paths? =
 **Ghost Doctor** tests the homepage and asset URLs as a logged-out visitor, applies supported repairs, and reverts changes that fail its follow-up check.
@@ -304,6 +323,18 @@ WP Ghost Premium includes crawler controls, but blocking search crawlers such as
 
 == Changelog ==
 
+= 7.0.22 (27 Nov 2026) =
+* New - Math and reCAPTCHA checks on Bricks login, lost password and sign-up forms
+* New - Math and reCAPTCHA checks on Essential Addons Login | Register forms
+* New - Math and reCAPTCHA v2 checks in the Blocksy account login window
+* New - 2FA code step after Bricks, Essential Addons and Blocksy logins
+* Update - Builder forms with their own reCAPTCHA, hCaptcha or Turnstile keep only theirs
+* Fix - Page builder lost password forms work with Math on
+* Fix - Restore Backup brings back the blocked countries, IP and path lists
+* Fix - Buttons inside WP Ghost notices show their labels
+* Fix - The visitor IP is read behind Cloudflare over IPv6
+* Fix - InMotion, Bitnami, GoDaddy and Local presets write the server rules
+* Fix - A Server Type that does not match the server keeps the paths working
 = 7.0.21 (24 Nov 2026) =
 * Update - Security update: hidden paths cover every spelling of an address
 * Update - Security update: Hide Old Paths accepts real WordPress login cookies only

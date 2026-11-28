@@ -599,6 +599,23 @@ class HMWP_Models_Twofactor {
     }
 
     /**
+     * The address of the 2FA step for a user who passed the password, for login forms that can't show it
+     *
+     * @param WP_User $user The user.
+     *
+     * @return string Empty when the login nonce could not be made
+     */
+    public function getTwoFactorStepUrl( $user ) {
+        $login_nonce = $this->createLoginNonce( $user->ID );
+
+        if ( empty( $login_nonce['key'] ) ) {
+            return '';
+        }
+
+        return $this->loginUrl( array( 'action' => 'validate_2fa', 'wp-auth-id' => $user->ID, 'wp-auth-nonce' => $login_nonce['key'] ), 'login_post' );
+    }
+
+    /**
      * Create the login nonce.
      *
      * @param int $user_id User ID.

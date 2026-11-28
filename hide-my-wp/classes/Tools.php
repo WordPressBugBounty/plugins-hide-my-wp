@@ -1864,9 +1864,9 @@ class HMWP_Classes_Tools {
 		global $is_apache;
 
 		// Check if custom server type is defined in options
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) <> 'auto' ) {
+		if ( self::getRulesServerType() <> 'auto' ) {
 			// Return true if the custom server type matches Apache or similar types
-			return in_array( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ), array(
+			return in_array( self::getRulesServerType(), array(
 				'apache',
 				'litespeed',
 				'siteground'
@@ -1915,8 +1915,8 @@ class HMWP_Classes_Tools {
 	public static function isLitespeed() {
 		$litespeed = false;
 		// Check if server type is custom defined in the options and matches LiteSpeed
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) <> 'auto' ) {
-			return ( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) == 'litespeed' );
+		if ( self::getRulesServerType() <> 'auto' ) {
+			return ( self::getRulesServerType() == 'litespeed' );
 		}
 		// Check if server type is custom defined as a constant and matches LiteSpeed
 		if ( defined( 'HMWP_SERVER_TYPE' ) && strtolower( HMWP_SERVER_TYPE ) == 'litespeed' ) {
@@ -2007,8 +2007,8 @@ class HMWP_Classes_Tools {
 		global $is_nginx;
 
 		// Check if a custom-defined server type matches Nginx
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) <> 'auto' ) {
-			if ( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) == 'nginx' ) {
+		if ( self::getRulesServerType() <> 'auto' ) {
+			if ( self::getRulesServerType() == 'nginx' ) {
 				return true;
 			}
 		}
@@ -2034,7 +2034,7 @@ class HMWP_Classes_Tools {
 		$type = HMWP_Classes_Tools::getOption( 'hmwp_server_type' );
 		$soft = isset( $_SERVER['SERVER_SOFTWARE'] ) ? strtolower( (string) $_SERVER['SERVER_SOFTWARE'] ) : ''; //phpcs:ignore
 
-		// Only the plain server choices are checked. Hosting presets can mix servers.
+		// Only the plain server choices and WP Engine are checked. Hosting presets can mix servers.
 		$selected = array(
 			'apache'     => 'htaccess',
 			'litespeed'  => 'htaccess',
@@ -2042,9 +2042,15 @@ class HMWP_Classes_Tools {
 			'nginx'      => 'nginx',
 			'cloudpanel' => 'nginx',
 			'iis'        => 'iis',
+			'wpengine'   => 'wpengine',
 		);
 
 		if ( $soft === '' || ! isset( $selected[ $type ] ) ) {
+			return '';
+		}
+
+		// WP Engine sets its own server values on every request
+		if ( $type === 'wpengine' && ( isset( $_SERVER['IS_WPE'] ) || isset( $_SERVER['HTTP_X_WPE_SSL'] ) || isset( $_SERVER['HTTP_X_WPENGINE_PHP_VERSION'] ) ) ) { //phpcs:ignore
 			return '';
 		}
 
@@ -2072,6 +2078,42 @@ class HMWP_Classes_Tools {
 	}
 
 	/**
+	 * The Server Type that decides where the rules are written.
+	 * Hosting presets, and a choice the server clearly contradicts, use Autodetect.
+	 *
+	 * @return string
+	 */
+	public static function getRulesServerType() {
+		$type = HMWP_Classes_Tools::getOption( 'hmwp_server_type' );
+
+		// Hosting presets run on Apache or Nginx: detect the server like Autodetect
+		if ( in_array( $type, array( 'local', 'inmotion', 'bitnami', 'godaddy' ), true ) ) {
+			return 'auto';
+		}
+
+		// The server names another kind than the one selected: write the rules for the server that answers
+		if ( self::getServerMismatch() <> '' ) {
+			return 'auto';
+		}
+
+		return $type;
+	}
+
+	/**
+	 * Show the warning when the selected Server Type does not fit the server that answers.
+	 *
+	 * @return void
+	 */
+	public static function showServerMismatch() {
+		if ( $server = self::getServerMismatch() ) {
+			$types = array( 'apache' => 'Apache', 'litespeed' => 'LiteSpeed', 'siteground' => 'SiteGround', 'nginx' => 'Nginx', 'cloudpanel' => 'CloudPanel', 'iis' => 'IIS Windows', 'wpengine' => 'WP Engine' );
+			$type  = self::getOption( 'hmwp_server_type' );
+			/* translators: 1: Detected server name. 2: Selected server type. 3: Opening link HTML. 4: Closing link HTML. */
+			HMWP_Classes_Error::setNotification( wp_kses_post( sprintf( __( 'This website runs on %1$s, but Server Type is set to %2$s. WP Ghost writes its rules for %1$s, so the paths keep working. Set Server Type to Autodetect in %3$sAdvanced > Compatibility%4$s to remove this notice.', 'hide-my-wp' ), '<strong>' . esc_html( $server ) . '</strong>', '<strong>' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : $type ) . '</strong>', '<a href="' . esc_url( HMWP_Classes_Tools::getSettingsUrl( 'hmwp_advanced&tab=compatibility' ) ) . '" class="text-white" style="text-decoration: underline">', '</a>' ) ), 'danger', false );
+		}
+	}
+
+	/**
 	 * Returns true if server is Wpengine
 	 *
 	 * @return boolean
@@ -2079,8 +2121,8 @@ class HMWP_Classes_Tools {
 	public static function isWpengine() {
 
 		// Check if a custom-defined server type matches WPEngine
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) <> 'auto' ) {
-			return ( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) == 'wpengine' );
+		if ( self::getRulesServerType() <> 'auto' ) {
+			return ( self::getRulesServerType() == 'wpengine' );
 		}
 
 		// Return true if the custom server type constant matches WPEngine
@@ -2196,8 +2238,8 @@ class HMWP_Classes_Tools {
 		global $is_IIS, $is_iis7;
 
 		// Check if a custom-defined server type matches IIS Windows
-		if ( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) <> 'auto' ) {
-			return ( HMWP_Classes_Tools::getOption( 'hmwp_server_type' ) == 'iis' );
+		if ( self::getRulesServerType() <> 'auto' ) {
+			return ( self::getRulesServerType() == 'iis' );
 		}
 
 		// Return true if the custom server type constant matches IIS

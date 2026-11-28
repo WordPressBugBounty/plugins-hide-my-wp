@@ -315,10 +315,10 @@ class HMWP_Models_Firewall_Server {
 			return ( ( $ip_long & $mask ) === ( $subnet_long & $mask ) );
 		}
 
-		// IPv6
-		if ( strpos( $ip, ':' ) !== false && strpos( $subnet, ':' ) !== false && $this->isIPv6Support() ) {
-			$ip_bin     = @inet_pton( $ip );
-			$subnet_bin = @inet_pton( $subnet );
+		// IPv6, also on PHP without the sockets extension: inetPton() has a PHP fallback // 11.2026
+		if ( strpos( $ip, ':' ) !== false && strpos( $subnet, ':' ) !== false ) {
+			$ip_bin     = filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ? $this->inetPton( $ip ) : false;
+			$subnet_bin = filter_var( $subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ? $this->inetPton( $subnet ) : false;
 
 			if ( $ip_bin === false || $subnet_bin === false || $bits < 0 || $bits > 128 ) {
 				return false;

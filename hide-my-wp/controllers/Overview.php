@@ -21,6 +21,9 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 	 */
 	public function init() {
 
+		// Warn when the selected Server Type does not fit the server that answers
+		HMWP_Classes_Tools::showServerMismatch();
+
 
 		//Load the CSS for Settings
 		HMWP_Classes_ObjController::getClass( 'HMWP_Classes_DisplayController' )->loadMedia( 'popper' );
@@ -59,7 +62,7 @@ class HMWP_Controllers_Overview extends HMWP_Classes_FrontController {
 
 		// Same restore offer as on the settings pages
 		if ( get_transient( 'hmwp_restore' ) == 1 ) {
-			$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_restore_settings' ), 'action' => 'hmwp_restore_settings' ) ) ) . '" class="btn btn-default btn-sm ml-3" />' . esc_html__( "Restore Settings", 'hide-my-wp' ) . '</a>';
+			$restoreLink = '<a href="' . esc_url( add_query_arg( array( 'hmwp_nonce' => wp_create_nonce( 'hmwp_restore_settings' ), 'action' => 'hmwp_restore_settings' ) ) ) . '" class="btn btn-default btn-sm ml-3">' . esc_html__( "Restore Settings", 'hide-my-wp' ) . '</a>';
 			HMWP_Classes_Error::setNotification( esc_html__( 'Do you want to restore the last saved settings?', 'hide-my-wp' ) . $restoreLink );
 		}
 

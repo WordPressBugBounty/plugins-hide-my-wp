@@ -45,6 +45,11 @@ class HMWP_Models_Bruteforce_LostPassword {
 		// Check bruteforce only in frontend for not logged users
 		$response = $bruteForceModel->bruteForceCheck();
 
+		// AJAX and page builder forms have no captcha field: the IP ban above still applies, the captcha is skipped like on login
+		if ( ! apply_filters( 'hmwp_preauth_captcha_check', true ) ) {
+			return $errors;
+		}
+
 		// Get the active Brute Force class
 		$error = $bruteForceModel->getInstance()->authenticate( false, $response );
 
